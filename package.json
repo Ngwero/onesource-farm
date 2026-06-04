@@ -11,6 +11,7 @@
     "seed:team": "tsx scripts/seed-rukapay-team.ts",
     "test:password": "tsx scripts/set-unified-test-password.ts",
     "reset:logins": "tsx scripts/reset-team-logins.ts",
+    "reset:onboarding": "tsx scripts/reset-team-onboarding.ts",
     "seed:signatures": "tsx scripts/seed-test-signatures.ts",
     "clear:users": "tsx scripts/clear-all-users.ts",
     "clear:memos": "tsx scripts/clear-all-memos.ts",

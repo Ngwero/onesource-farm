@@ -68,17 +68,16 @@ export async function resetAuthPasswords(
   const { error: profileError } = await profileQuery;
   if (profileError) throw profileError;
 
-  if (mode === 'onboarding' && userIds?.length) {
-    for (const id of userIds) {
-      await supabase
-        .from('users')
-        .update({ welcome_email_sent_at: null })
-        .eq('id', id)
-        .then(({ error }) => {
-          if (error && !error.message.includes('welcome_email_sent_at')) {
-            throw error;
-          }
-        });
+  if (mode === 'onboarding') {
+    let welcomeQuery = supabase.from('users').update({ welcome_email_sent_at: null });
+    if (userIds?.length) {
+      welcomeQuery = welcomeQuery.in('id', userIds);
+    } else {
+      welcomeQuery = welcomeQuery.not('id', 'is', null);
+    }
+    const { error: welcomeErr } = await welcomeQuery;
+    if (welcomeErr && !welcomeErr.message.includes('welcome_email_sent_at')) {
+      throw welcomeErr;
     }
   }
 

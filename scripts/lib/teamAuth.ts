@@ -71,15 +71,16 @@ export async function resetAuthPasswords(
     console.warn(`Profile must_set_password update: ${profileError.message}`);
   }
 
-  if (mode === 'onboarding' && userIds?.length) {
-    for (const id of userIds) {
-      const { error: welcomeErr } = await supabase
-        .from('users')
-        .update({ welcome_email_sent_at: null })
-        .eq('id', id);
-      if (welcomeErr && !welcomeErr.message.includes('welcome_email_sent_at')) {
-        console.warn(`welcome_email_sent_at: ${welcomeErr.message}`);
-      }
+  if (mode === 'onboarding') {
+    let welcomeQuery = supabase.from('users').update({ welcome_email_sent_at: null });
+    if (userIds?.length) {
+      welcomeQuery = welcomeQuery.in('id', userIds);
+    } else {
+      welcomeQuery = welcomeQuery.not('id', 'is', null);
+    }
+    const { error: welcomeErr } = await welcomeQuery;
+    if (welcomeErr && !welcomeErr.message.includes('welcome_email_sent_at')) {
+      console.warn(`welcome_email_sent_at: ${welcomeErr.message}`);
     }
   }
 
