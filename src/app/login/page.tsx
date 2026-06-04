@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { RukaPayLogo } from '@/components/brand/RukaPayLogo';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const { user, loading: authLoading, login, dashboardRoute } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (authLoading) return;
@@ -30,9 +31,26 @@ export default function LoginPage() {
   }, [user, authLoading, dashboardRoute, router]);
 
   useEffect(() => {
+    if (searchParams.get('reset') === '1') {
+      setSuccess('If an account exists for that email, we sent a password reset link. Check inbox and spam.');
+    }
+    const urlError = searchParams.get('error');
+    if (urlError) {
+      setError(decodeURIComponent(urlError));
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const welcomeNotice = sessionStorage.getItem('rukapay_welcome_notice');
+    if (welcomeNotice) {
+      sessionStorage.removeItem('rukapay_welcome_notice');
+    }
     if (sessionStorage.getItem('rukapay_password_ready') === '1') {
       sessionStorage.removeItem('rukapay_password_ready');
-      setSuccess('Password saved successfully. Sign in with your new password.');
+      const base = 'Password saved successfully. Sign in with your new password.';
+      setSuccess(welcomeNotice ? `${base} ${welcomeNotice}` : base);
+    } else if (welcomeNotice) {
+      setSuccess(welcomeNotice);
     }
   }, []);
 
@@ -48,7 +66,10 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setSuccess(data.message || 'Check your email for a reset link.');
+      setSuccess(
+        data.message ||
+          'If an account exists, a reset link was sent. Open it and choose a new password on the next page.'
+      );
       setForgotOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Request failed');
@@ -188,5 +209,19 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center page-shell">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-brand-200 border-t-brand-600" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

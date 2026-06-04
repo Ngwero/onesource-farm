@@ -82,6 +82,17 @@ export default function SetPasswordPage() {
 
       completedRef.current = true;
       sessionStorage.setItem('rukapay_password_ready', '1');
+      if (data.welcome_email_sent) {
+        sessionStorage.setItem(
+          'rukapay_welcome_notice',
+          'Welcome email sent — check your inbox and spam for “Welcome to the paperless era”.'
+        );
+      } else {
+        sessionStorage.setItem(
+          'rukapay_welcome_notice',
+          'Password saved. If you do not see a welcome email, check spam or sign in again once SMTP is configured.'
+        );
+      }
       logout();
       router.replace('/login');
     } catch (err) {
@@ -122,7 +133,8 @@ export default function SetPasswordPage() {
         <h1 className="login-title">Set your password</h1>
         <p className="login-subtitle">
           Welcome, {user.full_name}. Create a strong password (at least 10 characters with upper,
-          lower, number, and symbol).
+          lower, number, and symbol). After you save, we email a short welcome note to{' '}
+          <span className="text-white/90">{user.email}</span> (check spam if needed).
         </p>
 
         {error && <div className="login-error">{error}</div>}

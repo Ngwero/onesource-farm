@@ -9,11 +9,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email required' }, { status: 400 });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(
+      /\/$/,
+      ''
+    );
     const supabase = await createClient();
+    const redirectTo = `${appUrl}/auth/callback?next=${encodeURIComponent('/auth/reset-password')}`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(normalized, {
-      redirectTo: `${appUrl}/login?reset=1`,
+      redirectTo,
     });
 
     if (error) {
