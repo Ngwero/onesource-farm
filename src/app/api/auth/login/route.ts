@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { setDevSessionCookie } from '@/lib/auth/session';
+import { createServiceClient } from '@/lib/supabase/server';
+import { attachAppSessionCookie } from '@/lib/auth/session';
 import { sendWelcomeSignInEmailOnce } from '@/lib/notifications/email';
+import { copyResponseCookies, createRouteHandlerClient } from '@/lib/supabase/routeHandler';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,36 +14,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email and password required' }, { status: 400 });
     }
 
-    const supabase = await createClient();
+    const authResponse = NextResponse.json({ ok: true });
+    const supabase = createRouteHandlerClient(request, authResponse);
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (authError) {
-      const profileClient = createServiceClient();
-      const { data: user } = await profileClient
-        .from('users')
-        .select('*, roles(slug, name), departments(name, code)')
-        .eq('email', email)
-        .eq('is_active', true)
-        .single();
-
-      if (!user) {
-        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-      }
-
-      if (process.env.NODE_ENV === 'production') {
-        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-      }
-
-      await setDevSessionCookie(user.id);
-
-      return NextResponse.json({
-        user,
-        must_set_password: Boolean(user.must_set_password),
-        message: 'Dev session only — configure Supabase Auth for production',
-      });
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
     const profileClient = createServiceClient();
@@ -52,8 +32,12 @@ export async function POST(request: NextRequest) {
       .eq('id', authData.user.id)
       .single();
 
+    if (!profile?.is_active) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 401 });
+    }
+
     let welcomeEmailSent = false;
-    if (profile && !profile.must_set_password) {
+    if (!profile.must_set_password) {
       const welcome = await sendWelcomeSignInEmailOnce(profile.id);
       welcomeEmailSent = welcome.sent;
       if (!welcome.sent && !welcome.skipped) {
@@ -61,12 +45,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       user: profile,
       session: authData.session,
-      must_set_password: Boolean(profile?.must_set_password),
+      must_set_password: Boolean(profile.must_set_password),
       welcome_email_sent: welcomeEmailSent,
     });
+    copyResponseCookies(authResponse, response);
+    attachAppSessionCookie(response, profile.id);
+    return response;
   } catch (err) {
     console.error('Login error:', err);
     return NextResponse.json({ error: 'Login failed' }, { status: 500 });

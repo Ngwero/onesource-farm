@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthUser, authErrorResponse } from '@/lib/auth/session';
+import { attachAppSessionCookie, getAuthUser, authErrorResponse } from '@/lib/auth/session';
 
 export async function GET() {
   try {
@@ -7,7 +7,10 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    return NextResponse.json({ user });
+
+    const response = NextResponse.json({ user });
+    attachAppSessionCookie(response, user.id);
+    return response;
   } catch (err) {
     return authErrorResponse(err);
   }

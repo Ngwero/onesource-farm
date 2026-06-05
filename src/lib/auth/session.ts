@@ -51,15 +51,26 @@ function verifyDevToken(token: string): string | null {
   return userId;
 }
 
+const sessionCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/',
+  maxAge: DEV_SESSION_MAX_AGE,
+};
+
+/** Signed app session cookie for API routes (set on login and /api/auth/me). */
+export function attachAppSessionCookie(response: NextResponse, userId: string): void {
+  response.cookies.set(DEV_SESSION_COOKIE, signDevPayload(userId), sessionCookieOptions);
+}
+
+export function clearAppSessionCookie(response: NextResponse): void {
+  response.cookies.delete(DEV_SESSION_COOKIE);
+}
+
 export async function setDevSessionCookie(userId: string): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.set(DEV_SESSION_COOKIE, signDevPayload(userId), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: DEV_SESSION_MAX_AGE,
-  });
+  cookieStore.set(DEV_SESSION_COOKIE, signDevPayload(userId), sessionCookieOptions);
 }
 
 export async function clearDevSessionCookie(): Promise<void> {
@@ -93,13 +104,16 @@ async function getUserIdFromDevCookie(): Promise<string | null> {
   return verifyDevToken(token);
 }
 
-/** Resolve authenticated user from Supabase session or dev cookie. */
+/** Resolve authenticated user from app session cookie or Supabase session. */
 export async function getAuthUser(): Promise<User | null> {
+  const devUserId = await getUserIdFromDevCookie();
+  if (devUserId) {
+    const profile = await loadProfile(devUserId);
+    if (profile) return profile;
+  }
+
   const supabaseUserId = await getUserIdFromSupabaseSession();
   if (supabaseUserId) return loadProfile(supabaseUserId);
-
-  const devUserId = await getUserIdFromDevCookie();
-  if (devUserId) return loadProfile(devUserId);
 
   return null;
 }

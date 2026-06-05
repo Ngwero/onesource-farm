@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { normalizeUserProfile } from '@/lib/auth/profile';
 import {
@@ -11,6 +11,7 @@ import {
 import type { RoleSlug, User } from '@/types';
 import { Upload, CheckCircle } from 'lucide-react';
 import { SignatureImage } from '@/components/memo/SignatureImage';
+import { apiFetch } from '@/lib/api/client';
 
 export default function SignaturePage() {
   const { user, setUserFromProfile, refreshProfile } = useAuth();
@@ -18,6 +19,10 @@ export default function SignaturePage() {
   const [success, setSuccess] = useState(false);
   const roleSlug = user?.role?.slug as RoleSlug | undefined;
   const canAuthorMemos = canCreateMemo(roleSlug) || roleSlug === 'admin';
+
+  useEffect(() => {
+    if (user?.id) void refreshProfile();
+  }, [user?.id, refreshProfile]);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -27,10 +32,9 @@ export default function SignaturePage() {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const res = await fetch('/api/signatures', {
+      const res = await apiFetch('/api/signatures', {
         method: 'POST',
         body: formData,
-        credentials: 'include',
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Upload failed');

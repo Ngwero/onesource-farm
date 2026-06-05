@@ -1,14 +1,15 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { clearDevSessionCookie } from '@/lib/auth/session';
+import { NextRequest, NextResponse } from 'next/server';
+import { clearAppSessionCookie } from '@/lib/auth/session';
+import { createRouteHandlerClient } from '@/lib/supabase/routeHandler';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const response = NextResponse.json({ success: true });
   try {
-    const supabase = await createClient();
+    const supabase = createRouteHandlerClient(request, response);
     await supabase.auth.signOut();
-    await clearDevSessionCookie();
-    return NextResponse.json({ success: true });
   } catch {
-    return NextResponse.json({ success: true });
+    /* ignore */
   }
+  clearAppSessionCookie(response);
+  return response;
 }
