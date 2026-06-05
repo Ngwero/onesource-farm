@@ -46,35 +46,43 @@ const MY_DRAFTS_NAV: NavItem = {
   icon: <FileEdit size={18} />,
 };
 
+const UPLOAD_SIGNATURE_NAV: NavItem = {
+  label: 'Upload signature',
+  href: '/settings/signature',
+  icon: <PenLine size={18} />,
+};
+
+function applySignatureGate(items: NavItem[], user: User | null): NavItem[] {
+  if (!user || canStartMemo(user) || !userRequiresSignatureOnFile(user)) {
+    return items;
+  }
+  return items.map((item) =>
+    item.href === '/memos/create' ? UPLOAD_SIGNATURE_NAV : item
+  );
+}
+
 function navWithCreateMemo(items: NavItem[], roleSlug: RoleSlug, user: User | null): NavItem[] {
   const mayAuthor = canCreateMemo(roleSlug) || (user && userRequiresSignatureOnFile(user));
-  if (!mayAuthor) return items;
+  if (!mayAuthor) return applySignatureGate(items, user);
 
   let nav = [...items];
-  const needsSignature = user && userRequiresSignatureOnFile(user) && !hasUploadedSignature(user);
-  const createNav = canStartMemo(user)
-    ? CREATE_MEMO_NAV
-    : needsSignature
-      ? {
-          label: 'Upload signature',
-          href: '/settings/signature',
-          icon: <PenLine size={18} />,
-        }
-      : null;
+  const createNav = canStartMemo(user) ? CREATE_MEMO_NAV : UPLOAD_SIGNATURE_NAV;
 
-  if (
-    createNav &&
-    !nav.some((i) => i.href === '/memos/create' || i.href === '/settings/signature')
-  ) {
+  if (!nav.some((i) => i.href === '/memos/create' || i.href === '/settings/signature')) {
     const dashIdx = nav.findIndex((i) => i.href.startsWith('/dashboard'));
     const insertAt = dashIdx >= 0 ? dashIdx + 1 : 0;
     nav = [...nav.slice(0, insertAt), createNav, ...nav.slice(insertAt)];
+  } else {
+    nav = applySignatureGate(nav, user);
   }
+
   if (
     canCreateMemo(roleSlug) &&
     !nav.some((i) => i.href.includes('status=draft'))
   ) {
-    const createIdx = nav.findIndex((i) => i.href === '/memos/create');
+    const createIdx = nav.findIndex(
+      (i) => i.href === '/memos/create' || i.href === '/settings/signature'
+    );
     const insertAt = createIdx >= 0 ? createIdx + 1 : 1;
     nav = [...nav.slice(0, insertAt), MY_DRAFTS_NAV, ...nav.slice(insertAt)];
   }
@@ -197,7 +205,10 @@ export function Sidebar() {
   const searchParams = useSearchParams();
   const { user, logout } = useAuth();
   const roleSlug = (user?.role?.slug || (user as { roles?: { slug: string } })?.roles?.slug || 'staff') as RoleSlug;
-  let navItems = navWithCreateMemo(NAV_BY_ROLE[roleSlug] || NAV_BY_ROLE.staff, roleSlug, user);
+  let navItems = applySignatureGate(
+    navWithCreateMemo(NAV_BY_ROLE[roleSlug] || NAV_BY_ROLE.staff, roleSlug, user),
+    user
+  );
 
   if (roleSlug === 'department_head' && user && isBusinessHead(user)) {
     const mktPending: NavItem = {

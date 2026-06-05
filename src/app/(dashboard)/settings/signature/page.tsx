@@ -32,14 +32,14 @@ export default function SignaturePage() {
         body: formData,
         credentials: 'include',
       });
-      if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
       const profile = normalizeUserProfile(data.user) || (data.user as User);
       if (profile) setUserFromProfile(profile);
       await refreshProfile();
       setSuccess(true);
-    } catch {
-      alert('Failed to upload signature');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to upload signature');
     } finally {
       setUploading(false);
     }

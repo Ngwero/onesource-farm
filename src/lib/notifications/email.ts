@@ -64,7 +64,8 @@ async function getInlineAttachments() {
 }
 
 export async function sendTransactionalEmail(
-  payload: EmailPayload
+  payload: EmailPayload,
+  options?: { appUrl?: string }
 ): Promise<{ sent: boolean; reason?: string }> {
   if (!payload.to) return { sent: false, reason: 'no_recipient' };
 
@@ -82,13 +83,14 @@ export async function sendTransactionalEmail(
   }
 
   try {
+    const baseUrl = options?.appUrl?.replace(/\/$/, '') || appBaseUrl();
     const from = parseSmtpFrom();
     const fromDomain = from.address.split('@')[1] || 'rukapay.co.ug';
     const messageId = buildMessageId(fromDomain);
     const inlineAttachments = await getInlineAttachments();
     const html = buildBrandedEmailHtml(
       payload,
-      appBaseUrl(),
+      baseUrl,
       inlineAttachments.length
         ? { logoCid: INLINE_LOGO_CID, heroCid: INLINE_HERO_CID }
         : undefined
@@ -120,6 +122,41 @@ export async function sendTransactionalEmail(
     console.error('Email send failed:', err);
     return { sent: false, reason: err instanceof Error ? err.message : 'send_failed' };
   }
+}
+
+export async function sendPasswordResetEmail(params: {
+  email: string;
+  fullName: string;
+  resetUrl: string;
+  appUrl?: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const portalUrl = params.appUrl?.replace(/\/$/, '') || appBaseUrl();
+
+  return sendTransactionalEmail(
+    {
+      to: params.email,
+      toName: params.fullName,
+      subject: 'Reset your RukaPay e-Memo password',
+      title: 'Password reset',
+      body: `<p style="margin:0;">
+        We received a request to reset the password for your <strong>RukaPay e-Memo</strong> account.
+        Use the button below to choose a new password. This link is valid for a limited time.
+      </p>`,
+      highlightText: 'Reset your password',
+      highlightSubtext: 'For your security, this link expires after one use.',
+      bullets: [
+        'If you did not request a password reset, you can safely ignore this email.',
+        'Never share your password or this reset link with anyone.',
+        'This is an automated message from RukaPay e-Memo.',
+        'For help, contact support@rukapay.co.ug or your system administrator.',
+      ],
+      ctaLabel: 'Reset password',
+      ctaUrl: params.resetUrl,
+      footerNote:
+        'This is an automated message from RukaPay e-Memo. Please do not reply to this email.',
+    },
+    { appUrl: portalUrl }
+  );
 }
 
 export async function sendWelcomeSignInEmail(params: {

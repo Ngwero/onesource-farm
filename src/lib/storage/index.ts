@@ -1,6 +1,15 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { randomUUID } from 'crypto';
+import {
+  supabaseDeleteFile,
+  supabaseReadFile,
+  supabaseStoreFile,
+} from './supabaseStorage';
+
+export function usesSupabaseStorage(): boolean {
+  return Boolean(process.env.SUPABASE_STORAGE_BUCKET?.trim());
+}
 
 /** Scoped under project root so Next.js build tracing stays limited to uploads/. */
 function resolveUploadPath(...segments: string[]): string {
@@ -86,24 +95,43 @@ export async function storeFile(
   const ext = path.extname(originalName) || '';
   const fileName = `${randomUUID()}${ext}`;
   const filePath = path.join(targetDir, fileName);
-  await fs.writeFile(filePath, buffer);
+  const relativePath = path.relative(uploadRoot, filePath);
+
+  if (usesSupabaseStorage()) {
+    await supabaseStoreFile(relativePath.replace(/\\/g, '/'), buffer, mimeType);
+  } else {
+    await fs.writeFile(filePath, buffer);
+  }
 
   return {
     fileName: originalName,
     filePath,
-    relativePath: path.relative(uploadRoot, filePath),
+    relativePath,
     fileSize: buffer.length,
     mimeType,
   };
 }
 
 export async function readFile(relativePath: string): Promise<Buffer> {
-  const fullPath = path.join(getUploadRoot(), relativePath);
+  const normalized = relativePath.replace(/\\/g, '/');
+  if (usesSupabaseStorage()) {
+    return supabaseReadFile(normalized);
+  }
+  const fullPath = path.join(getUploadRoot(), normalized);
   return fs.readFile(fullPath);
 }
 
 export async function deleteFile(relativePath: string): Promise<void> {
-  const fullPath = path.join(getUploadRoot(), relativePath);
+  const normalized = relativePath.replace(/\\/g, '/');
+  if (usesSupabaseStorage()) {
+    try {
+      await supabaseDeleteFile(normalized);
+    } catch {
+      // File may not exist
+    }
+    return;
+  }
+  const fullPath = path.join(getUploadRoot(), normalized);
   try {
     await fs.unlink(fullPath);
   } catch {

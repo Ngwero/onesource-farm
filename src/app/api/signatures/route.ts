@@ -38,6 +38,11 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
     return NextResponse.json({ user: data });
   } catch (err) {
-    return authErrorResponse(err);
+    const message = err instanceof Error ? err.message : 'Upload failed';
+    console.error('Signature upload failed:', err);
+    if (message === 'Unauthorized' || message === 'Forbidden') {
+      return authErrorResponse(err);
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
