@@ -1,5 +1,18 @@
 import type { NextRequest } from 'next/server';
 
+const PRODUCTION_APP_URL = 'https://ememo.rukapay.co.ug';
+
+/** Portal link for go-live announcement emails (always production when app runs on Vercel). */
+export function resolveLaunchEmailAppUrl(request?: NextRequest): string {
+  const override = process.env.LAUNCH_EMAIL_APP_URL?.trim().replace(/\/$/, '');
+  if (override) return override;
+
+  const resolved = resolveAppUrl(request);
+  if (!resolved.includes('localhost')) return resolved;
+
+  return PRODUCTION_APP_URL;
+}
+
 /** Canonical app URL for auth redirects (emails, Supabase allow-list). */
 export function resolveAppUrl(request?: NextRequest): string {
   const configured = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, '');

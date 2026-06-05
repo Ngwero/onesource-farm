@@ -159,6 +159,54 @@ export async function sendPasswordResetEmail(params: {
   );
 }
 
+export const SYSTEM_LAUNCH_EFFECTIVE_DATE = 'Monday, 8 June 2026';
+export const SYSTEM_LAUNCH_TEMP_PASSWORD = 'Welcome@RukaPay2026';
+
+export async function sendSystemLaunchEmail(params: {
+  email: string;
+  fullName: string;
+  temporaryPassword?: string;
+  effectiveDate?: string;
+  appUrl?: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const portalUrl = params.appUrl?.replace(/\/$/, '') || appBaseUrl();
+  const effectiveDate = params.effectiveDate || SYSTEM_LAUNCH_EFFECTIVE_DATE;
+  const tempPassword = params.temporaryPassword || SYSTEM_LAUNCH_TEMP_PASSWORD;
+
+  return sendTransactionalEmail(
+    {
+      to: params.email,
+      toName: params.fullName,
+      subject: 'RukaPay e-Memo is live — action required before 8 June 2026',
+      title: 'e-Memo is live',
+      body: `<p style="margin:0;">
+        The <strong>RukaPay e-Memo System</strong> is now live at
+        <a href="${portalUrl}" style="color:#001d6e;font-weight:600;">${portalUrl}</a>.
+      </p>
+      <p style="margin:14px 0 0;">
+        From <strong>${effectiveDate}</strong>, all internal memos and leave requests must be
+        created and approved through e-Memo. Paper memos will no longer be processed after this date.
+      </p>`,
+      highlightText: 'Go-live: Monday, 8 June 2026',
+      highlightSubtext: `Temporary password: ${tempPassword}`,
+      bullets: [
+        `Sign in with your RukaPay email and the temporary password <strong>${tempPassword}</strong>.`,
+        'You will be prompted to create your own personal password on first login.',
+        'Upload your signature under <strong>Settings → My Signature</strong> before creating or approving memos.',
+        'Use <strong>Create Memo</strong> for payment, procurement, IT, HR, leave, and general internal requests.',
+        'Approvers will receive notifications when memos need your action.',
+        'Need help? Contact support@rukapay.co.ug or your system administrator.',
+        'This is an official notice from RukaPay e-Memo — please do not reply to this email.',
+      ],
+      ctaLabel: 'Open e-Memo portal',
+      ctaUrl: portalUrl,
+      footerNote:
+        'Please sign in before Monday, 8 June 2026 so your account and signature are ready.',
+    },
+    { appUrl: portalUrl }
+  );
+}
+
 export async function sendWelcomeSignInEmail(params: {
   email: string;
   fullName: string;

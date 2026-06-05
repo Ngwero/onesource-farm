@@ -1,10 +1,20 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { KeyRound, Plus, RefreshCw } from 'lucide-react';
+import { KeyRound, Mail, Plus, RefreshCw, Send } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const TEST_PASSWORD_HINT = 'Test@RukaPay2026';
 const ONBOARDING_PASSWORD_HINT = 'Welcome@RukaPay2026';
+
+type LaunchPreview = {
+  portalUrl: string;
+  effectiveDate: string;
+  temporaryPassword: string;
+  subject: string;
+  recipientCount: number;
+  smtpConfigured: boolean;
+};
 
 type UserRow = {
   id: string;
@@ -20,12 +30,17 @@ type UserRow = {
 };
 
 export default function AdminUsersPage() {
+  const { user: adminUser } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
   const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [resetting, setResetting] = useState(false);
+  const [launchPreview, setLaunchPreview] = useState<LaunchPreview | null>(null);
+  const [launchLoading, setLaunchLoading] = useState(false);
+  const [launchSending, setLaunchSending] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
   const [form, setForm] = useState({
     email: '',
     full_name: '',
@@ -45,9 +60,68 @@ export default function AdminUsersPage() {
     });
   }, []);
 
+  const loadLaunchPreview = useCallback(async () => {
+    setLaunchLoading(true);
+    try {
+      const res = await fetch('/api/admin/launch-announcement', { credentials: 'include' });
+      const data = await res.json();
+      if (res.ok) setLaunchPreview(data.preview);
+    } catch {
+      /* ignore */
+    } finally {
+      setLaunchLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     load();
-  }, [load]);
+    void loadLaunchPreview();
+  }, [load, loadLaunchPreview]);
+
+  useEffect(() => {
+    if (adminUser?.email && !testEmail) setTestEmail(adminUser.email);
+  }, [adminUser?.email, testEmail]);
+
+  async function sendLaunchEmail(allStaff: boolean) {
+    const target = allStaff ? 'all active staff' : testEmail;
+    const count = allStaff ? launchPreview?.recipientCount ?? users.length : 1;
+
+    if (
+      !confirm(
+        allStaff
+          ? `Send the e-Memo go-live announcement to ALL ${count} active staff?\n\nThis cannot be undone.`
+          : `Send a test go-live email to ${testEmail}?`
+      )
+    ) {
+      return;
+    }
+
+    setLaunchSending(true);
+    try {
+      const res = await fetch('/api/admin/launch-announcement', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(allStaff ? {} : { testEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Send failed');
+
+      if (data.failed > 0) {
+        alert(
+          `${data.message}\n\nFailed: ${data.failed}\n` +
+            (data.failures?.map((f: { email: string; reason?: string }) => `${f.email}: ${f.reason}`).join('\n') ||
+              '')
+        );
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Send failed');
+    } finally {
+      setLaunchSending(false);
+    }
+  }
 
   async function resetLogins(mode: 'test' | 'onboarding', userId?: string) {
     const label =
@@ -177,6 +251,72 @@ export default function AdminUsersPage() {
         <p className="text-xs text-slate-500 mt-3">
           CLI equivalent: <code className="bg-white px-1 rounded">npm run reset:logins</code> (testing + org workflows)
         </p>
+      </div>
+
+      <div className="card p-5 mb-6 border-emerald-100 bg-emerald-50/30">
+        <h2 className="font-semibold text-slate-800 flex items-center gap-2 mb-2">
+          <Mail size={18} className="text-emerald-700" />
+          e-Memo go-live announcement
+        </h2>
+        <p className="text-sm text-slate-600 mb-3">
+          Branded email telling staff e-Memo is live from <strong>Monday, 8 June 2026</strong> for all
+          memos and leave requests. Includes temporary password{' '}
+          <code className="text-xs bg-white px-1 rounded">{ONBOARDING_PASSWORD_HINT}</code> and link to{' '}
+          <strong>{launchPreview?.portalUrl || 'ememo.rukapay.co.ug'}</strong>.
+        </p>
+
+        {launchLoading ? (
+          <p className="text-sm text-slate-500">Loading preview…</p>
+        ) : launchPreview ? (
+          <ul className="text-xs text-slate-600 space-y-1 mb-4">
+            <li>
+              <strong>Subject:</strong> {launchPreview.subject}
+            </li>
+            <li>
+              <strong>Recipients:</strong> {launchPreview.recipientCount} active staff
+            </li>
+            <li>
+              <strong>SMTP:</strong>{' '}
+              {launchPreview.smtpConfigured ? (
+                <span className="text-emerald-700">Configured</span>
+              ) : (
+                <span className="text-red-600">Not configured — emails will fail</span>
+              )}
+            </li>
+          </ul>
+        ) : null}
+
+        <div className="flex flex-col sm:flex-row sm:items-end gap-3 mb-4">
+          <div className="flex-1 max-w-sm">
+            <label className="block text-xs font-medium text-slate-600 mb-1">Test email address</label>
+            <input
+              type="email"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              className="input-field text-sm"
+              placeholder="you@rukapay.co.ug"
+            />
+          </div>
+          <button
+            type="button"
+            disabled={launchSending || !testEmail || !launchPreview?.smtpConfigured}
+            onClick={() => void sendLaunchEmail(false)}
+            className="btn-secondary text-sm inline-flex items-center gap-2"
+          >
+            <Send size={14} />
+            Send test email
+          </button>
+        </div>
+
+        <button
+          type="button"
+          disabled={launchSending || !launchPreview?.smtpConfigured || (launchPreview?.recipientCount ?? 0) === 0}
+          onClick={() => void sendLaunchEmail(true)}
+          className="btn-primary text-sm inline-flex items-center gap-2"
+        >
+          <Mail size={14} className={launchSending ? 'animate-pulse' : ''} />
+          {launchSending ? 'Sending…' : `Send to all staff (${launchPreview?.recipientCount ?? 0})`}
+        </button>
       </div>
 
       {showForm && (

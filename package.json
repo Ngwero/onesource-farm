@@ -25,6 +25,7 @@
     "assign:marketing": "tsx scripts/assign-marketing-route.ts",
     "assign:org": "tsx scripts/assign-org-routes.ts",
     "check:email": "tsx scripts/check-welcome-email.ts",
+    "send:launch": "tsx scripts/send-launch-announcement.ts",
     "routes:workflows": "tsx scripts/print-workflow-routes.ts",
     "test:policy": "tsx scripts/test-policy-changes.ts",
     "test:workflows": "tsx scripts/test-all-workflows.ts",
