@@ -37,7 +37,7 @@ export async function getLaunchAnnouncementPreview(
     portalUrl,
     effectiveDate: SYSTEM_LAUNCH_EFFECTIVE_DATE,
     temporaryPassword: SYSTEM_LAUNCH_TEMP_PASSWORD,
-    subject: 'RukaPay e-Memo is live — action required before 8 June 2026',
+    subject: 'RukaPay e-Memo is live — please sign in before Monday 8 June',
     recipientCount: users?.length ?? 0,
     recipients: (users ?? []).map((u) => ({
       email: u.email,
@@ -82,7 +82,7 @@ export async function sendLaunchAnnouncementBatch(options: {
       failures.push({ email: user.email, reason: result.reason });
     }
 
-    await new Promise((r) => setTimeout(r, 200));
+    await new Promise((r) => setTimeout(r, 1000));
   }
 
   return { sent, failed, total: preview.recipientCount, failures };

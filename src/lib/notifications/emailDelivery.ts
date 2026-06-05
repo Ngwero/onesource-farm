@@ -42,24 +42,27 @@ export function buildMessageId(fromDomain: string): string {
   return `<ememo.${stamp}.${rand}@${fromDomain}>`;
 }
 
-/** Headers that signal transactional mail (not marketing/bulk) to Outlook and other clients. */
+/**
+ * Headers tuned for Outlook Focused / primary inbox (not Other or Junk).
+ * Avoid Auto-Submitted and bulk signals — those often land in Other for M365.
+ */
 export function buildInboxHeaders(options: {
   to: string;
   subject: string;
   messageId: string;
   fromDomain: string;
 }): Record<string, string> {
+  const refId = options.messageId.replace(/[<>]/g, '');
   return {
     'Message-ID': options.messageId,
     'Reply-To': replyToAddress(),
-    'X-Mailer': 'RukaPay e-Memo',
+    'Content-Language': 'en',
     Importance: 'normal',
     'X-Priority': '3',
     'X-MSMail-Priority': 'Normal',
-    'Auto-Submitted': 'auto-generated',
+    Precedence: 'normal',
     'X-Auto-Response-Suppress': 'OOF, DR, RN, NRN, AutoReply',
-    'X-Entity-Ref-ID': options.messageId.replace(/[<>]/g, ''),
-    'X-Email-Type': 'transactional',
+    'X-Entity-Ref-ID': refId,
   };
 }
 

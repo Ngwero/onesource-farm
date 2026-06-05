@@ -83,7 +83,18 @@ export function ProductTour() {
     () => (user ? buildTourSteps(user, roleSlug) : []),
     [user, roleSlug]
   );
-  const steps = useMemo(() => resolveVisibleSteps(allSteps), [allSteps, open]);
+  const [steps, setSteps] = useState<TourStep[]>([]);
+
+  useEffect(() => {
+    if (!open) {
+      setSteps([]);
+      return;
+    }
+    const sync = () => setSteps(resolveVisibleSteps(allSteps));
+    sync();
+    const timer = window.setTimeout(sync, 200);
+    return () => window.clearTimeout(timer);
+  }, [allSteps, open]);
   const safeIndex = Math.min(index, Math.max(0, steps.length - 1));
   const step = steps[safeIndex];
   const isLast = safeIndex >= steps.length - 1;
@@ -124,6 +135,10 @@ export function ProductTour() {
   }, [user?.id]);
 
   useLayoutEffect(() => {
+    document.querySelectorAll('[data-tour-highlight]').forEach((node) => {
+      node.removeAttribute('data-tour-highlight');
+    });
+
     if (!open || !step?.target) {
       setSpotlight(null);
       return;
@@ -132,7 +147,13 @@ export function ProductTour() {
     const update = () => {
       const el = document.querySelector(`[data-tour-id="${step.target}"]`);
       el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      window.setTimeout(() => setSpotlight(measureTarget(step.target!)), 120);
+      window.setTimeout(() => {
+        setSpotlight(measureTarget(step.target!));
+        document.querySelectorAll('[data-tour-highlight]').forEach((node) => {
+          node.removeAttribute('data-tour-highlight');
+        });
+        el?.setAttribute('data-tour-highlight', 'true');
+      }, 150);
     };
 
     update();
@@ -141,6 +162,9 @@ export function ProductTour() {
     return () => {
       window.removeEventListener('resize', update);
       window.removeEventListener('scroll', update, true);
+      document.querySelectorAll('[data-tour-highlight]').forEach((node) => {
+        node.removeAttribute('data-tour-highlight');
+      });
     };
   }, [open, step]);
 
@@ -148,8 +172,6 @@ export function ProductTour() {
 
   return (
     <div className="product-tour" role="dialog" aria-modal="true" aria-labelledby="tour-title">
-      <div className="product-tour__backdrop" onClick={() => close(true)} aria-hidden />
-
       {spotlight ? (
         <div
           className="product-tour__spotlight"
@@ -159,8 +181,12 @@ export function ProductTour() {
             width: spotlight.width,
             height: spotlight.height,
           }}
+          onClick={() => close(true)}
+          aria-hidden
         />
-      ) : null}
+      ) : (
+        <div className="product-tour__backdrop" onClick={() => close(true)} aria-hidden />
+      )}
 
       <div
         className={`product-tour__card${spotlight ? '' : ' product-tour__card--centered'}`}

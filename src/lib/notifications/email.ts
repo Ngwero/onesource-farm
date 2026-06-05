@@ -96,16 +96,21 @@ export async function sendTransactionalEmail(
         : undefined
     );
 
+    const replyTo = process.env.SMTP_REPLY_TO?.trim() || 'support@rukapay.co.ug';
+    const envelopeFrom = envelopeFromAddress();
+
     await transporter.sendMail({
       from: from.formatted,
       to: payload.to,
-      replyTo: process.env.SMTP_REPLY_TO?.trim() || 'support@rukapay.co.ug',
+      replyTo,
+      sender: envelopeFrom,
       envelope: {
-        from: envelopeFromAddress(),
+        from: envelopeFrom,
         to: payload.to,
       },
       subject: payload.subject,
       messageId,
+      priority: 'normal',
       headers: buildInboxHeaders({
         to: payload.to,
         subject: payload.subject,
@@ -177,7 +182,7 @@ export async function sendSystemLaunchEmail(params: {
     {
       to: params.email,
       toName: params.fullName,
-      subject: 'RukaPay e-Memo is live — action required before 8 June 2026',
+      subject: 'RukaPay e-Memo is live — please sign in before Monday 8 June',
       title: 'e-Memo is live',
       body: `<p style="margin:0;">
         The <strong>RukaPay e-Memo System</strong> is now live at
