@@ -43,6 +43,7 @@ export function NotificationsPanel() {
     <div className="relative">
       <button
         onClick={toggleOpen}
+        data-tour-id="tour-notifications"
         className="relative p-2.5 rounded-xl bg-white border border-slate-200/80 text-brand-700 shadow-sm hover:border-brand-200 hover:shadow transition-all"
         aria-label="Notifications"
       >

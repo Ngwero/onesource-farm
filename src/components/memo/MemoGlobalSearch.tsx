@@ -16,7 +16,7 @@ export function MemoGlobalSearch() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="memo-search memo-search--compact">
+    <form onSubmit={onSubmit} className="memo-search memo-search--compact" data-tour-id="tour-search">
       <Search className="memo-search__icon" size={17} aria-hidden />
       <input
         type="search"

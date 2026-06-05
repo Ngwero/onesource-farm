@@ -27,6 +27,7 @@ import { isBusinessHead } from '@/lib/memo/marketingRouting';
 import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
 import type { User } from '@/types';
 import type { RoleSlug } from '@/types';
+import { navTourId } from '@/lib/tour/navTourId';
 
 interface NavItem {
   label: string;
@@ -269,13 +270,14 @@ export function Sidebar() {
         <p className="text-[11px] text-white/55 mt-0.5">{roleLabel}</p>
       </div>
 
-      <nav className="app-sidebar__nav">
+      <nav className="app-sidebar__nav" data-tour-id="tour-sidebar">
         {navItems.map((item) => {
           const active = isNavActive(pathname, fullPath, item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
+              data-tour-id={navTourId(item.href, item.label)}
               className={`app-sidebar__link${active ? ' app-sidebar__link--active' : ''}`}
             >
               <span className={active ? 'text-white' : 'text-white/55'}>{item.icon}</span>
@@ -288,6 +290,7 @@ export function Sidebar() {
       <div className="app-sidebar__footer">
         <button
           type="button"
+          data-tour-id="tour-sign-out"
           onClick={() => void logout()}
           className="app-sidebar__link w-full"
         >

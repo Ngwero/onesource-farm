@@ -6,6 +6,7 @@ import { Sidebar } from './Sidebar';
 import { useAuth } from '@/context/AuthContext';
 import { NotificationsPanel } from '../notifications/NotificationsPanel';
 import { MemoGlobalSearch } from '../memo/MemoGlobalSearch';
+import { ProductTour, TourHelpButton } from '../tour/ProductTour';
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -46,6 +47,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
               Signed in as <strong>{user.full_name}</strong>
               {user.department?.name ? ` · ${user.department.name}` : ''}
             </p>
+            <TourHelpButton />
             <MemoGlobalSearch />
             <NotificationsPanel />
           </div>
@@ -54,6 +56,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="app-main">{children}</div>
         </main>
       </div>
+      <ProductTour />
     </div>
   );
 }
