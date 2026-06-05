@@ -7,8 +7,25 @@ import {
   supabaseStoreFile,
 } from './supabaseStorage';
 
+const DEFAULT_STORAGE_BUCKET = 'ememo-files';
+
 export function usesSupabaseStorage(): boolean {
-  return Boolean(process.env.SUPABASE_STORAGE_BUCKET?.trim());
+  return Boolean(resolveStorageBucket());
+}
+
+function resolveStorageBucket(): string | undefined {
+  const configured = process.env.SUPABASE_STORAGE_BUCKET?.trim();
+  if (configured) return configured;
+  if (process.env.VERCEL) return DEFAULT_STORAGE_BUCKET;
+  return undefined;
+}
+
+function assertStorageAvailable(): void {
+  if (process.env.VERCEL && !resolveStorageBucket()) {
+    throw new Error(
+      'File storage is not configured on Vercel. Set SUPABASE_STORAGE_BUCKET=ememo-files and run migration 015_ememo_storage_bucket.sql in Supabase.'
+    );
+  }
 }
 
 /** Scoped under project root so Next.js build tracing stays limited to uploads/. */
@@ -87,21 +104,31 @@ export async function storeFile(
     throw new Error(`File exceeds maximum size of ${maxSize / 1024 / 1024}MB`);
   }
 
+  assertStorageAvailable();
+
+  const ext = path.extname(originalName) || '';
+  const fileName = `${randomUUID()}${ext}`;
+
+  if (usesSupabaseStorage()) {
+    const relativePath = [category, subfolder, fileName].filter(Boolean).join('/');
+    await supabaseStoreFile(relativePath, buffer, mimeType);
+    return {
+      fileName: originalName,
+      filePath: relativePath,
+      relativePath,
+      fileSize: buffer.length,
+      mimeType,
+    };
+  }
+
   const uploadRoot = getUploadRoot();
   const baseDir = getCategoryDir(category);
   const targetDir = subfolder ? path.join(baseDir, subfolder) : baseDir;
   await ensureDir(targetDir);
 
-  const ext = path.extname(originalName) || '';
-  const fileName = `${randomUUID()}${ext}`;
   const filePath = path.join(targetDir, fileName);
   const relativePath = path.relative(uploadRoot, filePath);
-
-  if (usesSupabaseStorage()) {
-    await supabaseStoreFile(relativePath.replace(/\\/g, '/'), buffer, mimeType);
-  } else {
-    await fs.writeFile(filePath, buffer);
-  }
+  await fs.writeFile(filePath, buffer);
 
   return {
     fileName: originalName,
@@ -113,6 +140,7 @@ export async function storeFile(
 }
 
 export async function readFile(relativePath: string): Promise<Buffer> {
+  assertStorageAvailable();
   const normalized = relativePath.replace(/\\/g, '/');
   if (usesSupabaseStorage()) {
     return supabaseReadFile(normalized);

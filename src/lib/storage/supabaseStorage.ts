@@ -1,11 +1,12 @@
 import { createServiceClient } from '@/lib/supabase/server';
 
 function bucketName(): string {
-  const name = process.env.SUPABASE_STORAGE_BUCKET?.trim();
-  if (!name) {
-    throw new Error('SUPABASE_STORAGE_BUCKET is not configured');
-  }
-  return name;
+  const configured = process.env.SUPABASE_STORAGE_BUCKET?.trim();
+  if (configured) return configured;
+  if (process.env.VERCEL) return 'ememo-files';
+  throw new Error(
+    'SUPABASE_STORAGE_BUCKET is not configured. Set it to ememo-files and run migration 015 in Supabase.'
+  );
 }
 
 export async function supabaseStoreFile(
