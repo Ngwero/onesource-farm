@@ -1,5 +1,10 @@
 import { createServiceClient } from '@/lib/supabase/server';
-import { getStatusForStep, getNextStepAfterStatus, isExcoWorkflow } from '@/lib/workflow/engine';
+import {
+  getStatusForStep,
+  getNextStepAfterStatus,
+  isExcoWorkflow,
+  PENDING_STATUS_TO_ROLE,
+} from '@/lib/workflow/engine';
 import { resolveWorkflow } from '@/lib/workflow/resolve';
 import { startSlaTracking, resolveSlaTracking } from '@/lib/sla/service';
 import { logAudit } from '@/lib/audit/logger';
@@ -10,7 +15,6 @@ import {
   type ApprovalSideEffectsPayload,
 } from '@/lib/memo/approvalSideEffects';
 import { findApproversForStep } from '@/lib/memo/approvers';
-import { isDesignatedItFirstChecker } from '@/lib/workflow/itCheckers';
 import { generateReferenceNumber } from './reference';
 import { joinSlug } from '@/lib/auth/memoAccess';
 import type { CreateMemoInput, ApprovalInput, MemoTypeSlug } from '@/types';
@@ -420,11 +424,58 @@ export async function processApproval(
 async function processExcoApproval(
   supabase: ReturnType<typeof createServiceClient>,
   memo: Record<string, unknown>,
-  approver: { id: string; full_name: string; title?: string | null; signature_path?: string | null },
+  approver: {
+    id: string;
+    full_name: string;
+    title?: string | null;
+    signature_path?: string | null;
+    roles?: { slug: string } | { slug: string }[];
+  },
   input: ApprovalInput
 ): Promise<ProcessApprovalResult> {
   const approverId = approver.id;
   const memoId = memo.id as string;
+  const approverRole = joinSlug(
+    approver.roles as { slug: string } | { slug: string }[] | null | undefined
+  );
+
+  if (approverRole === 'admin') {
+    const { data: approvedStatus } = await supabase
+      .from('memo_statuses')
+      .select('id')
+      .eq('slug', 'approved')
+      .single();
+
+    await supabase
+      .from('memos')
+      .update({
+        status_id: approvedStatus!.id,
+        approved_at: new Date().toISOString(),
+      })
+      .eq('id', memoId);
+
+    await resolveSlaTracking(memoId);
+    const approvedCtx = notifyCtxFromMemo(
+      memo as { reference_number: string; subject?: string | null; memo_from?: string | null },
+      approver
+    );
+    return {
+      status: 'approved',
+      sideEffects: {
+        memoId,
+        approverId,
+        audit: { action: 'memo_approved', newValues: { admin_override: true } },
+        notifications: await buildFullyApprovedNotifications(
+          memoId,
+          memo.creator_id as string,
+          approvedCtx,
+          {
+            creatorMessage: `Your memo ${approvedCtx.referenceNumber} has been fully approved.`,
+          }
+        ),
+      },
+    };
+  }
 
   const { data: excoMember } = await supabase
     .from('exco_members')
@@ -581,16 +632,11 @@ function resolveApprovalBlockType(
   }
 ): 'prepared' | 'checked' | 'reviewed' | 'approved' {
   const roleSlug = joinSlug(approver.roles as { slug: string } | { slug: string }[] | null) || '';
-  const memoTypeSlug = joinSlug(memo.memo_types as { slug: string } | { slug: string }[] | null);
   const statusSlug = joinSlug(memo.memo_statuses as { slug: string } | { slug: string }[] | null);
 
-  if (
-    roleSlug === 'admin' &&
-    isDesignatedItFirstChecker(approver) &&
-    memoTypeSlug === 'it_request' &&
-    statusSlug === 'pending_it_checker_first'
-  ) {
-    return 'checked';
+  if (roleSlug === 'admin' && statusSlug) {
+    const stepRole = PENDING_STATUS_TO_ROLE[statusSlug];
+    if (stepRole) return mapRoleToBlockType(stepRole);
   }
 
   return mapRoleToBlockType(roleSlug);

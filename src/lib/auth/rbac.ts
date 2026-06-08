@@ -237,9 +237,19 @@ export function canEditMemo(user: User, memo: Memo): boolean {
   );
 }
 
+function memoAwaitingApproval(statusSlug?: string): boolean {
+  return Boolean(statusSlug?.startsWith('pending_'));
+}
+
 export function canApproveMemo(user: User, memo: Memo): boolean {
   const role = user.role?.slug as RoleSlug;
   if (!role) return false;
+
+  const statusSlug = memo.status?.slug;
+
+  if (role === 'admin') {
+    return memoAwaitingApproval(statusSlug) && memo.creator_id !== user.id;
+  }
 
   if (designatedFinanceStepReviewerCanApprove(user, memo)) {
     return true;
@@ -249,17 +259,7 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
     return false;
   }
 
-  const statusSlug = memo.status?.slug;
-
-  if (role === 'admin') {
-    if (
-      isDesignatedItFirstChecker(user) &&
-      memo.memo_type?.slug === 'it_request' &&
-      statusSlug === 'pending_it_checker_first'
-    ) {
-      return true;
-    }
-  } else if (role === 'it_checker_first') {
+  if (role === 'it_checker_first') {
     return (
       memo.memo_type?.slug === 'it_request' &&
       statusSlug === 'pending_it_checker_first' &&
