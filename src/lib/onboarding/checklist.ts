@@ -1,8 +1,4 @@
-import {
-  canCreateMemo,
-  hasUploadedSignature,
-  userRequiresSignatureOnFile,
-} from '@/lib/auth/rbac';
+import { canCreateMemo } from '@/lib/auth/rbac';
 import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
 import { isDesignatedItFirstChecker } from '@/lib/workflow/itCheckers';
 import type { MemoStatusSlug, RoleSlug, User } from '@/types';
@@ -90,43 +86,19 @@ export function buildOnboardingItems(
   queueVisited: boolean
 ): OnboardingItem[] {
   const role = user.role?.slug as RoleSlug | undefined;
-  const needsSignature = userRequiresSignatureOnFile(user);
-  const signatureDone = !needsSignature || hasUploadedSignature(user);
-  const departmentDone = Boolean(user.department_id && user.department?.name);
 
-  const items: OnboardingItem[] = [];
-
-  if (needsSignature) {
-    items.push({
-      id: 'signature',
-      label: 'Upload your signature',
-      done: signatureDone,
-      href: '/settings/signature',
-      hint: 'Required before you create or approve memos.',
-    });
-  }
-
-  items.push({
-    id: 'department',
-    label: departmentDone
-      ? `Department: ${user.department?.name}`
-      : 'Confirm your department',
-    done: departmentDone,
-    href: undefined,
-    hint: departmentDone
-      ? 'Your memos are scoped to this department.'
-      : 'Ask an admin to assign your department if it is missing.',
-  });
-
-  items.push({
-    id: 'queue',
-    label: onboardingQueueLabel(user),
-    done: queueVisited,
-    href: onboardingQueueHref(user),
-    hint: role === 'admin' ? 'Review memos and pending approvals.' : undefined,
-  });
-
-  return items;
+  return [
+    {
+      id: 'queue',
+      label: onboardingQueueLabel(user),
+      done: queueVisited,
+      href: onboardingQueueHref(user),
+      hint:
+        role === 'admin'
+          ? 'Review memos and pending approvals.'
+          : 'Open memos waiting on you or ones you created.',
+    },
+  ];
 }
 
 export function isOnboardingComplete(items: OnboardingItem[]): boolean {

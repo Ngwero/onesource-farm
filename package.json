@@ -16,6 +16,7 @@
     "clear:users": "tsx scripts/clear-all-users.ts",
     "clear:memos": "tsx scripts/clear-all-memos.ts",
     "clear:test-memos": "tsx scripts/clear-test-memos.ts",
+    "seed:initial-memos": "tsx scripts/seed-initial-memos.ts",
     "clear:signatures": "tsx scripts/clear-signatures.ts",
     "reset:user": "tsx scripts/reset-user-onboarding.ts",
     "assign:finance": "tsx scripts/assign-finance-route.ts",

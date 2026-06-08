@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { PlusCircle, PenLine } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { canStartMemo } from '@/lib/auth/rbac';
+import { canCreateMemo } from '@/lib/auth/rbac';
+import { getUserRoleSlug } from '@/lib/auth/profile';
+import type { RoleSlug } from '@/types';
 
 const TABS = [
   { label: 'All', href: '/memos' },
@@ -28,7 +30,8 @@ export function MemosFilterTabs({
   className?: string;
 }) {
   const { user } = useAuth();
-  const canCreate = canStartMemo(user);
+  const roleSlug = getUserRoleSlug(user) as RoleSlug | undefined;
+  const canCreate = Boolean(roleSlug && (canCreateMemo(roleSlug) || roleSlug === 'admin'));
 
   return (
     <div
@@ -55,15 +58,7 @@ export function MemosFilterTabs({
           <PlusCircle size={16} />
           New memo
         </Link>
-      ) : (
-        <Link
-          href="/settings/signature"
-          className="btn-secondary inline-flex items-center gap-2 text-sm shrink-0"
-        >
-          <PenLine size={16} />
-          Upload signature to create
-        </Link>
-      )}
+      ) : null}
     </div>
   );
 }

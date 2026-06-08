@@ -247,10 +247,6 @@ export async function processApproval(
     .eq('id', approverId)
     .single();
 
-  if (!approver?.signature_path) {
-    throw new Error('Signature required before approval. Please upload your signature.');
-  }
-
   const { data: memo } = await supabase
     .from('memos')
     .select('*, memo_types(slug), memo_statuses(slug)')
@@ -382,24 +378,26 @@ export async function processApproval(
     : { action: 'memo_approved' as const };
 
   const stampedAt = nowIso();
-  await supabase.from('signature_records').insert({
-    memo_id: memoId,
-    approver_id: approverId,
-    approver_name: approver.full_name,
-    approver_title: approver.title,
-    signature_path: approver.signature_path,
-    block_type: resolveApprovalBlockType(approver, memo),
-    signed_at: stampedAt,
-    delegated_from_id: delegation?.original_approver_id,
-    delegation_note: delegationNote,
-  });
+  if (approver.signature_path) {
+    await supabase.from('signature_records').insert({
+      memo_id: memoId,
+      approver_id: approverId,
+      approver_name: approver.full_name,
+      approver_title: approver.title,
+      signature_path: approver.signature_path,
+      block_type: resolveApprovalBlockType(approver, memo),
+      signed_at: stampedAt,
+      delegated_from_id: delegation?.original_approver_id,
+      delegation_note: delegationNote,
+    });
+  }
 
   await recordApprovalAction({
     memoId,
     stepOrder: memo.current_step_order ?? 0,
     approverId,
     action: 'approve',
-    signaturePath: approver.signature_path,
+    signaturePath: approver.signature_path ?? null,
     delegatedFromId: delegation?.original_approver_id,
   });
 

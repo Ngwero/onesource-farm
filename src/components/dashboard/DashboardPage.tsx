@@ -5,12 +5,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { FileText, Loader2, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import {
-  canCreateMemo,
-  canStartMemo,
-  hasUploadedSignature,
-  userRequiresSignatureOnFile,
-} from '@/lib/auth/rbac';
+import { canStartMemo } from '@/lib/auth/rbac';
 import type { RoleSlug } from '@/types';
 import { StatsCards, type DashboardStat } from './StatsCards';
 import { DashboardQuickLinks, type QuickLink } from './DashboardQuickLinks';
@@ -67,9 +62,7 @@ export function DashboardPage({
     action ??
     (canStartMemo(user)
       ? { href: '/memos/create', label: 'Create memo', icon: <PlusCircle size={18} /> }
-      : userRequiresSignatureOnFile(user) && !hasUploadedSignature(user)
-        ? { href: '/settings/signature', label: 'Upload signature', icon: <PlusCircle size={18} /> }
-        : undefined);
+      : undefined);
 
   return (
     <div className="space-y-0">

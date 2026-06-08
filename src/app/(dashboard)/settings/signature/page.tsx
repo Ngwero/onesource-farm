@@ -3,11 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { normalizeUserProfile } from '@/lib/auth/profile';
-import {
-  canCreateMemo,
-  SIGNATURE_REQUIRED_FOR_APPROVAL_MESSAGE,
-  SIGNATURE_REQUIRED_FOR_MEMO_MESSAGE,
-} from '@/lib/auth/rbac';
+import { canCreateMemo } from '@/lib/auth/rbac';
 import type { RoleSlug, User } from '@/types';
 import { Upload, CheckCircle } from 'lucide-react';
 import { SignatureImage } from '@/components/memo/SignatureImage';
@@ -54,8 +50,8 @@ export default function SignaturePage() {
       <h1 className="text-2xl font-bold text-slate-800 mb-2">My Signature</h1>
       <p className="text-slate-500 text-sm mb-6">
         {canAuthorMemos
-          ? 'Upload a signature before you create memos. It appears under Prepared By on memos you author.'
-          : 'Upload a signature before you approve memos. Your signature is stamped on each approval step.'}{' '}
+          ? 'Optional — your signature appears under Prepared By on memos you author when uploaded.'
+          : 'Optional — your signature is stamped on approval steps when uploaded.'}{' '}
         PNG or JPEG; light signatures are darkened automatically for printing.
       </p>
 
@@ -76,10 +72,8 @@ export default function SignaturePage() {
             <span className="font-medium">Signature uploaded</span>
           </div>
         ) : (
-          <div className="bg-amber-50 text-amber-700 text-sm p-3 rounded-lg mb-4">
-            {canAuthorMemos
-              ? SIGNATURE_REQUIRED_FOR_MEMO_MESSAGE
-              : SIGNATURE_REQUIRED_FOR_APPROVAL_MESSAGE}
+          <div className="bg-slate-50 text-slate-600 text-sm p-3 rounded-lg mb-4">
+            No signature on file yet. You can still create and approve memos; upload one here when you want it on the PDF.
           </div>
         )}
 

@@ -5,11 +5,6 @@ import { runSubmitMemoSideEffects } from '@/lib/memo/submitSideEffects';
 import { hasMemoPatchFields, patchEditableMemo } from '@/lib/memo/updateDraft';
 import { requireAuth } from '@/lib/auth/session';
 import { createServiceClient } from '@/lib/supabase/server';
-import {
-  hasUploadedSignature,
-  SIGNATURE_REQUIRED_FOR_MEMO_MESSAGE,
-} from '@/lib/auth/rbac';
-
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -17,10 +12,6 @@ export async function POST(
   try {
     const user = await requireAuth();
     const { id } = await params;
-
-    if (!hasUploadedSignature(user)) {
-      return NextResponse.json({ error: SIGNATURE_REQUIRED_FOR_MEMO_MESSAGE }, { status: 403 });
-    }
 
     let body: Record<string, unknown> | null = null;
     try {

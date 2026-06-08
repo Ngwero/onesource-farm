@@ -12,12 +12,7 @@ import { requireAuth, authErrorResponse } from '@/lib/auth/session';
 import { memoFromLineForUser } from '@/lib/memo/personLine';
 import { fetchMemoIdsForApprovedTab } from '@/lib/memo/approvedMemos';
 import { defaultStatusForRole } from '@/lib/auth/memoAccess';
-import {
-  canCreateMemo,
-  hasPermission,
-  hasUploadedSignature,
-  SIGNATURE_REQUIRED_FOR_MEMO_MESSAGE,
-} from '@/lib/auth/rbac';
+import { canCreateMemo, hasPermission } from '@/lib/auth/rbac';
 import type { RoleSlug } from '@/types';
 import { isItDepartmentHead } from '@/lib/memo/itRouting';
 import {
@@ -249,9 +244,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
-    if (!hasUploadedSignature(user)) {
-      return NextResponse.json({ error: SIGNATURE_REQUIRED_FOR_MEMO_MESSAGE }, { status: 403 });
-    }
 
     const body = await request.json();
     const { department_id, memo_type_id, ...input } = body;

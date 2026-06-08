@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { RukaPayLogo } from '@/components/brand/RukaPayLogo';
-import { canCreateMemo, canStartMemo, userRequiresSignatureOnFile, hasUploadedSignature } from '@/lib/auth/rbac';
+import { canCreateMemo } from '@/lib/auth/rbac';
 import { isDesignatedItFirstChecker } from '@/lib/workflow/itCheckers';
 import { isBusinessHead } from '@/lib/memo/marketingRouting';
 import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
@@ -47,12 +47,6 @@ const MY_DRAFTS_NAV: NavItem = {
   icon: <FileEdit size={18} />,
 };
 
-const UPLOAD_SIGNATURE_NAV: NavItem = {
-  label: 'Upload signature',
-  href: '/settings/signature',
-  icon: <PenLine size={18} />,
-};
-
 function navWithCreateMemo(items: NavItem[], roleSlug: RoleSlug, user: User | null): NavItem[] {
   if (!canCreateMemo(roleSlug) && roleSlug !== 'admin') return items;
 
@@ -62,17 +56,6 @@ function navWithCreateMemo(items: NavItem[], roleSlug: RoleSlug, user: User | nu
     const dashIdx = nav.findIndex((i) => i.href.startsWith('/dashboard'));
     const insertAt = dashIdx >= 0 ? dashIdx + 1 : 0;
     nav = [...nav.slice(0, insertAt), CREATE_MEMO_NAV, ...nav.slice(insertAt)];
-  }
-
-  if (
-    user &&
-    userRequiresSignatureOnFile(user) &&
-    !hasUploadedSignature(user) &&
-    !nav.some((i) => i.href === '/settings/signature')
-  ) {
-    const createIdx = nav.findIndex((i) => i.href === '/memos/create');
-    const insertAt = createIdx >= 0 ? createIdx + 1 : 1;
-    nav = [...nav.slice(0, insertAt), UPLOAD_SIGNATURE_NAV, ...nav.slice(insertAt)];
   }
 
   if (!nav.some((i) => i.href.includes('status=draft'))) {

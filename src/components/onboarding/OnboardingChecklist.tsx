@@ -57,7 +57,7 @@ export function OnboardingChecklist() {
         <div>
           <h2 className="font-semibold text-slate-900">Get started</h2>
           <p className="text-sm text-slate-600 mt-0.5">
-            Complete these steps so you can create and approve memos without delays.
+            Open your queue to review memos waiting on you.
           </p>
         </div>
         <button

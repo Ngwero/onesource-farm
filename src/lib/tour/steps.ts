@@ -1,9 +1,4 @@
-import {
-  canCreateMemo,
-  canStartMemo,
-  hasUploadedSignature,
-  userRequiresSignatureOnFile,
-} from '@/lib/auth/rbac';
+import { canCreateMemo, canStartMemo } from '@/lib/auth/rbac';
 import type { RoleSlug, User } from '@/types';
 
 export interface TourStep {
@@ -18,23 +13,13 @@ export interface TourStep {
 function authorSteps(user: User | null): TourStep[] {
   const steps: TourStep[] = [];
 
-  if (userRequiresSignatureOnFile(user) && !hasUploadedSignature(user)) {
-    steps.push({
-      id: 'signature-upload',
-      target: 'tour-signature-upload',
-      title: 'Upload your signature first',
-      body: 'Before you create memos, upload a PNG or JPEG signature here. It appears under Prepared By on memos you author.',
-      placement: 'right',
-    });
-  } else if (userRequiresSignatureOnFile(user)) {
-    steps.push({
-      id: 'signature',
-      target: 'tour-signature',
-      title: 'My Signature',
-      body: 'View or replace your signature anytime. Approvers also need a signature on file before they can approve memos.',
-      placement: 'right',
-    });
-  }
+  steps.push({
+    id: 'signature',
+    target: 'tour-signature',
+    title: 'My Signature',
+    body: 'Optionally upload a PNG or JPEG signature. It appears on memos you author or approve when on file.',
+    placement: 'right',
+  });
 
   if (canStartMemo(user)) {
     steps.push({
@@ -83,7 +68,7 @@ function approverSteps(roleSlug: RoleSlug): TourStep[] {
       id: 'signature-approver',
       target: 'tour-signature',
       title: 'My Signature',
-      body: 'Upload your signature before approving. It is stamped on each approval step you complete.',
+      body: 'Optionally upload a signature — it is stamped on approval steps when on file.',
       placement: 'right',
     },
     {
@@ -190,7 +175,7 @@ export function buildTourSteps(user: User | null, roleSlug: RoleSlug): TourStep[
     {
       id: 'finish',
       title: 'You are ready',
-      body: 'That is the essentials. Upload your signature if you have not yet, then create or review your first memo. Need this again? Click <strong>Take tour</strong> in the top bar.',
+      body: 'That is the essentials. Create or review your first memo — add a signature anytime under Settings. Need this again? Click <strong>Take tour</strong> in the top bar.',
     }
   );
 

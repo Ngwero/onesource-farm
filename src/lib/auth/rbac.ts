@@ -153,10 +153,9 @@ export function userRequiresSignatureOnFile(user: User | null | undefined): bool
   return roleRequiresSignatureOnFile(user.role.slug as RoleSlug);
 }
 
-/** User may create memos (signature + staff / dept head / admin). */
+/** User may open the create-memo flow (role only; signature optional). */
 export function canStartMemo(user: User | null | undefined): boolean {
   if (!user?.role?.slug) return false;
-  if (!hasUploadedSignature(user)) return false;
   const role = user.role.slug as RoleSlug;
   return canCreateMemo(role) || hasPermission(role, '*');
 }
