@@ -48,8 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return profile;
         }
       }
+      if (res.status === 401) {
+        localStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(PENDING_KEY);
+        setUser(null);
+      }
     } catch {
-      /* fall through to local cache */
+      /* fall through */
     }
     return null;
   }, [persistUser]);

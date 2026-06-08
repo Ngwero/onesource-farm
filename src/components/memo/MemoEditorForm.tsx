@@ -137,6 +137,8 @@ export function MemoEditorForm({
 }: MemoEditorFormProps) {
   const router = useRouter();
   const [lookup, setLookup] = useState<LookupData | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(true);
+  const [lookupError, setLookupError] = useState<string | null>(null);
   const [targetDepartmentId, setTargetDepartmentId] = useState(user.department_id || '');
   const [loading, setLoading] = useState(false);
   const [draftMemoId, setDraftMemoId] = useState<string | undefined>();
@@ -158,9 +160,39 @@ export function MemoEditorForm({
   });
 
   useEffect(() => {
+    let cancelled = false;
+    setLookupLoading(true);
+    setLookupError(null);
+
     apiFetch('/api/lookup')
-      .then((r) => r.json())
-      .then(setLookup);
+      .then(async (r) => {
+        const data = await r.json();
+        if (cancelled) return;
+        if (!r.ok) {
+          setLookup(null);
+          setLookupError(
+            (data as { error?: string }).error ||
+              (r.status === 401
+                ? 'Your session expired. Log out and sign in again.'
+                : 'Could not load memo form data.')
+          );
+          return;
+        }
+        setLookup(data as LookupData);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLookup(null);
+          setLookupError('Could not load memo form data. Check your connection and try again.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLookupLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const senderLine = useMemo(
@@ -343,6 +375,34 @@ export function MemoEditorForm({
           ? `${referenceNumber} — update fields and attachments, then save or submit.`
           : 'Update your memo and save changes.';
 
+  if (lookupLoading) {
+    return (
+      <div className="max-w-4xl">
+        <h1 className="page-title">{title}</h1>
+        <p className="text-center py-12 text-slate-500">Loading memo form…</p>
+      </div>
+    );
+  }
+
+  if (lookupError) {
+    return (
+      <div className="max-w-4xl">
+        <h1 className="page-title">{title}</h1>
+        <div className="card p-6 border-amber-200 bg-amber-50">
+          <p className="font-medium text-amber-900">Could not open the memo form</p>
+          <p className="text-sm text-amber-800 mt-2">{lookupError}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="btn-primary mt-4 text-sm"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl">
       <h1 className="page-title">{title}</h1>
@@ -408,7 +468,7 @@ export function MemoEditorForm({
               disabled={mode === 'edit'}
             >
               <option value="">Choose a memo type...</option>
-              {lookup?.memo_types.map((t) => (
+              {(lookup?.memo_types ?? []).map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
                 </option>
