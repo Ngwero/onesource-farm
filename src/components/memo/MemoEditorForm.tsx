@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, Send, Info, Trash2 } from 'lucide-react';
 import { PersonSelectField } from '@/components/memo/PersonSelectField';
-import { DraftAttachments } from '@/components/memo/DraftAttachments';
+import { DraftAttachments, uploadMemoAttachments } from '@/components/memo/DraftAttachments';
 import { apiFetch } from '@/lib/api/client';
 import { memoFromLineForUser, getPeopleForStyle, type MemoPersonOption } from '@/lib/memo/personLine';
 import type { MemoTypeSlug } from '@/types';
@@ -135,6 +135,7 @@ export function MemoEditorForm({
   const [lookup, setLookup] = useState<LookupData | null>(null);
   const [targetDepartmentId, setTargetDepartmentId] = useState(user.department_id || '');
   const [loading, setLoading] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
   const [form, setForm] = useState<MemoFormState>({
     memo_type_id: '',
     memo_from: '',
@@ -227,6 +228,11 @@ export function MemoEditorForm({
 
       if (!id) throw new Error('Memo id missing');
 
+      if (pendingAttachments.length > 0) {
+        await uploadMemoAttachments(id, pendingAttachments);
+        setPendingAttachments([]);
+      }
+
       if (submit) {
         const submitRes = await apiFetch(`/api/memos/${id}/submit`, {
           method: 'POST',
@@ -278,7 +284,7 @@ export function MemoEditorForm({
       : `Edit ${statusSlug === 'draft' ? 'Draft' : 'Memo'}`;
   const subtitle =
     mode === 'create'
-      ? 'Save as draft to finish later, or submit to start approval.'
+      ? 'Add attachments, save as draft to finish later, or submit to start approval.'
       : referenceNumber
         ? `${referenceNumber} — update fields and attachments, then save or submit.`
         : 'Update your memo and save changes.';
@@ -460,8 +466,15 @@ export function MemoEditorForm({
           </div>
         )}
 
-        {mode === 'edit' && memoId && isEditableStatus && (
-          <DraftAttachments memoId={memoId} />
+        {(mode === 'create' || (memoId && isEditableStatus)) && (
+          <DraftAttachments
+            memoId={memoId}
+            pendingFiles={mode === 'create' ? pendingAttachments : []}
+            onAddPending={(file) => setPendingAttachments((files) => [...files, file])}
+            onRemovePending={(index) =>
+              setPendingAttachments((files) => files.filter((_, i) => i !== index))
+            }
+          />
         )}
 
         <div className="flex flex-col sm:flex-row flex-wrap gap-3 pt-4 border-t border-slate-100">
