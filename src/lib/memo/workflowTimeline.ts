@@ -20,6 +20,7 @@ export interface WorkflowTimelineStep {
   status: WorkflowTimelineStepStatus;
   approver?: string;
   date?: string;
+  note?: string;
 }
 
 type MemoForTimeline = {
@@ -310,6 +311,7 @@ export async function buildWorkflowTimelineForMemo(
       status,
       approver,
       date,
+      note: sig?.delegation_note || undefined,
     });
   }
 
@@ -330,6 +332,7 @@ export async function buildWorkflowTimelineForMemo(
         viewingUserId
       );
       footer.date = formatActionTimestamp(lastSig.signed_at);
+      footer.note = lastSig.delegation_note || undefined;
     } else if (memo.approved_at) {
       footer.date = formatActionTimestamp(memo.approved_at);
     }

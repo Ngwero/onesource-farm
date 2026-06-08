@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
         .order('memo_date', { ascending: false })
         .order('created_at', { ascending: false });
     } else {
-      query = query.order('created_at', { ascending: false });
+      query = query.order('updated_at', { ascending: false });
     }
 
     const sharedOnly = searchParams.get('shared') === '1';

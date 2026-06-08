@@ -21,6 +21,7 @@ interface MemoListItem {
   creator?: { full_name: string };
   memo_date?: string | null;
   created_at: string;
+  updated_at?: string;
   submitted_at?: string;
   parsed_financial_amount?: number | null;
 }
@@ -69,7 +70,7 @@ export function MemoList({
             <th>Department</th>
             <th>Status</th>
             {showAmounts ? <th className="text-right">Amount (UGX)</th> : null}
-            <th>{sortByMemoDate ? 'Memo date' : 'Date'}</th>
+            <th>{sortByMemoDate ? 'Memo date' : 'Last activity'}</th>
             <th />
           </tr>
         </thead>
@@ -102,7 +103,7 @@ export function MemoList({
               <td className="text-slate-500 text-xs whitespace-nowrap">
                 {sortByMemoDate
                   ? formatListDate(memo.memo_date)
-                  : formatListDate(memo.submitted_at || memo.created_at)}
+                  : formatListDate(memo.updated_at || memo.submitted_at || memo.created_at)}
               </td>
               <td>
                 <div className="flex items-center justify-end gap-3">

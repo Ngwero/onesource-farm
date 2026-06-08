@@ -332,10 +332,21 @@ export async function processApproval(
     };
   }
 
+  const approverRole = joinSlug(
+    approver.roles as { slug: string } | { slug: string }[] | null | undefined
+  );
+  const isAdminOverride = approverRole === 'admin';
+
   // Approve
   const delegationNote = delegation
     ? `Approved by ${approver.full_name} on behalf of ${delegation.original_name}`
-    : undefined;
+    : isAdminOverride
+      ? 'Approved by admin (override)'
+      : undefined;
+
+  const approveAudit = isAdminOverride
+    ? { action: 'memo_approved' as const, newValues: { admin_override: true } }
+    : { action: 'memo_approved' as const };
 
   const stampedAt = nowIso();
   await supabase.from('signature_records').insert({
@@ -405,7 +416,7 @@ export async function processApproval(
       sideEffects: {
         memoId,
         approverId,
-        audit: { action: 'memo_approved' },
+        audit: approveAudit,
         notifications: await buildFullyApprovedNotifications(
           memoId,
           memo.creator_id,
@@ -450,7 +461,7 @@ export async function processApproval(
     sideEffects: {
       memoId,
       approverId,
-      audit: { action: 'memo_approved' },
+      audit: approveAudit,
       notifications: [
         {
           kind: 'approvers',

@@ -7,6 +7,7 @@ import { deleteFile } from '@/lib/storage';
 import { patchEditableMemo } from '@/lib/memo/updateDraft';
 import { attachPendingAssigneeNames } from '@/lib/memo/pendingAssignee';
 import { buildWorkflowTimelineForMemo } from '@/lib/memo/workflowTimeline';
+import { buildMemoActivity } from '@/lib/memo/memoActivity';
 
 const MEMO_DETAIL_SELECT = `
   *,
@@ -40,8 +41,11 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
     const [memo] = await attachPendingAssigneeNames(supabase, [data], user.id);
-    const workflow_timeline = await buildWorkflowTimelineForMemo(memo, user.id);
-    return NextResponse.json({ memo: { ...memo, workflow_timeline } });
+    const [workflow_timeline, activity] = await Promise.all([
+      buildWorkflowTimelineForMemo(memo, user.id),
+      buildMemoActivity(id),
+    ]);
+    return NextResponse.json({ memo: { ...memo, workflow_timeline, activity } });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Memo not found';
     const status = message === 'Forbidden' ? 403 : message === 'Memo not found' ? 404 : 500;

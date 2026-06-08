@@ -38,7 +38,7 @@ export function MemoDocumentExport({ memoId, referenceNumber }: Props) {
   }
 
   return (
-    <section className="memo-export-panel" aria-label="Export memo PDF">
+    <section className="memo-export-panel memo-export-panel--compact-mobile" aria-label="Export memo PDF">
       <div className="memo-export-panel__icon" aria-hidden>
         <FileText size={22} strokeWidth={1.75} />
       </div>

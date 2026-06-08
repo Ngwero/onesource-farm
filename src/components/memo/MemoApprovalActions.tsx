@@ -1,0 +1,171 @@
+'use client';
+
+import { CheckCircle, RotateCcw, XCircle } from 'lucide-react';
+
+type ApprovalAction = 'approve' | 'return' | 'reject';
+
+type MemoApprovalActionsProps = {
+  showApproval: boolean;
+  setShowApproval: (show: boolean) => void;
+  approvalAction: ApprovalAction;
+  setApprovalAction: (action: ApprovalAction) => void;
+  approvalComments: string;
+  setApprovalComments: (comments: string) => void;
+  actionLoading: boolean;
+  onConfirm: () => void;
+};
+
+function ApprovalForm({
+  approvalAction,
+  approvalComments,
+  setApprovalComments,
+  actionLoading,
+  onConfirm,
+  onCancel,
+  className = '',
+}: {
+  approvalAction: ApprovalAction;
+  approvalComments: string;
+  setApprovalComments: (comments: string) => void;
+  actionLoading: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+  className?: string;
+}) {
+  return (
+    <div className={`space-y-3 ${className}`}>
+      <p className="text-sm font-medium capitalize">{approvalAction} memo</p>
+      <textarea
+        value={approvalComments}
+        onChange={(e) => setApprovalComments(e.target.value)}
+        placeholder={
+          approvalAction === 'approve' ? 'Optional comments…' : 'Required comments…'
+        }
+        className="input-field min-h-[88px] text-base sm:text-sm"
+      />
+      <div className="flex flex-col-reverse sm:flex-row gap-2">
+        <button type="button" onClick={onCancel} className="btn-secondary w-full sm:w-auto min-h-[44px]">
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          disabled={actionLoading}
+          className="btn-primary flex-1 min-h-[44px]"
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ActionButtons({
+  onSelect,
+  compact = false,
+}: {
+  onSelect: (action: ApprovalAction) => void;
+  compact?: boolean;
+}) {
+  return (
+    <div className={`grid gap-2 ${compact ? 'grid-cols-3' : 'grid-cols-1'}`}>
+      <button
+        type="button"
+        onClick={() => onSelect('approve')}
+        className={`btn-primary flex items-center justify-center gap-2 min-h-[44px] ${
+          compact ? 'text-sm px-2' : 'w-full'
+        }`}
+      >
+        <CheckCircle size={compact ? 18 : 16} />
+        {compact ? 'Approve' : 'Approve'}
+      </button>
+      <button
+        type="button"
+        onClick={() => onSelect('return')}
+        className={`btn-secondary flex items-center justify-center gap-2 min-h-[44px] ${
+          compact ? 'text-sm px-2' : 'w-full'
+        }`}
+      >
+        <RotateCcw size={compact ? 18 : 16} />
+        {compact ? 'Return' : 'Return for Correction'}
+      </button>
+      <button
+        type="button"
+        onClick={() => onSelect('reject')}
+        className={`btn-danger flex items-center justify-center gap-2 min-h-[44px] ${
+          compact ? 'text-sm px-2' : 'w-full'
+        }`}
+      >
+        <XCircle size={compact ? 18 : 16} />
+        Reject
+      </button>
+    </div>
+  );
+}
+
+export function MemoApprovalActions({
+  showApproval,
+  setShowApproval,
+  approvalAction,
+  setApprovalAction,
+  approvalComments,
+  setApprovalComments,
+  actionLoading,
+  onConfirm,
+}: MemoApprovalActionsProps) {
+  function openAction(action: ApprovalAction) {
+    setApprovalAction(action);
+    setShowApproval(true);
+  }
+
+  function closeApproval() {
+    setShowApproval(false);
+  }
+
+  return (
+    <>
+      <div className="hidden lg:block card p-4">
+        <h3 className="font-semibold mb-3">Approval Actions</h3>
+        {!showApproval ? (
+          <ActionButtons onSelect={openAction} />
+        ) : (
+          <ApprovalForm
+            approvalAction={approvalAction}
+            approvalComments={approvalComments}
+            setApprovalComments={setApprovalComments}
+            actionLoading={actionLoading}
+            onConfirm={onConfirm}
+            onCancel={closeApproval}
+          />
+        )}
+      </div>
+
+      <div className="lg:hidden memo-approval-bar" aria-label="Approval actions">
+        {showApproval ? (
+          <>
+            <button
+              type="button"
+              className="memo-approval-bar__backdrop"
+              aria-label="Close approval form"
+              onClick={closeApproval}
+            />
+            <div className="memo-approval-bar__sheet" role="dialog" aria-modal="true">
+              <ApprovalForm
+                approvalAction={approvalAction}
+                approvalComments={approvalComments}
+                setApprovalComments={setApprovalComments}
+                actionLoading={actionLoading}
+                onConfirm={onConfirm}
+                onCancel={closeApproval}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="memo-approval-bar__actions">
+            <ActionButtons onSelect={openAction} compact />
+          </div>
+        )}
+      </div>
+    </>
+  );
+}

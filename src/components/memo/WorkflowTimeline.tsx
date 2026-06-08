@@ -7,6 +7,7 @@ interface Step {
   status: 'completed' | 'current' | 'pending' | 'rejected' | 'returned';
   approver?: string;
   date?: string;
+  note?: string;
 }
 
 interface WorkflowTimelineProps {
@@ -28,7 +29,7 @@ export function WorkflowTimeline({ steps, slaDueAt }: WorkflowTimelineProps) {
     : null;
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4">
+    <div className="bg-white rounded-lg border border-slate-200 p-4 memo-workflow-timeline">
       <h3 className="font-semibold text-slate-800 mb-4">Workflow Progress</h3>
 
       {slaRemaining !== null && (
@@ -54,6 +55,9 @@ export function WorkflowTimeline({ steps, slaDueAt }: WorkflowTimelineProps) {
               {step.approver && (
                 <p className="text-xs text-slate-500">{step.approver}</p>
               )}
+              {step.note ? (
+                <p className="text-xs font-medium text-amber-700 mt-0.5">{step.note}</p>
+              ) : null}
               {step.date && (
                 <p className="text-xs text-slate-400">{step.date}</p>
               )}

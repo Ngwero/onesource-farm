@@ -9,20 +9,14 @@ import { MemoTemplate } from '@/components/memo/MemoTemplate';
 import { MemoAttachmentList } from '@/components/memo/MemoAttachmentList';
 import { MemoDocumentExport } from '@/components/memo/MemoDocumentExport';
 import { WorkflowTimeline } from '@/components/memo/WorkflowTimeline';
+import { MemoActivity } from '@/components/memo/MemoActivity';
+import { MemoApprovalActions } from '@/components/memo/MemoApprovalActions';
+import type { MemoActivityItem } from '@/lib/memo/memoActivityTypes';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  CheckCircle,
-  RotateCcw,
-  XCircle,
-  Share2,
-  UserMinus,
-  Pencil,
-  Send,
-  Trash2,
-} from 'lucide-react';
+import { Share2, UserMinus, Pencil, Send, Trash2 } from 'lucide-react';
 import { hasPermission, canEditMemo } from '@/lib/auth/rbac';
 import type { RoleSlug } from '@/types';
 import type { Memo, SignatureRecord, BrandingSettings, MemoStatusSlug } from '@/types';
@@ -292,7 +286,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
   );
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 memo-detail-page${canApprove ? ' memo-detail-page--approver' : ''}`}>
       <PageHeader
         title={memo.reference_number}
         titleMono
@@ -361,8 +355,8 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
+        <div className="lg:col-span-2 space-y-5 order-2 lg:order-1">
           <MemoDocumentExport memoId={id} referenceNumber={memo.reference_number} />
           <div className="memo-doc-view">
             <p className="memo-doc-view__label">Memo preview</p>
@@ -372,69 +366,27 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
           <MemoAttachmentList attachments={attachments} />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 order-1 lg:order-2">
           <WorkflowTimeline steps={workflowSteps} />
 
-          {canApprove && (
-            <div className="card p-4">
-              <h3 className="font-semibold mb-3">Approval Actions</h3>
-              {!showApproval ? (
-                <div className="space-y-2">
-                  <button
-                    onClick={() => {
-                      setApprovalAction('approve');
-                      setShowApproval(true);
-                    }}
-                    className="btn-primary w-full flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle size={16} /> Approve
-                  </button>
-                  <button
-                    onClick={() => {
-                      setApprovalAction('return');
-                      setShowApproval(true);
-                    }}
-                    className="btn-secondary w-full flex items-center justify-center gap-2"
-                  >
-                    <RotateCcw size={16} /> Return for Correction
-                  </button>
-                  <button
-                    onClick={() => {
-                      setApprovalAction('reject');
-                      setShowApproval(true);
-                    }}
-                    className="btn-danger w-full flex items-center justify-center gap-2"
-                  >
-                    <XCircle size={16} /> Reject
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm font-medium capitalize">{approvalAction} Memo</p>
-                  <textarea
-                    value={approvalComments}
-                    onChange={(e) => setApprovalComments(e.target.value)}
-                    placeholder={
-                      approvalAction === 'approve' ? 'Optional comments...' : 'Required comments...'
-                    }
-                    className="input-field min-h-[80px]"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleApproval}
-                      disabled={actionLoading}
-                      className="btn-primary flex-1"
-                    >
-                      Confirm
-                    </button>
-                    <button onClick={() => setShowApproval(false)} className="btn-secondary">
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          {canApprove ? (
+            <MemoApprovalActions
+              showApproval={showApproval}
+              setShowApproval={setShowApproval}
+              approvalAction={approvalAction}
+              setApprovalAction={setApprovalAction}
+              approvalComments={approvalComments}
+              setApprovalComments={setApprovalComments}
+              actionLoading={actionLoading}
+              onConfirm={handleApproval}
+            />
+          ) : null}
+
+          <MemoActivity
+            items={
+              ((memo as { activity?: MemoActivityItem[] }).activity || []) as MemoActivityItem[]
+            }
+          />
 
           {isCreator && pendingStatuses.includes(statusSlug || '') && (
             <button onClick={handleWithdraw} className="btn-secondary w-full text-sm">
@@ -485,10 +437,10 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
                   ))}
                 </ul>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="email"
-                  className="input-field flex-1 text-sm"
+                  className="input-field flex-1 text-base sm:text-sm"
                   placeholder="colleague@rukapay.co.ug"
                   value={shareEmail}
                   onChange={(e) => setShareEmail(e.target.value)}
@@ -497,7 +449,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
                   type="button"
                   onClick={handleShare}
                   disabled={sharing || !shareEmail.trim()}
-                  className="btn-secondary text-sm shrink-0"
+                  className="btn-secondary text-sm shrink-0 min-h-[44px] sm:min-h-0"
                 >
                   Share
                 </button>

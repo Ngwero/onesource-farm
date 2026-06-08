@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Paperclip, Upload, Download } from 'lucide-react';
+import { Paperclip, Upload, Download, Trash2 } from 'lucide-react';
 import { apiFetch } from '@/lib/api/client';
 
 type Attachment = {
@@ -37,6 +37,7 @@ export function DraftAttachments({
 }) {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!memoId) {
@@ -53,6 +54,25 @@ export function DraftAttachments({
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function handleDelete(attachmentId: string) {
+    if (!memoId) return;
+    if (!confirm('Remove this attachment?')) return;
+
+    setDeletingId(attachmentId);
+    try {
+      const res = await apiFetch(`/api/memos/${memoId}/attachments/${attachmentId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed');
+      await load();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Delete failed');
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -102,14 +122,26 @@ export function DraftAttachments({
               className="flex items-center justify-between text-sm bg-white rounded-lg px-3 py-2 border border-slate-100"
             >
               <span className="truncate max-w-[200px]">{a.file_name}</span>
-              <a
-                href={`/api/files/${a.file_path}`}
-                className="text-brand-600 hover:underline flex items-center gap-1 shrink-0"
-                download
-              >
-                <Download size={14} />
-                Download
-              </a>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={`/api/files/${a.file_path}`}
+                  className="text-brand-600 hover:underline flex items-center gap-1"
+                  download
+                >
+                  <Download size={14} />
+                  Download
+                </a>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(a.id)}
+                  disabled={deletingId === a.id}
+                  className="text-red-600 hover:text-red-700 flex items-center gap-1 disabled:opacity-50"
+                  aria-label={`Remove ${a.file_name}`}
+                >
+                  <Trash2 size={14} />
+                  {deletingId === a.id ? 'Removing…' : 'Remove'}
+                </button>
+              </div>
             </li>
           ))}
         </ul>

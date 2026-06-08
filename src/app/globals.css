@@ -1613,6 +1613,29 @@ body {
     width: 100%;
     justify-content: center;
   }
+
+  .memo-export-panel--compact-mobile {
+    padding: 0.85rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .memo-export-panel--compact-mobile .memo-export-panel__icon {
+    display: none;
+  }
+
+  .memo-export-panel--compact-mobile .memo-export-panel__desc {
+    display: none;
+  }
+
+  .memo-export-panel--compact-mobile .memo-export-panel__title {
+    font-size: 0.9375rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .memo-export-panel--compact-mobile .memo-export-panel__ref {
+    margin-top: 0.25rem;
+    font-size: 0.7rem;
+  }
 }
 
 /* ——— Memo document preview block ——— */
@@ -1958,9 +1981,147 @@ body {
   margin-inline: auto;
 }
 
+/* ——— Memo detail page (mobile approvers) ——— */
+.memo-detail-page--approver {
+  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 1024px) {
+  .memo-detail-page--approver {
+    padding-bottom: 0;
+  }
+}
+
+.memo-approval-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 45;
+  pointer-events: none;
+}
+
+.memo-approval-bar__actions {
+  pointer-events: auto;
+  padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+  background: rgb(255 255 255 / 0.96);
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -8px 24px rgb(15 23 42 / 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.memo-approval-bar__backdrop {
+  pointer-events: auto;
+  position: fixed;
+  inset: 0;
+  border: none;
+  background: rgb(15 23 42 / 0.45);
+  cursor: pointer;
+}
+
+.memo-approval-bar__sheet {
+  pointer-events: auto;
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  background: #fff;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  box-shadow: 0 -12px 40px rgb(15 23 42 / 0.18);
+}
+
+@media (max-width: 640px) {
+  .page-header__title {
+    font-size: 1.25rem;
+  }
+
+  .page-header__title--mono {
+    font-size: 1.05rem;
+    word-break: break-all;
+  }
+
+  .page-header__subtitle {
+    font-size: 0.875rem;
+  }
+
+  .memo-workflow-timeline {
+    padding: 0.85rem 1rem;
+  }
+
+  .memo-workflow-timeline h3 {
+    font-size: 0.9375rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .memo-doc-view {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-inline: -0.15rem;
+    padding-inline: 0.15rem;
+  }
+
+  .memo-doc-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .memo-doc-header-info {
+    text-align: left;
+    width: 100%;
+  }
+
+  .memo-doc-logo {
+    height: 2.75rem;
+  }
+
+  .memo-doc-body {
+    padding: 1rem;
+  }
+
+  .memo-doc-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1.15rem;
+    padding-bottom: 1rem;
+  }
+
+  .memo-doc-ref-badge {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .memo-doc-title {
+    font-size: 1.3rem;
+  }
+
+  .memo-doc-routing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .memo-doc-approval-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .memo-doc-approval-card {
+    min-height: 5.5rem;
+  }
+
+  .memo-doc-block-text {
+    font-size: 0.875rem;
+  }
+}
+
 @media print {
   .memo-export-panel,
-  .memo-doc-view__label {
+  .memo-doc-view__label,
+  .memo-approval-bar {
     display: none;
   }
 
