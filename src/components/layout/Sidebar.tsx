@@ -162,6 +162,8 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
   ],
   admin: [
     { label: 'Dashboard', href: '/dashboard/admin', icon: <LayoutDashboard size={18} /> },
+    { label: 'Create Memo', href: '/memos/create', icon: <PlusCircle size={18} /> },
+    { label: 'My Drafts', href: '/memos?status=draft', icon: <FileEdit size={18} /> },
     { label: 'All Memos', href: '/memos', icon: <FileText size={18} /> },
     { label: 'Users', href: '/admin/users', icon: <Users size={18} /> },
     { label: 'Departments', href: '/admin/departments', icon: <Building2 size={18} /> },

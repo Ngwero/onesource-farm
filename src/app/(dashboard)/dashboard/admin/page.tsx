@@ -10,6 +10,7 @@ import {
   Clock,
   CheckCircle2,
   FileText,
+  PlusCircle,
 } from 'lucide-react';
 import { DashboardPage } from '@/components/dashboard/DashboardPage';
 import { useMemos } from '@/hooks/useMemos';
@@ -77,6 +78,7 @@ export default function AdminDashboard() {
       financialSummary={financialSummary}
       financialSummaryTitle="Total financial implication (all memos)"
       memosTitle="All memos"
+      action={{ href: '/memos/create', label: 'Create memo', icon: <PlusCircle size={18} /> }}
     />
   );
 }

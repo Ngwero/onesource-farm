@@ -10,24 +10,25 @@ import { MemoEditorForm } from '@/components/memo/MemoEditorForm';
 
 export default function CreateMemoPage() {
   const { user, loading, refreshProfile } = useAuth();
-  const [sessionReady, setSessionReady] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      setSessionReady(false);
+      setSessionChecked(true);
       return;
     }
     let cancelled = false;
-    void refreshProfile().then((profile) => {
-      if (!cancelled) setSessionReady(Boolean(profile));
+    setSessionChecked(false);
+    void refreshProfile().finally(() => {
+      if (!cancelled) setSessionChecked(true);
     });
     return () => {
       cancelled = true;
     };
   }, [loading, user?.id, refreshProfile]);
 
-  if (loading || (user && !sessionReady)) {
+  if (loading || !sessionChecked) {
     return <div className="text-center py-12 text-slate-500">Loading…</div>;
   }
 
