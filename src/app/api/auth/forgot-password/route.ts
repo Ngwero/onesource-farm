@@ -76,7 +76,12 @@ export async function POST(request: NextRequest) {
       options: { redirectTo },
     });
 
-    const resetUrl = linkData?.properties?.action_link;
+    const hashedToken = linkData?.properties?.hashed_token;
+    // Use token_hash on our callback — admin.generateLink + PKCE code exchange fails
+    // because no code verifier exists in the user's browser.
+    const resetUrl = hashedToken
+      ? `${redirectTo}?token_hash=${encodeURIComponent(hashedToken)}&type=recovery`
+      : linkData?.properties?.action_link;
 
     if (linkError || !resetUrl) {
       console.error('Forgot password: generateLink failed', {
@@ -84,6 +89,7 @@ export async function POST(request: NextRequest) {
         email: normalized,
         redirectTo,
         appUrl,
+        hasHashedToken: Boolean(hashedToken),
       });
       return NextResponse.json(
         {

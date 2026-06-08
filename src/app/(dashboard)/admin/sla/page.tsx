@@ -229,17 +229,15 @@ export default function AdminSlaPage() {
                       />
                     </div>
                   </div>
-                  {changed && (
-                    <button
-                      type="button"
-                      onClick={() => saveSetting(s.role_slug)}
-                      disabled={savingRole === s.role_slug}
-                      className="btn-primary text-xs mt-2 flex items-center gap-1"
-                    >
-                      <Save size={12} />
-                      {savingRole === s.role_slug ? 'Saving...' : 'Save'}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => saveSetting(s.role_slug)}
+                    disabled={!changed || savingRole === s.role_slug}
+                    className="btn-primary text-xs mt-2 flex items-center gap-1 disabled:opacity-40"
+                  >
+                    <Save size={12} />
+                    {savingRole === s.role_slug ? 'Saving...' : 'Save'}
+                  </button>
                 </li>
               );
             })}

@@ -25,24 +25,50 @@ export default function AuthResetPasswordPage() {
 
   useEffect(() => {
     const supabase = createClient();
+    let cancelled = false;
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
         setReady(true);
         setChecking(false);
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setReady(true);
-      }
-      setChecking(false);
-    });
+    async function establishSession() {
+      const params = new URLSearchParams(window.location.search);
+      const token_hash = params.get('token_hash');
+      const type = params.get('type');
 
-    return () => subscription.unsubscribe();
+      if (token_hash && type) {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash,
+          type: type as 'recovery',
+        });
+        if (!error) {
+          window.history.replaceState({}, '', '/auth/reset-password');
+          if (!cancelled) {
+            setReady(true);
+            setChecking(false);
+          }
+          return;
+        }
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!cancelled) {
+        if (session) setReady(true);
+        setChecking(false);
+      }
+    }
+
+    void establishSession();
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {

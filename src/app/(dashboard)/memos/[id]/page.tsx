@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api/client';
 import { canApproveMemo } from '@/lib/auth/rbac';
 import { rowToMemoForAccess } from '@/lib/auth/memoRbacShape';
 import { MemoTemplate } from '@/components/memo/MemoTemplate';
+import { MemoAttachmentList } from '@/components/memo/MemoAttachmentList';
 import { MemoDocumentExport } from '@/components/memo/MemoDocumentExport';
 import { WorkflowTimeline } from '@/components/memo/WorkflowTimeline';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -16,7 +17,6 @@ import {
   CheckCircle,
   RotateCcw,
   XCircle,
-  Paperclip,
   Share2,
   UserMinus,
   Pencil,
@@ -247,8 +247,15 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
   const signatures =
     (memo as { signature_records?: SignatureRecord[] }).signature_records || [];
   const attachments =
-    (memo as { memo_attachments?: { id: string; file_name: string; file_size?: number }[] })
-      .memo_attachments || [];
+    (memo as {
+      memo_attachments?: {
+        id: string;
+        file_name: string;
+        file_path: string;
+        file_size?: number;
+        mime_type?: string;
+      }[];
+    }).memo_attachments || [];
 
   const workflowSteps: WorkflowTimelineStep[] =
     (memo as { workflow_timeline?: WorkflowTimelineStep[] }).workflow_timeline ??
@@ -336,23 +343,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
             <MemoTemplate memo={memo} branding={branding || undefined} signatures={signatures} />
           </div>
 
-          {attachments.length > 0 && (
-            <div className="card p-4">
-              <h3 className="font-semibold flex items-center gap-2 mb-3">
-                <Paperclip size={16} /> Attachments ({attachments.length})
-              </h3>
-              <ul className="space-y-2">
-                {attachments.map((a) => (
-                  <li key={a.id} className="flex items-center justify-between text-sm">
-                    <span>{a.file_name}</span>
-                    <span className="text-slate-400">
-                      {a.file_size ? `${(a.file_size / 1024).toFixed(1)} KB` : ''}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <MemoAttachmentList attachments={attachments} />
         </div>
 
         <div className="space-y-4">

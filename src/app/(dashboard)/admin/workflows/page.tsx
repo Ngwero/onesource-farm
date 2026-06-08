@@ -29,7 +29,7 @@ const ROLE_OPTIONS = [
   { slug: 'business_head', label: 'Business Head (Norman)' },
   { slug: 'it_checker_first', label: 'IT Checker — 1st (Emma)' },
   { slug: 'it_checker_second', label: 'IT Checker — 2nd (Jim)' },
-  { slug: 'finance_reviewer', label: 'Finance Reviewer' },
+  { slug: 'finance_reviewer', label: 'Finance Reviewer (Christine)' },
   { slug: 'hr_reviewer', label: 'HR Reviewer' },
   { slug: 'ceo', label: 'CEO' },
   { slug: 'exco_member', label: 'EXCO Member' },

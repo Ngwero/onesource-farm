@@ -68,17 +68,25 @@ export function getMemoFinancialAmount(text?: string | null): number | null {
   return amounts.reduce((sum, n) => sum + n, 0);
 }
 
+const EXCLUDED_FINANCIAL_STATUS_SLUGS = new Set(['rejected']);
+
 export function summarizeMemoFinancials(
   memos: Array<{
     id: string;
     reference_number?: string;
     subject?: string;
     financial_implication?: string | null;
+    memo_statuses?: { slug?: string } | { slug?: string }[] | null;
   }>
 ): MemoFinancialSummary {
+  const eligible = memos.filter((memo) => {
+    const status = memo.memo_statuses;
+    const slug = Array.isArray(status) ? status[0]?.slug : status?.slug;
+    return !EXCLUDED_FINANCIAL_STATUS_SLUGS.has(slug || '');
+  });
   const items: MemoFinancialRow[] = [];
 
-  for (const memo of memos) {
+  for (const memo of eligible) {
     const amount = getMemoFinancialAmount(memo.financial_implication);
     if (amount !== null) {
       items.push({
@@ -93,7 +101,7 @@ export function summarizeMemoFinancials(
   return {
     total: items.reduce((sum, row) => sum + row.amount, 0),
     currency: 'UGX',
-    memoCount: memos.length,
+    memoCount: eligible.length,
     memosWithAmount: items.length,
     items,
   };

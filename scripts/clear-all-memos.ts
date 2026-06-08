@@ -66,7 +66,7 @@ async function deleteAllRows(table: string): Promise<number> {
   return total;
 }
 
-async function clearAttachmentFiles() {
+async function clearLocalAttachmentFiles() {
   const attachmentsDir = resolve(process.cwd(), 'uploads', 'attachments');
   if (!existsSync(attachmentsDir)) return 0;
 
@@ -93,6 +93,33 @@ async function clearAttachmentFiles() {
   return removed;
 }
 
+async function clearSupabaseAttachmentFiles(): Promise<number> {
+  const bucket = process.env.SUPABASE_STORAGE_BUCKET?.trim();
+  if (!bucket) return 0;
+
+  const { data: rows, error } = await supabase.from('memo_attachments').select('file_path');
+  if (error) {
+    console.warn(`  memo_attachments lookup: ${error.message}`);
+    return 0;
+  }
+
+  const paths = (rows || []).map((r: { file_path: string }) => r.file_path).filter(Boolean);
+  if (paths.length === 0) return 0;
+
+  let removed = 0;
+  const batchSize = 100;
+  for (let i = 0; i < paths.length; i += batchSize) {
+    const batch = paths.slice(i, i + batchSize);
+    const { error: removeError } = await supabase.storage.from(bucket).remove(batch);
+    if (removeError) {
+      console.warn(`  storage remove: ${removeError.message}`);
+    } else {
+      removed += batch.length;
+    }
+  }
+  return removed;
+}
+
 async function resetMemoSequences() {
   const year = new Date().getFullYear();
   const { error } = await supabase.from('memo_sequences').upsert(
@@ -104,6 +131,9 @@ async function resetMemoSequences() {
 
 async function clearMemos() {
   console.log('Erasing all memos and related records…\n');
+
+  const storageFiles = await clearSupabaseAttachmentFiles();
+  console.log(`  supabase attachment files removed: ${storageFiles}`);
 
   const trash = await deleteAllRows('trash_records');
   console.log(`  trash_records: ${trash}`);
@@ -126,8 +156,8 @@ async function clearMemos() {
   await resetMemoSequences();
   console.log('  memo_sequences: reset for current year');
 
-  const files = await clearAttachmentFiles();
-  console.log(`  attachment files removed: ${files}`);
+  const localFiles = await clearLocalAttachmentFiles();
+  console.log(`  local attachment files removed: ${localFiles}`);
 
   const { count } = await supabase.from('memos').select('*', { count: 'exact', head: true });
   console.log(`\nDone. Remaining memos: ${count ?? 0}`);

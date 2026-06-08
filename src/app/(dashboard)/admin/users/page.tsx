@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { KeyRound, Mail, Plus, RefreshCw, Send } from 'lucide-react';
+import { KeyRound, Mail, Plus, RefreshCw, Save, Send } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 const TEST_PASSWORD_HINT = 'Test@RukaPay2026';
@@ -36,6 +36,9 @@ export default function AdminUsersPage() {
   const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [userDrafts, setUserDrafts] = useState<
+    Record<string, { department_id?: string | null; role_id?: string }>
+  >({});
   const [resetting, setResetting] = useState(false);
   const [launchPreview, setLaunchPreview] = useState<LaunchPreview | null>(null);
   const [launchLoading, setLaunchLoading] = useState(false);
@@ -184,18 +187,55 @@ export default function AdminUsersPage() {
     }
   }
 
-  async function updateUser(id: string, patch: Partial<UserRow>) {
+  function patchUserDraft(id: string, patch: { department_id?: string | null; role_id?: string }) {
+    setUserDrafts((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], ...patch },
+    }));
+  }
+
+  function getUserDraft(u: UserRow) {
+    const draft = userDrafts[u.id];
+    return {
+      department_id: draft?.department_id !== undefined ? draft.department_id : u.department_id || '',
+      role_id: draft?.role_id !== undefined ? draft.role_id : u.role_id || '',
+    };
+  }
+
+  function userHasChanges(u: UserRow) {
+    const draft = userDrafts[u.id];
+    if (!draft) return false;
+    const currentDept = u.department_id || '';
+    const currentRole = u.role_id || '';
+    const draftDept = draft.department_id !== undefined ? draft.department_id || '' : currentDept;
+    const draftRole = draft.role_id !== undefined ? draft.role_id : currentRole;
+    return draftDept !== currentDept || draftRole !== currentRole;
+  }
+
+  async function saveUser(id: string) {
+    const u = users.find((row) => row.id === id);
+    if (!u || !userHasChanges(u)) return;
+
+    const draft = getUserDraft(u);
     setSavingId(id);
     const res = await fetch(`/api/admin/users/${id}`, {
       method: 'PATCH',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
+      body: JSON.stringify({
+        department_id: draft.department_id || null,
+        role_id: draft.role_id,
+      }),
     });
     setSavingId(null);
     if (res.ok) {
       const { user } = await res.json();
-      setUsers((list) => list.map((u) => (u.id === id ? { ...u, ...user } : u)));
+      setUsers((list) => list.map((row) => (row.id === id ? { ...row, ...user } : row)));
+      setUserDrafts((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     } else {
       const err = await res.json();
       alert(err.error);
@@ -414,82 +454,95 @@ export default function AdminUsersPage() {
               <th className="text-left px-4 py-3">Department</th>
               <th className="text-left px-4 py-3">Role</th>
               <th className="text-left px-4 py-3">Status</th>
-              <th className="text-left px-4 py-3">Login</th>
+              <th className="text-left px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
-            {users.map((u) => (
-              <tr key={u.id} className={savingId === u.id ? 'opacity-60' : ''}>
-                <td className="px-4 py-3 font-medium">{u.full_name}</td>
-                <td className="px-4 py-3 text-slate-600">{u.email}</td>
-                <td className="px-4 py-3">
-                  <select
-                    value={u.department_id || ''}
-                    onChange={(e) =>
-                      updateUser(u.id, { department_id: e.target.value || null })
-                    }
-                    className="input-field py-1.5 text-sm min-w-[8rem]"
-                    disabled={savingId === u.id}
-                  >
-                    <option value="">Unassigned</option>
-                    {departments.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="px-4 py-3">
-                  <select
-                    value={u.role_id || ''}
-                    onChange={(e) => updateUser(u.id, { role_id: e.target.value })}
-                    className="input-field py-1.5 text-sm min-w-[8rem]"
-                    disabled={savingId === u.id}
-                  >
-                    {roles.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="px-4 py-3">
-                  {u.must_set_password ? (
-                    <span className="text-amber-600 text-xs font-medium">Awaiting password setup</span>
-                  ) : (
-                    <span className={u.is_active ? 'text-brand-600' : 'text-red-500'}>
-                      {u.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-col gap-1 min-w-[7.5rem]">
-                    <button
-                      type="button"
-                      disabled={resetting}
-                      onClick={() => {
-                        setSavingId(u.id);
-                        void resetLogins('test', u.id);
-                      }}
-                      className="text-xs text-brand-700 hover:underline text-left"
+            {users.map((u) => {
+              const draft = getUserDraft(u);
+              const changed = userHasChanges(u);
+              return (
+                <tr key={u.id} className={savingId === u.id ? 'opacity-60' : ''}>
+                  <td className="px-4 py-3 font-medium">{u.full_name}</td>
+                  <td className="px-4 py-3 text-slate-600">{u.email}</td>
+                  <td className="px-4 py-3">
+                    <select
+                      value={draft.department_id || ''}
+                      onChange={(e) =>
+                        patchUserDraft(u.id, { department_id: e.target.value || null })
+                      }
+                      className="input-field py-1.5 text-sm min-w-[8rem]"
+                      disabled={savingId === u.id}
                     >
-                      Test password
-                    </button>
-                    <button
-                      type="button"
-                      disabled={resetting}
-                      onClick={() => {
-                        setSavingId(u.id);
-                        void resetLogins('onboarding', u.id);
-                      }}
-                      className="text-xs text-slate-600 hover:underline text-left"
+                      <option value="">Unassigned</option>
+                      {departments.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-4 py-3">
+                    <select
+                      value={draft.role_id || ''}
+                      onChange={(e) => patchUserDraft(u.id, { role_id: e.target.value })}
+                      className="input-field py-1.5 text-sm min-w-[8rem]"
+                      disabled={savingId === u.id}
                     >
-                      Onboarding reset
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      {roles.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-4 py-3">
+                    {u.must_set_password ? (
+                      <span className="text-amber-600 text-xs font-medium">Awaiting password setup</span>
+                    ) : (
+                      <span className={u.is_active ? 'text-brand-600' : 'text-red-500'}>
+                        {u.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col gap-2 min-w-[7.5rem]">
+                      <button
+                        type="button"
+                        disabled={!changed || savingId === u.id}
+                        onClick={() => void saveUser(u.id)}
+                        className="btn-primary text-xs inline-flex items-center gap-1 w-fit disabled:opacity-40"
+                      >
+                        <Save size={12} />
+                        {savingId === u.id ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={resetting}
+                        onClick={() => {
+                          setSavingId(u.id);
+                          void resetLogins('test', u.id);
+                        }}
+                        className="text-xs text-brand-700 hover:underline text-left"
+                      >
+                        Test password
+                      </button>
+                      <button
+                        type="button"
+                        disabled={resetting}
+                        onClick={() => {
+                          setSavingId(u.id);
+                          void resetLogins('onboarding', u.id);
+                        }}
+                        className="text-xs text-slate-600 hover:underline text-left"
+                      >
+                        Onboarding reset
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
