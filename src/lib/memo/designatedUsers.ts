@@ -1,4 +1,5 @@
 import type { MemoTypeSlug, User } from '@/types';
+import { getUserRoleSlug } from '@/lib/auth/profile';
 import { HR_MEMO_CREATOR_EMAIL } from '@/lib/workflow/hrWorkflowSteps';
 import { FINANCE_MEMO_APPROVER_EMAIL } from '@/lib/workflow/financeWorkflowSteps';
 import {
@@ -57,10 +58,10 @@ export function isDesignatedDeptHead(
 }
 
 export function canCreateMemoType(
-  user: Pick<User, 'role'> | null | undefined,
+  user: Pick<User, 'role'> | Record<string, unknown> | null | undefined,
   _memoTypeSlug: MemoTypeSlug
 ): boolean {
-  return Boolean(user?.role?.slug);
+  return Boolean(getUserRoleSlug(user));
 }
 
 export function filterCreatableMemoTypes<T extends { slug: string }>(

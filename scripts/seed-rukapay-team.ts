@@ -110,6 +110,7 @@ async function seed() {
 
   const { data: roles } = await supabase.from('roles').select('id, slug');
   const staffRoleId = roles?.find((r) => r.slug === 'staff')?.id;
+  const deptHeadRoleId = roles?.find((r) => r.slug === 'department_head')?.id;
   const adminRoleId = roles?.find((r) => r.slug === 'admin')?.id;
   const financeRoleId = roles?.find((r) => r.slug === 'finance_reviewer')?.id;
   const itCheckerFirstRoleId = roles?.find((r) => r.slug === 'it_checker_first')?.id;
@@ -142,13 +143,15 @@ async function seed() {
     const isFinanceReviewer = isFinanceMemoApprover || isFinanceMemoCreator;
     const role_id = isAdmin
       ? adminRoleId
-      : isFinanceMemoApprover && financeRoleId
-        ? financeRoleId
-        : isItCheckerFirst && itCheckerFirstRoleId
-          ? itCheckerFirstRoleId
-          : isItCheckerSecond && itCheckerSecondRoleId
-            ? itCheckerSecondRoleId
-            : staffRoleId;
+      : isHrStaff && deptHeadRoleId
+        ? deptHeadRoleId
+        : isFinanceMemoApprover && financeRoleId
+          ? financeRoleId
+          : isItCheckerFirst && itCheckerFirstRoleId
+            ? itCheckerFirstRoleId
+            : isItCheckerSecond && itCheckerSecondRoleId
+              ? itCheckerSecondRoleId
+              : staffRoleId;
     const department_id = isAdmin && itDept?.id
       ? itDept.id
       : (isFinanceMemoCreator || isFinanceMemoApprover) && financeDept?.id
@@ -208,7 +211,7 @@ async function seed() {
         : isFinanceReviewer
           ? 'Finance & HR Reviewer'
           : isHrStaff
-            ? 'HR — Staff'
+            ? 'HR — Dept Head'
           : isItCheckerFirst
             ? 'IT Checker (1st)'
             : isItCheckerSecond

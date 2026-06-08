@@ -74,14 +74,18 @@ async function main() {
     process.exit(1);
   }
 
+  const deptHeadRoleId = roles?.find((r) => r.slug === 'department_head')?.id;
+  const dorothyRoleId = deptHeadRoleId || staffRoleId;
   const dorothy = await assignUser(
     supabase,
     HR_MEMO_CREATOR_EMAIL,
-    staffRoleId,
+    dorothyRoleId,
     hrDept.id,
-    'HR — Staff'
+    deptHeadRoleId ? 'HR — Dept Head' : 'HR — Staff'
   );
-  console.log(`✓ ${dorothy.email} — Staff in HR (can create HR memos)`);
+  console.log(
+    `✓ ${dorothy.email} — ${deptHeadRoleId ? 'Department Head' : 'Staff'} in HR (creates HR memos)`
+  );
 
   const christine = await assignUser(
     supabase,

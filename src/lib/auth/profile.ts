@@ -1,5 +1,16 @@
 import type { Role, RoleSlug, User } from '@/types';
 
+/** Resolve role slug from normalized `role` or raw Supabase `roles` join. */
+export function getUserRoleSlug(
+  user: Pick<User, 'role'> | Record<string, unknown> | null | undefined
+): RoleSlug | undefined {
+  if (!user) return undefined;
+  const normalized = user as User;
+  if (normalized.role?.slug) return normalized.role.slug as RoleSlug;
+  const roles = (user as Record<string, unknown>).roles as { slug?: string } | null | undefined;
+  return roles?.slug as RoleSlug | undefined;
+}
+
 /** Normalize Supabase join shape (`roles`) into app `User` shape (`role`). */
 export function normalizeUserProfile(raw: Record<string, unknown> | null | undefined): User | null {
   if (!raw?.id) return null;
