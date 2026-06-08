@@ -149,6 +149,15 @@ export async function readFile(relativePath: string): Promise<Buffer> {
   return fs.readFile(fullPath);
 }
 
+/** Read file when present; returns null if missing (e.g. stale DB path). */
+export async function readFileOptional(relativePath: string): Promise<Buffer | null> {
+  try {
+    return await readFile(relativePath);
+  } catch {
+    return null;
+  }
+}
+
 export async function deleteFile(relativePath: string): Promise<void> {
   const normalized = relativePath.replace(/\\/g, '/');
   if (usesSupabaseStorage()) {

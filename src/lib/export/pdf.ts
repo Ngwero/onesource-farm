@@ -2,7 +2,7 @@ import PDFDocument from 'pdfkit';
 import path from 'path';
 import fs from 'fs/promises';
 import type { Memo, BrandingSettings, SignatureRecord } from '@/types';
-import { readFile } from '@/lib/storage';
+import { readFileOptional } from '@/lib/storage';
 import {
   MEMO_VISION_STATEMENT,
   formatMemoDate,
@@ -48,12 +48,8 @@ type MemoPdfLayout = {
 
 async function resolveLogoBuffer(logoPath?: string): Promise<Buffer | null> {
   if (logoPath) {
-    try {
-      const { readFile } = await import('@/lib/storage');
-      return readFile(logoPath);
-    } catch {
-      /* fall through */
-    }
+    const buf = await readFileOptional(logoPath);
+    if (buf) return buf;
   }
   try {
     return fs.readFile(path.join(process.cwd(), 'public', 'rukapay-logo-white.png'));
@@ -177,7 +173,7 @@ export async function generateMemoPDF(
     blocksToRender.map(async (type) => {
       const sig = resolveSignatureForBlock(type, signatures, memo);
       if (!sig?.signature_path) return;
-      const buf = await readFile(sig.signature_path);
+      const buf = await readFileOptional(sig.signature_path);
       if (buf) enhancedSigs.set(type, buf);
     })
   );
