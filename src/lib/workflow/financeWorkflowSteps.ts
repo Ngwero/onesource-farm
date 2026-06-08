@@ -7,7 +7,7 @@ export const FINANCE_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
   {
     step_order: 1,
     role_slug: 'finance_reviewer',
-    step_name: 'Finance Review',
+    step_name: 'Finance Review (Amara - CFO)',
     is_parallel: false,
     sla_hours: 48,
   },

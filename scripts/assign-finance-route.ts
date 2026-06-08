@@ -9,7 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   FINANCE_REQUEST_APPROVAL_STEPS,
   FINANCE_MEMO_CREATOR_EMAIL,
-  FINANCE_MEMO_APPROVER_EMAIL,
+  FINANCE_DEPT_HEAD_EMAIL,
 } from '../src/lib/workflow/financeWorkflowSteps';
 
 function loadEnvLocal() {
@@ -89,10 +89,10 @@ async function main() {
 
   const amara = await assignUser(
     supabase,
-    FINANCE_MEMO_APPROVER_EMAIL,
+    FINANCE_DEPT_HEAD_EMAIL,
     financeRoleId,
     finDept.id,
-    'Finance Reviewer'
+    'CFO / Finance Reviewer'
   );
   console.log(`✓ ${amara.email} — Finance reviewer (Finance Request queue)`);
 

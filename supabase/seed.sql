@@ -197,9 +197,9 @@ INSERT INTO approval_steps (workflow_id, step_order, role_slug, step_name, sla_h
 SELECT w.id, 3, 'ceo', 'CEO Approval', 72
 FROM approval_workflows w JOIN memo_types mt ON w.memo_type_id = mt.id WHERE mt.slug = 'marketing_request';
 
--- Finance Request: Christine creates → CEO (her memos skip finance); others → Christine → CEO
+-- Finance Request: Christine creates → Amara (CFO) → CEO
 INSERT INTO approval_steps (workflow_id, step_order, role_slug, step_name, sla_hours)
-SELECT w.id, 1, 'finance_reviewer', 'Finance Review (Christine)', 48
+SELECT w.id, 1, 'finance_reviewer', 'Finance Review (Amara - CFO)', 48
 FROM approval_workflows w JOIN memo_types mt ON w.memo_type_id = mt.id WHERE mt.slug = 'finance_request';
 
 INSERT INTO approval_steps (workflow_id, step_order, role_slug, step_name, sla_hours)

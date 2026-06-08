@@ -1,14 +1,16 @@
 'use client';
 
-import { Clock, FileStack, CheckCircle2 } from 'lucide-react';
+import { Clock, FileStack, CheckCircle2, FileText } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { DashboardPage } from '@/components/dashboard/DashboardPage';
 import { useMemos } from '@/hooks/useMemos';
+import { isDesignatedCfo } from '@/lib/memo/designatedUsers';
 import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
 
 export default function FinanceDashboard() {
   const { user } = useAuth();
   const financeReviewer = isInterdeptFinanceReviewer(user);
+  const cfoFinanceChecker = isDesignatedCfo(user);
 
   const { memos, financialSummary, loading } = useMemos({ status: 'pending_finance' });
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
@@ -37,15 +39,36 @@ export default function FinanceDashboard() {
     },
   ];
 
+  const quickLinks = cfoFinanceChecker
+    ? [
+        {
+          href: '/memos?status=pending_finance&memo_type=finance_request',
+          label: 'Christine — Finance memos',
+          description: 'Finance Request memos awaiting your review',
+          icon: <FileText size={20} />,
+        },
+      ]
+    : undefined;
+
   return (
     <DashboardPage
-      title={financeReviewer ? 'Finance Review — Christine' : 'Finance Dashboard'}
+      title={
+        cfoFinanceChecker
+          ? 'Finance Review — Amara (CFO)'
+          : financeReviewer
+            ? 'Finance Review — Christine'
+            : 'Finance Dashboard'
+      }
       banner={
-        financeReviewer
-          ? 'You review the finance step on all memo types (including Finance Request), then memos go to the CEO for final approval.'
-          : undefined
+        cfoFinanceChecker
+          ? 'You review Finance Request memos from Christine, then they go to the CEO for final approval.'
+          : financeReviewer
+            ? 'You review the finance step on inter-department memos (not your own Finance Requests), then memos go to the CEO.'
+            : undefined
       }
       stats={stats}
+      quickLinks={quickLinks}
+      quickLinksTitle={quickLinks ? 'Your queue' : undefined}
       loading={loading || loadingApproved}
       memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
       financialSummary={financialSummary}

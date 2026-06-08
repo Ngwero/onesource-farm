@@ -34,9 +34,11 @@ export function usesChristineFinanceQueue(
   );
 }
 
-/** Amara: pending_finance queue for Finance Request memos from Christine only. */
+/** Amara (CFO / finance_reviewer): Christine's Finance Request memos at pending_finance. */
 export function usesAmaraFinanceRequestQueue(user: User, status: string | null): boolean {
-  return isDesignatedCfo(user) && status === 'pending_finance';
+  if (status !== 'pending_finance' || !isDesignatedCfo(user)) return false;
+  const role = user.role?.slug;
+  return role === 'finance_reviewer' || role === 'exco_member';
 }
 
 export async function amaraFinanceRequestCreatorId(

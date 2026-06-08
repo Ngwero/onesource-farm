@@ -218,7 +218,7 @@ export function Sidebar() {
     );
   }
 
-  if (roleSlug === 'exco_member' && user && isDesignatedCfo(user)) {
+  if (user && isDesignatedCfo(user) && (roleSlug === 'finance_reviewer' || roleSlug === 'exco_member')) {
     const financePending: NavItem = {
       label: 'Christine — Finance memos',
       href: '/memos?status=pending_finance&memo_type=finance_request',

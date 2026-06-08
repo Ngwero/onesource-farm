@@ -217,7 +217,7 @@ export function canViewMemo(user: User, memo: Memo, sharedWith?: string[]): bool
         ].includes(memo.status?.slug || '')
       );
     case 'finance_reviewer':
-      return false;
+      return designatedCfoFinanceRequestCanView(user, memo);
     case 'hr_reviewer':
       return memo.memo_type?.slug === 'hr_request';
     case 'ceo':
@@ -340,7 +340,11 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
     return statusSlug === 'pending_ceo' && isDesignatedCeo(user);
   }
 
-  if (role === 'hr_reviewer' || role === 'finance_reviewer') {
+  if (role === 'finance_reviewer') {
+    return designatedCfoFinanceRequestCanApprove(user, memo);
+  }
+
+  if (role === 'hr_reviewer') {
     return false;
   }
 
