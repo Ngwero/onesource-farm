@@ -247,7 +247,9 @@ export function Sidebar() {
 
   const query = searchParams.toString();
   const fullPath = query ? `${pathname}?${query}` : pathname;
-  const roleLabel = roleSlug.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const roleLabel =
+    user?.title?.trim() ||
+    roleSlug.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
     <aside className="app-sidebar">

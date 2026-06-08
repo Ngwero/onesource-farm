@@ -201,6 +201,39 @@ export type ProcessApprovalResult = {
   sideEffects?: ApprovalSideEffectsPayload;
 };
 
+/** Admin override only when the admin is not the designated approver for the current step. */
+async function adminApprovalIsOverride(
+  approverId: string,
+  approverRole: string | undefined,
+  memo: {
+    department_id: string;
+    current_step_order?: number | null;
+    memo_types?: { slug: string } | { slug: string }[] | null;
+    memo_statuses?: { slug: string } | { slug: string }[] | null;
+  }
+): Promise<boolean> {
+  if (approverRole !== 'admin') return false;
+
+  const currentStatusSlug = joinSlug(
+    memo.memo_statuses as { slug: string } | { slug: string }[] | null
+  );
+  const pendingRole = currentStatusSlug
+    ? PENDING_STATUS_TO_ROLE[currentStatusSlug]
+    : undefined;
+  if (!pendingRole) return true;
+
+  const memoTypeSlug = joinSlug(
+    memo.memo_types as { slug: string } | { slug: string }[] | null
+  ) as MemoTypeSlug;
+  const expectedIds = await findApproversForStep(
+    pendingRole,
+    memo.department_id,
+    memoTypeSlug,
+    memo.current_step_order ?? 0
+  );
+  return !expectedIds.includes(approverId);
+}
+
 export async function processApproval(
   memoId: string,
   approverId: string,
@@ -335,7 +368,7 @@ export async function processApproval(
   const approverRole = joinSlug(
     approver.roles as { slug: string } | { slug: string }[] | null | undefined
   );
-  const isAdminOverride = approverRole === 'admin';
+  const isAdminOverride = await adminApprovalIsOverride(approverId, approverRole, memo);
 
   // Approve
   const delegationNote = delegation

@@ -9,11 +9,15 @@ import {
   FileStack,
   Clock,
   CheckCircle2,
+  FileText,
 } from 'lucide-react';
 import { DashboardPage } from '@/components/dashboard/DashboardPage';
 import { useMemos } from '@/hooks/useMemos';
+import { useAuth } from '@/context/AuthContext';
+import { isDesignatedItFirstChecker } from '@/lib/workflow/itCheckers';
 
 export default function AdminDashboard() {
+  const { user } = useAuth();
   const { memos, financialSummary, loading } = useMemos();
   const all = memos as Array<{ memo_statuses?: { slug: string } }>;
 
@@ -45,6 +49,16 @@ export default function AdminDashboard() {
   ];
 
   const quickLinks = [
+    ...(user && isDesignatedItFirstChecker(user)
+      ? [
+          {
+            href: '/memos?status=pending_it_checker_first&memo_type=it_request',
+            label: 'IT — my check queue',
+            description: '1st IT checker (Emmanuel)',
+            icon: <FileText size={20} />,
+          },
+        ]
+      : []),
     { href: '/admin/users', label: 'Users', description: 'Roles & access', icon: <Users size={20} /> },
     { href: '/admin/departments', label: 'Departments', icon: <Building2 size={20} /> },
     { href: '/admin/branding', label: 'Branding', icon: <Settings size={20} /> },

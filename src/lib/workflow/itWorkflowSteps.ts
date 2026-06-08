@@ -2,12 +2,12 @@ import type { WorkflowStep } from '@/lib/workflow/engine';
 
 export const IT_MEMO_CREATOR_EMAIL = 'doreen.kembabazi@rukapay.co.ug';
 
-/** IT Request: Emma → Jim → Christine (finance) → CEO */
+/** IT Request: Emmanuel → Jim → Christine (finance) → CEO */
 export const IT_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
   {
     step_order: 1,
     role_slug: 'it_checker_first',
-    step_name: 'IT Check — 1st (Emma)',
+    step_name: 'IT Check — 1st (Emmanuel)',
     is_parallel: false,
     sla_hours: 24,
   },

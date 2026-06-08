@@ -4,6 +4,7 @@ import {
   userRequiresSignatureOnFile,
 } from '@/lib/auth/rbac';
 import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
+import { isDesignatedItFirstChecker } from '@/lib/workflow/itCheckers';
 import type { MemoStatusSlug, RoleSlug, User } from '@/types';
 
 const ROLE_QUEUE_STATUS: Partial<Record<RoleSlug, MemoStatusSlug>> = {
@@ -44,6 +45,10 @@ export function onboardingQueueHref(user: User): string {
 
   if (canCreateMemo(role)) return '/memos?view=active';
 
+  if (role === 'admin' && isDesignatedItFirstChecker(user)) {
+    return '/memos?status=pending_it_checker_first&memo_type=it_request';
+  }
+
   if (role === 'admin') return '/memos';
 
   return '/memos';
@@ -52,6 +57,10 @@ export function onboardingQueueHref(user: User): string {
 export function onboardingQueueLabel(user: User): string {
   const role = user.role?.slug as RoleSlug | undefined;
   if (!role) return 'Open your memo list';
+
+  if (role === 'admin' && isDesignatedItFirstChecker(user)) {
+    return 'Open your IT check queue';
+  }
 
   if (defaultStatusForRole(role)) return 'Open your approval queue';
   if (canCreateMemo(role)) return 'See memos in progress';

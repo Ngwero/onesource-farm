@@ -37,7 +37,7 @@ const WORKFLOW_HINTS: Record<MemoTypeSlug, string> = {
   hr_request: 'Route: You → Christine (finance) → CEO',
   leave_request: 'Route: You → Department Head → CEO',
   it_request:
-    'Route: You → Department Head → Emma (1st IT check) → Jim (2nd IT check) → CEO. Check “Budget involved” if Finance must review.',
+    'Route: You → Department Head → Emmanuel (1st IT check) → Jim (2nd IT check) → CEO. Check “Budget involved” if Finance must review.',
   marketing_request: 'Route: Norman (Business) → Christine → CEO',
   finance_request: 'Route: You → Christine (finance) → CEO (other finance staff: same route)',
   general_internal:
@@ -476,7 +476,7 @@ export function MemoEditorForm({
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
             <span className="font-medium text-slate-800">Approval route</span>
             <span className="block text-xs text-slate-500 mt-0.5">
-              IT requests always go to Emma, then Jim, then Christine (Finance), then CEO.
+              IT requests always go to Emmanuel, then Jim, then Christine (Finance), then CEO.
             </span>
           </div>
         )}

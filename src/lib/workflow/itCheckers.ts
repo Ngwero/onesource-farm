@@ -1,4 +1,4 @@
-/** System admin (Emma) — also acts as 1st IT checker while keeping the admin role. */
+/** System admin (Emmanuel) — also acts as 1st IT checker while keeping the admin role. */
 export const ADMIN_EMAIL = 'emmanuel.ngwero@rukapay.co.ug';
 
 /** Designated IT memo checkers (order matters). 1st checker may be admin (single role in DB). */

@@ -46,11 +46,11 @@ export default function ItCheckerDashboard() {
 
   return (
     <DashboardPage
-      title={isFirst ? 'IT Check — Emma (1st)' : 'IT Check — Jim (2nd)'}
+      title={isFirst ? 'IT Check — Emmanuel (1st)' : 'IT Check — Jim (2nd)'}
       banner={
         isFirst
           ? 'You are the first IT checker. After you approve, memos go to Jim for the second check.'
-          : 'You are the second IT checker. Memos reach you after Emma’s first approval.'
+          : 'You are the second IT checker. Memos reach you after Emmanuel’s first approval.'
       }
       stats={stats}
       loading={loading || loadingApproved}
