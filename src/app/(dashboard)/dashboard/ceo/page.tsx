@@ -5,7 +5,7 @@ import { DashboardPage } from '@/components/dashboard/DashboardPage';
 import { useMemos } from '@/hooks/useMemos';
 
 export default function CEODashboard() {
-  const { memos, financialSummary, loading } = useMemos({ status: 'pending_ceo' });
+  const { memos, loading } = useMemos({ status: 'pending_ceo' });
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
   const all = memos as Array<{ memo_statuses?: { slug: string } }>;
 
@@ -31,7 +31,6 @@ export default function CEODashboard() {
       stats={stats}
       loading={loading || loadingApproved}
       memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
-      financialSummary={financialSummary}
       memosTitle="Pending final approval"
       emptyMessage="No memos pending CEO approval"
     />

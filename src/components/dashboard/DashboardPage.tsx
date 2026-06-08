@@ -6,12 +6,9 @@ import { format } from 'date-fns';
 import { FileText, Loader2, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { canStartMemo } from '@/lib/auth/rbac';
-import type { RoleSlug } from '@/types';
 import { StatsCards, type DashboardStat } from './StatsCards';
 import { DashboardQuickLinks, type QuickLink } from './DashboardQuickLinks';
 import { MemoList } from '@/components/memo/MemoList';
-import { FinancialSummary } from '@/components/memo/FinancialSummary';
-import type { MemoFinancialSummary } from '@/lib/memo/financial';
 
 interface DashboardPageProps {
   title: string;
@@ -23,8 +20,6 @@ interface DashboardPageProps {
   memosTitle?: string;
   loading: boolean;
   memos: Parameters<typeof MemoList>[0]['memos'];
-  financialSummary?: MemoFinancialSummary | null;
-  financialSummaryTitle?: string;
   emptyMessage?: string;
   action?: {
     href: string;
@@ -42,8 +37,6 @@ export function DashboardPage({
   memosTitle = 'Recent memos',
   loading,
   memos,
-  financialSummary,
-  financialSummaryTitle,
   emptyMessage,
   action,
 }: DashboardPageProps) {
@@ -51,9 +44,6 @@ export function DashboardPage({
   const today = format(new Date(), 'EEEE, d MMMM yyyy');
   const roleName = user?.role?.name || 'Team member';
   const department = user?.department?.name;
-  const roleSlug = (user?.role?.slug || (user as { roles?: { slug: string } })?.roles?.slug) as
-    | RoleSlug
-    | undefined;
 
   const pendingCount = stats.find((s) => s.label.toLowerCase().includes('pending'))?.value ?? 0;
 
@@ -137,12 +127,7 @@ export function DashboardPage({
             <p>Loading memos…</p>
           </div>
         ) : (
-          <>
-            {financialSummary ? (
-              <FinancialSummary summary={financialSummary} title={financialSummaryTitle} />
-            ) : null}
-            <MemoList memos={memos} currentUserId={user?.id} emptyMessage={emptyMessage} />
-          </>
+          <MemoList memos={memos} currentUserId={user?.id} emptyMessage={emptyMessage} />
         )}
       </section>
     </div>

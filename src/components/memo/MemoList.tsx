@@ -1,9 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { StatusBadge } from '../ui/StatusBadge';
-import { FileText, Eye, Pencil } from 'lucide-react';
+import { FileText, Eye, Pencil, Download } from 'lucide-react';
+import { downloadMemoPdf } from '@/lib/memo/downloadMemoPdf';
+
 const EDITABLE_STATUSES = ['draft', 'returned', 'rejected'];
+const PDF_EXPORT_STATUSES = new Set(['draft', 'deleted']);
 
 interface MemoListItem {
   id: string;
@@ -42,6 +46,19 @@ export function MemoList({
   /** When true, show memo date column (period filter / sort by memo date). */
   sortByMemoDate?: boolean;
 }) {
+  const [exportingId, setExportingId] = useState<string | null>(null);
+
+  async function handleDownload(memo: MemoListItem) {
+    setExportingId(memo.id);
+    try {
+      await downloadMemoPdf(memo.id, memo.reference_number);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Export failed');
+    } finally {
+      setExportingId(null);
+    }
+  }
+
   if (!memos.length) {
     return (
       <div className="card empty-state">
@@ -102,6 +119,17 @@ export function MemoList({
                         Edit
                       </Link>
                     )}
+                  {!PDF_EXPORT_STATUSES.has(memo.memo_statuses?.slug || '') ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(memo)}
+                      disabled={exportingId === memo.id}
+                      className="table-action"
+                    >
+                      <Download size={15} />
+                      {exportingId === memo.id ? 'PDF…' : 'PDF'}
+                    </button>
+                  ) : null}
                   <Link href={`/memos/${memo.id}`} className="table-action">
                     <Eye size={15} />
                     View

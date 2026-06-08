@@ -5,7 +5,7 @@ import { DashboardPage } from '@/components/dashboard/DashboardPage';
 import { useMemos } from '@/hooks/useMemos';
 
 export default function HRDashboard() {
-  const { memos, financialSummary, loading } = useMemos();
+  const { memos, loading } = useMemos();
   const all = memos as Array<{ memo_types?: { slug: string }; memo_statuses?: { slug: string } }>;
 
   const stats = [
@@ -41,7 +41,6 @@ export default function HRDashboard() {
       stats={stats}
       loading={loading}
       memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
-      financialSummary={financialSummary}
       memosTitle="HR-related memos"
     />
   );

@@ -19,7 +19,7 @@ import { isDesignatedItFirstChecker } from '@/lib/workflow/itCheckers';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const { memos, financialSummary, loading } = useMemos();
+  const { memos, loading } = useMemos();
   const all = memos as Array<{ memo_statuses?: { slug: string } }>;
 
   const stats = [
@@ -75,8 +75,6 @@ export default function AdminDashboard() {
       quickLinksTitle="System administration"
       loading={loading}
       memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
-      financialSummary={financialSummary}
-      financialSummaryTitle="Total financial implication (all memos)"
       memosTitle="All memos"
       action={{ href: '/memos/create', label: 'Create memo', icon: <PlusCircle size={18} /> }}
     />

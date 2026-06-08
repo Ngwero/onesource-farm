@@ -8,7 +8,7 @@ import { isDesignatedCfo } from '@/lib/memo/designatedUsers';
 
 export default function EXCODashboard() {
   const { user } = useAuth();
-  const { memos, financialSummary, loading } = useMemos({ status: 'pending_exco' });
+  const { memos, loading } = useMemos({ status: 'pending_exco' });
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
   const all = memos as Array<{ memo_statuses?: { slug: string } }>;
 
@@ -55,7 +55,6 @@ export default function EXCODashboard() {
       quickLinksTitle={quickLinks ? 'CFO review' : undefined}
       loading={loading || loadingApproved}
       memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
-      financialSummary={financialSummary}
       memosTitle="Pending EXCO memos"
       emptyMessage="No memos pending EXCO approval"
     />

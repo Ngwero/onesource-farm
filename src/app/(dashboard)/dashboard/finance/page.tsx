@@ -12,7 +12,7 @@ export default function FinanceDashboard() {
   const financeReviewer = isInterdeptFinanceReviewer(user);
   const cfoFinanceChecker = isDesignatedCfo(user);
 
-  const { memos, financialSummary, loading } = useMemos({ status: 'pending_finance' });
+  const { memos, loading } = useMemos({ status: 'pending_finance' });
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
   const all = memos as Array<{ memo_statuses?: { slug: string } }>;
 
@@ -71,8 +71,6 @@ export default function FinanceDashboard() {
       quickLinksTitle={quickLinks ? 'Your queue' : undefined}
       loading={loading || loadingApproved}
       memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
-      financialSummary={financialSummary}
-      financialSummaryTitle="Total financial implication (finance queue)"
       memosTitle="Memos awaiting finance review"
       emptyMessage="No memos pending finance review"
     />
