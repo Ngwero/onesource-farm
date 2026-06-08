@@ -11,7 +11,6 @@ import { StatsCards, type DashboardStat } from './StatsCards';
 import { DashboardQuickLinks, type QuickLink } from './DashboardQuickLinks';
 import { MemoList } from '@/components/memo/MemoList';
 import { FinancialSummary } from '@/components/memo/FinancialSummary';
-import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
 import type { MemoFinancialSummary } from '@/lib/memo/financial';
 
 interface DashboardPageProps {
@@ -115,8 +114,6 @@ export function DashboardPage({
           </div>
         </div>
       </header>
-
-      <OnboardingChecklist />
 
       <StatsCards stats={stats} />
 
