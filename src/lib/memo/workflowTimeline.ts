@@ -3,7 +3,9 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { findApproversForStep } from '@/lib/memo/approvers';
 import { formatNameWithDepartmentCode } from '@/lib/memo/personLine';
 import { resolveWorkflow } from '@/lib/workflow/resolve';
+import { workflowForFinanceCreator } from '@/lib/workflow/financeWorkflowSteps';
 import { PENDING_STATUS_TO_ROLE, sortedWorkflowSteps, type WorkflowStep } from '@/lib/workflow/engine';
+import { formatActionTimestamp } from '@/lib/memo/actionTimestamps';
 import type { ImportanceLevel, MemoTypeSlug, SignatureRecord } from '@/types';
 
 export type WorkflowTimelineStepStatus =
@@ -30,10 +32,12 @@ type MemoForTimeline = {
   submitted_at?: string | null;
   approved_at?: string | null;
   current_step_order?: number | null;
+  updated_at?: string | null;
   pending_assignee_id?: string | null;
   pending_assignee_name?: string | null;
   memo_types?: { slug: string } | { slug: string }[] | null;
   memo_statuses?: { slug: string } | { slug: string }[] | null;
+  creator?: { email?: string | null } | { email?: string | null }[] | null;
   signature_records?: SignatureRecord[] | null;
 };
 
@@ -178,20 +182,37 @@ export async function buildWorkflowTimelineForMemo(
       {
         name: 'Created',
         status: 'completed',
-        date: new Date(memo.created_at).toLocaleString(),
+        date: formatActionTimestamp(memo.created_at),
       },
     ];
   }
 
-  const workflow = await resolveWorkflow(memo.memo_type_id, memoTypeSlug, {
-    requiresFinance: memo.requires_finance ?? undefined,
-    importanceLevel: memo.importance_level ?? undefined,
-  });
+  const creatorRel = memo.creator;
+  const creatorEmail = Array.isArray(creatorRel) ? creatorRel[0]?.email : creatorRel?.email;
+
+  const workflow = workflowForFinanceCreator(
+    await resolveWorkflow(memo.memo_type_id, memoTypeSlug, {
+      requiresFinance: memo.requires_finance ?? undefined,
+      importanceLevel: memo.importance_level ?? undefined,
+    }),
+    memoTypeSlug,
+    creatorEmail
+  );
 
   const steps = sortedWorkflowSteps(workflow);
   const signatures = memo.signature_records || [];
   const sigByStep = assignSignaturesToSteps(steps, signatures);
   const pendingIdx = indexByPendingRole(steps, statusSlug);
+
+  const { data: approvalActions } = await supabase
+    .from('approvals')
+    .select('step_order, action, signed_at')
+    .eq('memo_id', memo.id)
+    .in('action', ['return', 'reject'])
+    .order('signed_at', { ascending: false });
+
+  const latestReturn = approvalActions?.find((row) => row.action === 'return');
+  const latestReject = approvalActions?.find((row) => row.action === 'reject');
   const approved = statusSlug === 'approved';
   const rejected = statusSlug === 'rejected';
   const returned = statusSlug === 'returned';
@@ -225,14 +246,12 @@ export async function buildWorkflowTimelineForMemo(
     {
       name: 'Created',
       status: 'completed',
-      date: new Date(memo.created_at).toLocaleString(),
+      date: formatActionTimestamp(memo.created_at),
     },
     {
       name: 'Submitted',
       status: memo.submitted_at || (!draft && !withdrawn) ? 'completed' : 'pending',
-      date: memo.submitted_at
-        ? new Date(memo.submitted_at).toLocaleString()
-        : undefined,
+      date: formatActionTimestamp(memo.submitted_at),
     },
   ];
 
@@ -241,13 +260,18 @@ export async function buildWorkflowTimelineForMemo(
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     let status: WorkflowTimelineStepStatus = 'pending';
+    let date: string | undefined;
 
     if (approved) {
       status = 'completed';
-    } else if (rejected && pendingIdx >= 0 && i === pendingIdx) {
+    } else if (rejected && step.step_order === (memo.current_step_order ?? 0)) {
       status = 'rejected';
-    } else if (returned && pendingIdx >= 0 && i === pendingIdx) {
+      date = formatActionTimestamp(latestReject?.signed_at);
+    } else if (returned && step.step_order === (memo.current_step_order ?? 0)) {
       status = 'returned';
+      date = formatActionTimestamp(latestReturn?.signed_at);
+    } else if ((returned || rejected) && step.step_order < (memo.current_step_order ?? 0)) {
+      status = 'completed';
     } else if (pendingIdx < 0) {
       if (!draft && !withdrawn && memo.submitted_at) {
         status = i === 0 ? 'current' : 'pending';
@@ -260,7 +284,6 @@ export async function buildWorkflowTimelineForMemo(
 
     const sig = sigByStep.get(i);
     let approver: string | undefined;
-    let date: string | undefined;
 
     if (sig && (status === 'completed' || approved)) {
       approver = approverLine(
@@ -269,7 +292,7 @@ export async function buildWorkflowTimelineForMemo(
         sig.approver_name,
         viewingUserId
       );
-      date = new Date(sig.signed_at).toLocaleString();
+      if (!date) date = formatActionTimestamp(sig.signed_at);
     } else if (status === 'current' && memo.pending_assignee_id) {
       approver = approverLine(
         userLabels,
@@ -306,9 +329,9 @@ export async function buildWorkflowTimelineForMemo(
         lastSig.approver_name,
         viewingUserId
       );
-      footer.date = new Date(lastSig.signed_at).toLocaleString();
+      footer.date = formatActionTimestamp(lastSig.signed_at);
     } else if (memo.approved_at) {
-      footer.date = new Date(memo.approved_at).toLocaleString();
+      footer.date = formatActionTimestamp(memo.approved_at);
     }
   }
 

@@ -13,6 +13,7 @@ type MemoForPrepared = {
   creator_id: string;
   creator?: MemoCreatorProfile | null;
   submitted_at?: string | null;
+  updated_at?: string | null;
   created_at: string;
 };
 
@@ -40,6 +41,6 @@ export function resolveSignatureForBlock(
     approver_title: creator.title ?? undefined,
     signature_path: creator.signature_path || '',
     block_type: 'prepared',
-    signed_at: memo.submitted_at || memo.created_at,
+    signed_at: memo.submitted_at || memo.updated_at || memo.created_at,
   };
 }

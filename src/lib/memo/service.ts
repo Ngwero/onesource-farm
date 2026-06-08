@@ -15,6 +15,8 @@ import {
   type ApprovalSideEffectsPayload,
 } from '@/lib/memo/approvalSideEffects';
 import { findApproversForStep } from '@/lib/memo/approvers';
+import { nowIso, recordApprovalAction } from '@/lib/memo/actionTimestamps';
+import { resolveFinanceRequestSubmitStep } from '@/lib/workflow/financeWorkflowSteps';
 import { generateReferenceNumber } from './reference';
 import { joinSlug } from '@/lib/auth/memoAccess';
 import type { CreateMemoInput, ApprovalInput, MemoTypeSlug } from '@/types';
@@ -122,7 +124,7 @@ export async function submitMemo(memoId: string, userId: string) {
 
   const { data: memo } = await supabase
     .from('memos')
-    .select('*, memo_types(slug), memo_statuses(slug), creator:users!creator_id(full_name)')
+    .select('*, memo_types(slug), memo_statuses(slug), creator:users!creator_id(full_name, email)')
     .eq('id', memoId)
     .single();
 
@@ -148,7 +150,8 @@ export async function submitMemo(memoId: string, userId: string) {
     importanceLevel: memo.importance_level,
   });
 
-  const firstStep = workflow.steps[0];
+  const creator = memo.creator as { full_name?: string; email?: string } | null;
+  const firstStep = resolveFinanceRequestSubmitStep(workflow, creator?.email);
   const statusSlug = getStatusForStep(firstStep.role_slug);
 
   const { data: status } = await supabase
@@ -161,18 +164,18 @@ export async function submitMemo(memoId: string, userId: string) {
     throw new Error(`Approval status "${statusSlug}" is not configured. Contact your administrator.`);
   }
 
+  const submittedAt = nowIso();
   const { error: updateError } = await supabase
     .from('memos')
     .update({
       status_id: status.id,
       current_step_order: firstStep.step_order,
-      submitted_at: new Date().toISOString(),
+      submitted_at: submittedAt,
+      updated_at: submittedAt,
     })
     .eq('id', memoId);
 
   if (updateError) throw updateError;
-
-  const creator = memo.creator as { full_name?: string } | null;
 
   const sideEffects: SubmitSideEffectsPayload = {
     memoId,
@@ -239,13 +242,24 @@ export async function processApproval(
       .eq('slug', 'rejected')
       .single();
 
+    const stampedAt = nowIso();
     await supabase
       .from('memos')
       .update({
         status_id: rejectedStatus!.id,
         rejection_reason: input.comments,
+        updated_at: stampedAt,
       })
       .eq('id', memoId);
+
+    await recordApprovalAction({
+      memoId,
+      stepOrder: memo.current_step_order ?? 0,
+      approverId,
+      action: 'reject',
+      comments: input.comments,
+      delegatedFromId: delegation?.original_approver_id,
+    });
 
     await resolveSlaTracking(memoId);
     const rejectCtx = notifyCtxFromMemo(memo, approver);
@@ -277,10 +291,23 @@ export async function processApproval(
       .eq('slug', 'returned')
       .single();
 
+    const stampedAt = nowIso();
     await supabase
       .from('memos')
-      .update({ status_id: returnedStatus!.id })
+      .update({
+        status_id: returnedStatus!.id,
+        updated_at: stampedAt,
+      })
       .eq('id', memoId);
+
+    await recordApprovalAction({
+      memoId,
+      stepOrder: memo.current_step_order ?? 0,
+      approverId,
+      action: 'return',
+      comments: input.comments,
+      delegatedFromId: delegation?.original_approver_id,
+    });
 
     await resolveSlaTracking(memoId);
     const returnCtx = notifyCtxFromMemo(memo, approver);
@@ -310,6 +337,7 @@ export async function processApproval(
     ? `Approved by ${approver.full_name} on behalf of ${delegation.original_name}`
     : undefined;
 
+  const stampedAt = nowIso();
   await supabase.from('signature_records').insert({
     memo_id: memoId,
     approver_id: approverId,
@@ -317,8 +345,18 @@ export async function processApproval(
     approver_title: approver.title,
     signature_path: approver.signature_path,
     block_type: resolveApprovalBlockType(approver, memo),
+    signed_at: stampedAt,
     delegated_from_id: delegation?.original_approver_id,
     delegation_note: delegationNote,
+  });
+
+  await recordApprovalAction({
+    memoId,
+    stepOrder: memo.current_step_order ?? 0,
+    approverId,
+    action: 'approve',
+    signaturePath: approver.signature_path,
+    delegatedFromId: delegation?.original_approver_id,
   });
 
   const memoTypeSlug = joinSlug(
@@ -350,11 +388,13 @@ export async function processApproval(
       .eq('slug', 'approved')
       .single();
 
+    const approvedAt = nowIso();
     await supabase
       .from('memos')
       .update({
         status_id: approvedStatus!.id,
-        approved_at: new Date().toISOString(),
+        approved_at: approvedAt,
+        updated_at: approvedAt,
       })
       .eq('id', memoId);
 
@@ -382,11 +422,13 @@ export async function processApproval(
     .eq('slug', statusSlug)
     .single();
 
+  const routedAt = nowIso();
   await supabase
     .from('memos')
     .update({
       status_id: nextStatus!.id,
       current_step_order: nextStep.step_order,
+      updated_at: routedAt,
     })
     .eq('id', memoId);
 
@@ -446,11 +488,13 @@ async function processExcoApproval(
       .eq('slug', 'approved')
       .single();
 
+    const approvedAt = nowIso();
     await supabase
       .from('memos')
       .update({
         status_id: approvedStatus!.id,
-        approved_at: new Date().toISOString(),
+        approved_at: approvedAt,
+        updated_at: approvedAt,
       })
       .eq('id', memoId);
 
@@ -485,13 +529,15 @@ async function processExcoApproval(
 
   if (!excoMember) throw new Error('Not an EXCO member');
 
+  const excoSignedAt = nowIso();
   await supabase.from('exco_approvals').upsert({
     memo_id: memoId,
     exco_member_id: excoMember.id,
     approver_id: approverId,
     action: 'approve',
     comments: input.comments,
-    signed_at: new Date().toISOString(),
+    signed_at: excoSignedAt,
+    updated_at: excoSignedAt,
   });
 
   const { data: allExco } = await supabase.from('exco_members').select('id').eq('is_active', true);
@@ -508,11 +554,13 @@ async function processExcoApproval(
       .eq('slug', 'approved')
       .single();
 
+    const approvedAt = nowIso();
     await supabase
       .from('memos')
       .update({
         status_id: approvedStatus!.id,
-        approved_at: new Date().toISOString(),
+        approved_at: approvedAt,
+        updated_at: approvedAt,
       })
       .eq('id', memoId);
 

@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { logAudit } from '@/lib/audit/logger';
+import { nowIso } from '@/lib/memo/actionTimestamps';
 import { assertCanEditMemo, rowToMemoForAccess } from '@/lib/auth/memoAccess';
 import { canEditMemo } from '@/lib/auth/rbac';
 import { memoFromLineForUser } from '@/lib/memo/personLine';
@@ -53,7 +54,10 @@ export async function patchEditableMemo(
     throw new Error('Memo cannot be edited');
   }
 
-  const { error } = await supabase.from('memos').update(updates).eq('id', memoId);
+  const { error } = await supabase
+    .from('memos')
+    .update({ ...updates, updated_at: nowIso() })
+    .eq('id', memoId);
   if (error) throw error;
 
   const newVersion = (existing.current_version || 1) + 1;

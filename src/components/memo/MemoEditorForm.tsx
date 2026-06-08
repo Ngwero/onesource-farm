@@ -7,6 +7,7 @@ import { PersonSelectField } from '@/components/memo/PersonSelectField';
 import { DraftAttachments } from '@/components/memo/DraftAttachments';
 import { apiFetch } from '@/lib/api/client';
 import { memoFromLineForUser, getPeopleForStyle, type MemoPersonOption } from '@/lib/memo/personLine';
+import { isFinanceRequestCreator } from '@/lib/workflow/financeWorkflowSteps';
 import type { MemoTypeSlug } from '@/types';
 
 export type MemoFormState = {
@@ -38,7 +39,7 @@ const WORKFLOW_HINTS: Record<MemoTypeSlug, string> = {
   it_request:
     'Route: You → Department Head → Emma (1st IT check) → Jim (2nd IT check) → CEO. Check “Budget involved” if Finance must review.',
   marketing_request: 'Route: Norman (Business) → Christine → CEO',
-  finance_request: 'Route: You → Christine (finance) → CEO',
+  finance_request: 'Route: You → Christine (finance) → CEO (other finance staff: same route)',
   general_internal:
     'Route: You → Department Head → Finance Review → CEO or EXCO (set importance level below)',
 };
@@ -185,6 +186,14 @@ export function MemoEditorForm({
     }
   }, [typeSlug, form.requires_finance]);
   const peopleRouting = lookup?.people ? getPeopleForStyle(lookup.people, 'routing') : [];
+
+  const workflowHint = useMemo(() => {
+    if (!typeSlug) return undefined;
+    if (typeSlug === 'finance_request' && isFinanceRequestCreator(user)) {
+      return 'Route: You → CEO (finance review is skipped for memos you create)';
+    }
+    return WORKFLOW_HINTS[typeSlug];
+  }, [typeSlug, user]);
 
   async function ensureDraftMemo(): Promise<string> {
     if (memoId) return memoId;
@@ -377,11 +386,11 @@ export function MemoEditorForm({
                 </option>
               ))}
             </select>
-            {typeSlug && WORKFLOW_HINTS[typeSlug] && (
+            {workflowHint ? (
               <p className="text-xs font-medium text-brand-700 mt-2 px-2 py-1.5 rounded-md bg-brand-50 border border-brand-100">
-                {WORKFLOW_HINTS[typeSlug]}
+                {workflowHint}
               </p>
-            )}
+            ) : null}
           </div>
           <div>
             <Label htmlFor="memo_date">Date</Label>

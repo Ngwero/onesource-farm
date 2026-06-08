@@ -3,6 +3,10 @@ import { logAudit } from '@/lib/audit/logger';
 import { startSlaTracking } from '@/lib/sla/service';
 import { notifyApprovers, type MemoNotificationContext } from '@/lib/notifications/service';
 import { findApproversForStep } from '@/lib/memo/approvers';
+import {
+  nowIso,
+  resetWorkflowSignaturesForResubmit,
+} from '@/lib/memo/actionTimestamps';
 import type { WorkflowStep } from '@/lib/workflow/engine';
 import type { MemoTypeSlug } from '@/types';
 
@@ -17,6 +21,7 @@ export type SubmitSideEffectsPayload = {
 
 async function ensureCreatorPreparedSignature(memoId: string, creatorId: string) {
   const supabase = createServiceClient();
+  const stampedAt = nowIso();
 
   const { data: existing } = await supabase
     .from('signature_records')
@@ -25,7 +30,13 @@ async function ensureCreatorPreparedSignature(memoId: string, creatorId: string)
     .eq('block_type', 'prepared')
     .maybeSingle();
 
-  if (existing) return;
+  if (existing) {
+    await supabase
+      .from('signature_records')
+      .update({ signed_at: stampedAt })
+      .eq('id', existing.id);
+    return;
+  }
 
   const { data: creator } = await supabase
     .from('users')
@@ -42,12 +53,15 @@ async function ensureCreatorPreparedSignature(memoId: string, creatorId: string)
     approver_title: creator.title,
     signature_path: creator.signature_path,
     block_type: 'prepared',
+    signed_at: stampedAt,
   });
 }
 
 /** Notifications, SLA, signatures, audit — run after the submit HTTP response is sent. */
 export async function runSubmitMemoSideEffects(payload: SubmitSideEffectsPayload) {
   const { memoId, userId, departmentId, memoTypeSlug, firstStep, notifyCtx } = payload;
+
+  await resetWorkflowSignaturesForResubmit(memoId);
 
   const [, approverIds] = await Promise.all([
     ensureCreatorPreparedSignature(memoId, userId),
