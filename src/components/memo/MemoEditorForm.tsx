@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, Send, Info, Trash2 } from 'lucide-react';
 import { PersonSelectField } from '@/components/memo/PersonSelectField';
-import { DraftAttachments, uploadMemoAttachments } from '@/components/memo/DraftAttachments';
+import { DraftAttachments } from '@/components/memo/DraftAttachments';
 import { apiFetch } from '@/lib/api/client';
 import { memoFromLineForUser, getPeopleForStyle, type MemoPersonOption } from '@/lib/memo/personLine';
 import type { MemoTypeSlug } from '@/types';
@@ -38,7 +38,7 @@ const WORKFLOW_HINTS: Record<MemoTypeSlug, string> = {
   it_request:
     'Route: You → Department Head → Emma (1st IT check) → Jim (2nd IT check) → CEO. Check “Budget involved” if Finance must review.',
   marketing_request: 'Route: Norman (Business) → Christine → CEO',
-  finance_request: 'Route: You → Amara (CFO) → CEO',
+  finance_request: 'Route: You → Christine (finance) → CEO',
   general_internal:
     'Route: You → Department Head → Finance Review → CEO or EXCO (set importance level below)',
 };
@@ -135,7 +135,8 @@ export function MemoEditorForm({
   const [lookup, setLookup] = useState<LookupData | null>(null);
   const [targetDepartmentId, setTargetDepartmentId] = useState(user.department_id || '');
   const [loading, setLoading] = useState(false);
-  const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
+  const [draftMemoId, setDraftMemoId] = useState<string | undefined>();
+  const effectiveMemoId = memoId ?? draftMemoId;
   const [form, setForm] = useState<MemoFormState>({
     memo_type_id: '',
     memo_from: '',
@@ -185,6 +186,32 @@ export function MemoEditorForm({
   }, [typeSlug, form.requires_finance]);
   const peopleRouting = lookup?.people ? getPeopleForStyle(lookup.people, 'routing') : [];
 
+  async function ensureDraftMemo(): Promise<string> {
+    if (memoId) return memoId;
+    if (draftMemoId) return draftMemoId;
+    if (!targetDepartmentId) {
+      throw new Error('Select which department this memo is for before attaching files.');
+    }
+    if (!form.memo_type_id) {
+      throw new Error('Select a memo type before attaching files.');
+    }
+
+    const res = await apiFetch('/api/memos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        department_id: targetDepartmentId,
+        ...form,
+        memo_from: senderLine,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    const id = data.memo.id as string;
+    setDraftMemoId(id);
+    return id;
+  }
+
   async function persist(submit: boolean) {
     if (!targetDepartmentId) {
       alert('Select which department this memo is for.');
@@ -197,9 +224,9 @@ export function MemoEditorForm({
 
     setLoading(true);
     try {
-      let id = memoId;
+      let id = effectiveMemoId;
 
-      if (mode === 'create') {
+      if (!id) {
         const res = await apiFetch('/api/memos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -212,14 +239,14 @@ export function MemoEditorForm({
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         id = data.memo.id as string;
-      } else if (memoId && !submit) {
-        const res = await apiFetch(`/api/memos/${memoId}`, {
+      } else if (!submit || mode === 'edit' || draftMemoId) {
+        const res = await apiFetch(`/api/memos/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...form,
             memo_from: senderLine,
-            change_reason: 'Draft saved',
+            change_reason: submit ? 'Updated before submit' : 'Draft saved',
           }),
         });
         const data = await res.json();
@@ -227,11 +254,6 @@ export function MemoEditorForm({
       }
 
       if (!id) throw new Error('Memo id missing');
-
-      if (pendingAttachments.length > 0) {
-        await uploadMemoAttachments(id, pendingAttachments);
-        setPendingAttachments([]);
-      }
 
       if (submit) {
         const submitRes = await apiFetch(`/api/memos/${id}/submit`, {
@@ -468,12 +490,8 @@ export function MemoEditorForm({
 
         {(mode === 'create' || (memoId && isEditableStatus)) && (
           <DraftAttachments
-            memoId={memoId}
-            pendingFiles={mode === 'create' ? pendingAttachments : []}
-            onAddPending={(file) => setPendingAttachments((files) => [...files, file])}
-            onRemovePending={(index) =>
-              setPendingAttachments((files) => files.filter((_, i) => i !== index))
-            }
+            memoId={effectiveMemoId}
+            onEnsureMemoId={mode === 'create' ? ensureDraftMemo : undefined}
           />
         )}
 

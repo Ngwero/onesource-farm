@@ -1,7 +1,6 @@
 import type { MemoTypeSlug, User } from '@/types';
 import { getUserRoleSlug } from '@/lib/auth/profile';
 import { HR_MEMO_CREATOR_EMAIL } from '@/lib/workflow/hrWorkflowSteps';
-import { FINANCE_MEMO_APPROVER_EMAIL } from '@/lib/workflow/financeWorkflowSteps';
 import {
   BUSINESS_HEAD_EMAIL,
   MARKETING_HEAD_EMAIL,
@@ -11,8 +10,8 @@ import { IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL } from '@/lib/workflow/
 /** Final approver (CEO). */
 export const CEO_APPROVER_EMAIL = 'rowena.turinawe@rukapay.co.ug';
 
-/** CFO (Amara) — Finance Request memos only. Other types use Christine at pending_finance. */
-export const CFO_EMAIL = FINANCE_MEMO_APPROVER_EMAIL;
+/** Finance department head (Amara). Finance review step is Christine for all memo types. */
+export const CFO_EMAIL = 'amara.oto@rukapay.co.ug';
 
 /** IT department heads. */
 export const IT_DEPT_HEAD_EMAILS = [IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL] as const;

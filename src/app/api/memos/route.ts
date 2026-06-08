@@ -21,10 +21,8 @@ import {
 import type { RoleSlug } from '@/types';
 import { isItDepartmentHead } from '@/lib/memo/itRouting';
 import {
-  financeRequestMemoTypeId,
-  financeReviewerUsesFinanceRequestOnly,
-  interdeptFinanceMemoTypeIds,
-  staffShouldUseFinanceQueueList,
+  financeStepMemoTypeIds,
+  usesChristineFinanceQueue,
 } from '@/lib/memo/financeQueueList';
 import { memoSearchOrFilter, sanitizeMemoSearchQuery } from '@/lib/memo/search';
 import { memoDateRangeForPeriod, parseMemoPeriodFilter } from '@/lib/memo/periodFilter';
@@ -92,16 +90,16 @@ export async function GET(request: NextRequest) {
     }
 
     const sharedOnly = searchParams.get('shared') === '1';
-    const financeStaffQueue = role === 'staff' && staffShouldUseFinanceQueueList(user, status);
+    const christineFinanceQueue = usesChristineFinanceQueue(user, status);
     const roleScopedList = shouldUseRoleScopedMemoList({
       status,
       view,
       sharedOnly,
-      financeStaffQueue,
+      financeStaffQueue: christineFinanceQueue,
     });
 
-    if (financeStaffQueue) {
-      const typeIds = await interdeptFinanceMemoTypeIds(supabase);
+    if (christineFinanceQueue) {
+      const typeIds = await financeStepMemoTypeIds(supabase);
       if (typeIds.length === 0) {
         return NextResponse.json({ memos: [], financial_summary: null });
       }
@@ -117,12 +115,7 @@ export async function GET(request: NextRequest) {
       }
       query = query.in('id', sharedIds);
     } else if (roleScopedList) {
-      if (role === 'finance_reviewer' && financeReviewerUsesFinanceRequestOnly(user)) {
-        const financeTypeId = await financeRequestMemoTypeId(supabase);
-        if (financeTypeId) {
-          query = query.eq('memo_type_id', financeTypeId);
-        }
-      } else if (role === 'department_head' && user.department_id) {
+      if (role === 'department_head' && user.department_id) {
         if (isItDepartmentHead(user)) {
           const [{ data: itType }, { data: pendingDeptHead }] = await Promise.all([
             supabase.from('memo_types').select('id').eq('slug', 'it_request').single(),

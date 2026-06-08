@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Paperclip, Upload, Download, X } from 'lucide-react';
+import { Paperclip, Upload, Download } from 'lucide-react';
 import { apiFetch } from '@/lib/api/client';
 
 type Attachment = {
@@ -30,14 +30,10 @@ export async function uploadMemoAttachments(memoId: string, files: File[]): Prom
 
 export function DraftAttachments({
   memoId,
-  pendingFiles = [],
-  onAddPending,
-  onRemovePending,
+  onEnsureMemoId,
 }: {
   memoId?: string;
-  pendingFiles?: File[];
-  onAddPending?: (file: File) => void;
-  onRemovePending?: (index: number) => void;
+  onEnsureMemoId?: () => Promise<string>;
 }) {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -62,16 +58,22 @@ export function DraftAttachments({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!memoId) {
-      onAddPending?.(file);
-      e.target.value = '';
-      return;
-    }
-
     setUploading(true);
     try {
-      await uploadMemoAttachment(memoId, file);
-      await load();
+      let id = memoId;
+      if (!id && onEnsureMemoId) {
+        id = await onEnsureMemoId();
+      }
+      if (!id) {
+        throw new Error('Save the memo draft first, or select a memo type and department.');
+      }
+
+      await uploadMemoAttachment(id, file);
+      const res = await apiFetch(`/api/memos/${id}`);
+      const data = await res.json();
+      if (res.ok) {
+        setAttachments(data.memo?.memo_attachments || []);
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Upload failed');
     } finally {
@@ -80,17 +82,15 @@ export function DraftAttachments({
     }
   }
 
-  const hasPending = pendingFiles.length > 0;
-
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
       <h3 className="font-semibold flex items-center gap-2 mb-3 text-sm">
         <Paperclip size={16} />
         Attachments
       </h3>
-      {!memoId && !hasPending ? (
+      {!memoId ? (
         <p className="text-xs text-slate-500 mb-3">
-          Add supporting documents here. They upload when you save or submit the memo.
+          Select a memo type and department first. Files upload immediately when added.
         </p>
       ) : null}
 
@@ -113,34 +113,8 @@ export function DraftAttachments({
             </li>
           ))}
         </ul>
-      ) : memoId && !hasPending ? (
+      ) : memoId ? (
         <p className="text-xs text-slate-500 mb-3">No attachments yet.</p>
-      ) : null}
-
-      {hasPending ? (
-        <ul className="space-y-2 mb-4">
-          {pendingFiles.map((file, index) => (
-            <li
-              key={`${file.name}-${file.size}-${index}`}
-              className="flex items-center justify-between text-sm bg-amber-50 rounded-lg px-3 py-2 border border-amber-100"
-            >
-              <span className="truncate max-w-[200px]">{file.name}</span>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-amber-700">Queued</span>
-                {onRemovePending ? (
-                  <button
-                    type="button"
-                    onClick={() => onRemovePending(index)}
-                    className="text-slate-400 hover:text-red-500 p-0.5"
-                    aria-label={`Remove ${file.name}`}
-                  >
-                    <X size={14} />
-                  </button>
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ul>
       ) : null}
 
       <label className="btn-secondary inline-flex items-center gap-2 text-sm cursor-pointer">

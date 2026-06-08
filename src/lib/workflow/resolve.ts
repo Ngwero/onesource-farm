@@ -26,16 +26,11 @@ function normalizeItWorkflow(workflow: WorkflowDefinition, memoTypeSlug: MemoTyp
 }
 
 function normalizeFinanceWorkflow(
-  workflow: WorkflowDefinition,
+  _workflow: WorkflowDefinition,
   memoTypeSlug: MemoTypeSlug
 ): WorkflowDefinition {
-  if (memoTypeSlug !== 'finance_request') return workflow;
-  const first = workflow.steps[0];
-  const hasDeptHead = workflow.steps.some((s) => s.role_slug === 'department_head');
-  if (hasDeptHead || first?.role_slug !== 'finance_reviewer') {
-    return getWorkflowForMemoType('finance_request');
-  }
-  return workflow;
+  if (memoTypeSlug !== 'finance_request') return _workflow;
+  return getWorkflowForMemoType('finance_request');
 }
 
 function normalizeMarketingWorkflow(

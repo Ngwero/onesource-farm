@@ -9,7 +9,6 @@ import {
   designatedFinanceStepReviewerCanView,
   isInterdeptFinanceReviewer,
 } from '@/lib/memo/financeMemoRouting';
-import { isDesignatedCfo } from '@/lib/memo/designatedUsers';
 import {
   emailsMatch,
   isDesignatedCeo,
@@ -216,14 +215,6 @@ export function canViewMemo(user: User, memo: Memo, sharedWith?: string[]): bool
         ].includes(memo.status?.slug || '')
       );
     case 'finance_reviewer':
-      if (isDesignatedCfo(user)) {
-        return (
-          memo.memo_type?.slug === 'finance_request' &&
-          ['pending_finance', 'pending_ceo', 'approved', 'submitted'].includes(
-            memo.status?.slug || ''
-          )
-        );
-      }
       return false;
     case 'hr_reviewer':
       return memo.memo_type?.slug === 'hr_request';

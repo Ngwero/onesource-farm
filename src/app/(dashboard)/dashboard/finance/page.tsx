@@ -4,15 +4,11 @@ import { Clock, FileStack, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { DashboardPage } from '@/components/dashboard/DashboardPage';
 import { useMemos } from '@/hooks/useMemos';
-import {
-  isInterdeptFinanceReviewer,
-  isDesignatedFinanceApprover,
-} from '@/lib/memo/financeMemoRouting';
+import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
 
 export default function FinanceDashboard() {
   const { user } = useAuth();
-  const interdeptReviewer = isInterdeptFinanceReviewer(user);
-  const cfoQueue = isDesignatedFinanceApprover(user);
+  const financeReviewer = isInterdeptFinanceReviewer(user);
 
   const { memos, financialSummary, loading } = useMemos({ status: 'pending_finance' });
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
@@ -20,7 +16,7 @@ export default function FinanceDashboard() {
 
   const stats = [
     {
-      label: interdeptReviewer ? 'Awaiting my review' : 'Pending finance',
+      label: financeReviewer ? 'Awaiting my review' : 'Pending finance',
       value: all.filter((m) => m.memo_statuses?.slug === 'pending_finance').length,
       variant: 'pending' as const,
       icon: <Clock size={16} />,
@@ -41,22 +37,14 @@ export default function FinanceDashboard() {
     },
   ];
 
-  const title = interdeptReviewer
-    ? 'Finance Review — Christine'
-    : cfoQueue
-      ? 'Finance Dashboard — Amara (CFO)'
-      : 'Finance Dashboard';
-
-  const banner = interdeptReviewer
-    ? 'You review the finance step on IT, HR, marketing, payment, procurement, and general memos. Finance Request memos are routed to Amara (CFO).'
-    : cfoQueue
-      ? 'You review Finance Request memos. Other departments are reviewed by Christine at the finance step.'
-      : undefined;
-
   return (
     <DashboardPage
-      title={title}
-      banner={banner}
+      title={financeReviewer ? 'Finance Review — Christine' : 'Finance Dashboard'}
+      banner={
+        financeReviewer
+          ? 'You review the finance step on all memo types (including Finance Request), then memos go to the CEO for final approval.'
+          : undefined
+      }
       stats={stats}
       loading={loading || loadingApproved}
       memos={memos as Parameters<typeof DashboardPage>[0]['memos']}

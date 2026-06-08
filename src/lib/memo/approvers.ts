@@ -3,7 +3,6 @@ import {
   CEO_APPROVER_EMAIL,
   DESIGNATED_DEPT_HEAD_EMAILS,
 } from '@/lib/memo/designatedUsers';
-import { FINANCE_MEMO_APPROVER_EMAIL } from '@/lib/workflow/financeWorkflowSteps';
 import { INTERDEPT_FINANCE_REVIEWER_EMAIL } from '@/lib/workflow/interdeptFinanceReviewer';
 import { BUSINESS_HEAD_EMAIL } from '@/lib/workflow/marketingWorkflowSteps';
 import { IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL } from '@/lib/workflow/itCheckers';
@@ -88,10 +87,6 @@ export async function findApproversForStep(
 
   if (roleSlug === 'it_checker_second') {
     return approverIdsForEmail(supabase, IT_SECOND_CHECKER_EMAIL);
-  }
-
-  if (roleSlug === 'finance_reviewer' && type === 'finance_request') {
-    return approverIdsForEmail(supabase, FINANCE_MEMO_APPROVER_EMAIL);
   }
 
   if (roleSlug === 'finance_reviewer') {
