@@ -46,7 +46,7 @@ export function MemoDocumentExport({ memoId, referenceNumber }: Props) {
         <p className="memo-export-panel__eyebrow">E-Copy export</p>
         <h2 className="memo-export-panel__title">Download official PDF</h2>
         <p className="memo-export-panel__desc">
-          Watermarked electronic copy with E-COPY tag. Locked for viewing and printing — not
+          Single-page watermarked E-Copy with E-COPY tag. Locked for viewing and printing — not
           editable in PDF software.
         </p>
         <p className="memo-export-panel__ref">
