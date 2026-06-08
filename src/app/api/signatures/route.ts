@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { storeFile } from '@/lib/storage';
-import { enhanceSignatureBuffer } from '@/lib/signature/enhance';
 import { requireAuth, authErrorResponse } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
@@ -14,8 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File required' }, { status: 400 });
     }
 
-    const raw = Buffer.from(await file.arrayBuffer());
-    const buffer = await enhanceSignatureBuffer(raw);
+    const buffer = Buffer.from(await file.arrayBuffer());
     const stored = await storeFile(
       'signatures',
       buffer,

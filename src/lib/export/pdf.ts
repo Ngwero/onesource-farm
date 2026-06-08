@@ -2,7 +2,7 @@ import PDFDocument from 'pdfkit';
 import path from 'path';
 import fs from 'fs/promises';
 import type { Memo, BrandingSettings, SignatureRecord } from '@/types';
-import { loadEnhancedSignature } from '@/lib/signature/enhance';
+import { readFile } from '@/lib/storage';
 import {
   MEMO_VISION_STATEMENT,
   formatMemoDate,
@@ -53,7 +53,7 @@ export async function generateMemoPDF(
     blocksToRender.map(async (type) => {
       const sig = resolveSignatureForBlock(type, signatures, memo);
       if (!sig?.signature_path) return;
-      const buf = await loadEnhancedSignature(sig.signature_path);
+      const buf = await readFile(sig.signature_path);
       if (buf) enhancedSigs.set(type, buf);
     })
   );

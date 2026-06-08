@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from '@/lib/storage';
-import { enhanceSignatureBuffer } from '@/lib/signature/enhance';
 import { requireAuth, authErrorResponse } from '@/lib/auth/session';
 import { assertCanViewMemo } from '@/lib/auth/memoAccess';
 import { createServiceClient } from '@/lib/supabase/server';
@@ -14,11 +13,6 @@ const MIME_TYPES: Record<string, string> = {
   '.pdf': 'application/pdf',
   '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
-
-function isSignaturePath(relativePath: string): boolean {
-  const normalized = relativePath.replace(/\\/g, '/').toLowerCase();
-  return normalized.startsWith('signatures/') || normalized.includes('/signatures/');
-}
 
 async function assertFileAccess(user: User, relativePath: string) {
   if (relativePath.includes('..')) throw new Error('Forbidden');
@@ -76,14 +70,9 @@ export async function GET(
 
     await assertFileAccess(user, relativePath);
 
-    let buffer = await readFile(relativePath);
+    const buffer = await readFile(relativePath);
     const ext = path.extname(relativePath).toLowerCase();
-    let mimeType = MIME_TYPES[ext] || 'application/octet-stream';
-
-    if (isSignaturePath(relativePath) && ['.png', '.jpg', '.jpeg'].includes(ext)) {
-      buffer = await enhanceSignatureBuffer(buffer);
-      mimeType = 'image/png';
-    }
+    const mimeType = MIME_TYPES[ext] || 'application/octet-stream';
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {

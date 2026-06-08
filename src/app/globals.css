@@ -1909,8 +1909,6 @@ body {
   max-width: 100%;
   object-fit: contain;
   object-position: left bottom;
-  filter: contrast(2) brightness(0.82);
-  mix-blend-mode: multiply;
 }
 
 .memo-doc-approval-pending {

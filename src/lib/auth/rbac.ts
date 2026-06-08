@@ -7,7 +7,6 @@ import { isDesignatedItFirstChecker } from '@/lib/workflow/itCheckers';
 import {
   designatedFinanceStepReviewerCanApprove,
   designatedFinanceStepReviewerCanView,
-  isDesignatedFinanceApprover,
   isInterdeptFinanceReviewer,
 } from '@/lib/memo/financeMemoRouting';
 import { isDesignatedCfo } from '@/lib/memo/designatedUsers';
@@ -251,8 +250,12 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
   const role = user.role?.slug as RoleSlug;
   if (!role) return false;
 
+  if (designatedFinanceStepReviewerCanApprove(user, memo)) {
+    return true;
+  }
+
   if (role === 'staff') {
-    return designatedFinanceStepReviewerCanApprove(user, memo);
+    return false;
   }
 
   const statusSlug = memo.status?.slug;
@@ -320,16 +323,8 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
     return statusSlug === 'pending_ceo' && isDesignatedCeo(user);
   }
 
-  if (role === 'hr_reviewer') {
+  if (role === 'hr_reviewer' || role === 'finance_reviewer') {
     return false;
-  }
-
-  if (role === 'finance_reviewer' && statusSlug === 'pending_finance') {
-    return (
-      memo.memo_type?.slug === 'finance_request' &&
-      isDesignatedFinanceApprover(user) &&
-      memo.creator_id !== user.id
-    );
   }
 
   return false;
