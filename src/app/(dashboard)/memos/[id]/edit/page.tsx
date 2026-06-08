@@ -26,6 +26,7 @@ export default function EditMemoPage({ params }: { params: Promise<{ id: string 
         const m = data.memo as Memo & {
           memo_statuses?: { slug: string };
           memo_types?: { slug: string };
+          approvals?: { action: string }[];
         };
         const statusSlug = m.memo_statuses?.slug as MemoStatusSlug | undefined;
         const memoForRbac: Memo = {
@@ -34,7 +35,7 @@ export default function EditMemoPage({ params }: { params: Promise<{ id: string 
             ? { id: '', name: '', slug: statusSlug, sort_order: 0 }
             : m.status,
         };
-        if (!canEditMemo(user, memoForRbac)) {
+        if (!canEditMemo(user, { ...memoForRbac, approvals: m.approvals })) {
           router.replace(`/memos/${id}`);
           return;
         }
@@ -78,6 +79,7 @@ export default function EditMemoPage({ params }: { params: Promise<{ id: string 
         referenceNumber={memo?.reference_number}
         initialForm={initialForm}
         statusSlug={statusSlug}
+        approvals={(memo as { approvals?: { action: string }[] })?.approvals}
         user={{
           id: user.id,
           email: user.email,

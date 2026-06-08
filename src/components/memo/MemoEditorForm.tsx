@@ -7,8 +7,9 @@ import { PersonSelectField } from '@/components/memo/PersonSelectField';
 import { DraftAttachments } from '@/components/memo/DraftAttachments';
 import { apiFetch } from '@/lib/api/client';
 import { memoFromLineForUser, getPeopleForStyle, type MemoPersonOption } from '@/lib/memo/personLine';
+import { memoAwaitingFirstApprover } from '@/lib/auth/rbac';
 import { isFinanceRequestCreator } from '@/lib/workflow/financeWorkflowSteps';
-import type { MemoTypeSlug } from '@/types';
+import type { MemoStatusSlug, MemoTypeSlug } from '@/types';
 
 export type MemoFormState = {
   memo_type_id: string;
@@ -113,6 +114,7 @@ type MemoEditorFormProps = {
   referenceNumber?: string;
   initialForm?: Partial<MemoFormState>;
   statusSlug?: string;
+  approvals?: { action: string }[];
   user: {
     id: string;
     email: string;
@@ -130,6 +132,7 @@ export function MemoEditorForm({
   referenceNumber,
   initialForm,
   statusSlug,
+  approvals,
   user,
 }: MemoEditorFormProps) {
   const router = useRouter();
@@ -308,7 +311,25 @@ export function MemoEditorForm({
     }
   }
 
-  const isEditableStatus = !statusSlug || ['draft', 'returned', 'rejected'].includes(statusSlug);
+  const pendingFirstStep =
+    Boolean(statusSlug) &&
+    memoAwaitingFirstApprover({
+      status: {
+        id: '',
+        name: '',
+        slug: statusSlug as MemoStatusSlug,
+        sort_order: 0,
+      },
+      approvals,
+    });
+  const isEditableStatus =
+    !statusSlug ||
+    ['draft', 'returned', 'rejected'].includes(statusSlug) ||
+    pendingFirstStep;
+  const canSubmit =
+    mode === 'create' ||
+    !statusSlug ||
+    ['draft', 'returned', 'rejected'].includes(statusSlug);
   const title =
     mode === 'create'
       ? 'Create New Memo'
@@ -316,9 +337,11 @@ export function MemoEditorForm({
   const subtitle =
     mode === 'create'
       ? 'Add attachments, save as draft to finish later, or submit to start approval.'
-      : referenceNumber
-        ? `${referenceNumber} — update fields and attachments, then save or submit.`
-        : 'Update your memo and save changes.';
+      : pendingFirstStep
+        ? `${referenceNumber} — update while waiting on the first approver, then save.`
+        : referenceNumber
+          ? `${referenceNumber} — update fields and attachments, then save or submit.`
+          : 'Update your memo and save changes.';
 
   return (
     <div className="max-w-4xl">
@@ -333,6 +356,11 @@ export function MemoEditorForm({
               <strong className="text-slate-800">Drafts</strong> stay private until you submit.
               Attach supporting files below before sending for approval.
             </p>
+            {pendingFirstStep && (
+              <p className="text-brand-700 font-medium">
+                Still with the first approver — save changes here until someone approves.
+              </p>
+            )}
             {statusSlug === 'returned' && (
               <p className="text-amber-700 font-medium">
                 This memo was returned for correction — update and submit again.
@@ -514,15 +542,17 @@ export function MemoEditorForm({
             <Save size={16} />
             {mode === 'create' ? 'Save draft' : 'Save changes'}
           </button>
-          <button
-            type="button"
-            onClick={() => persist(true)}
-            disabled={loading || !form.memo_type_id || !form.subject.trim()}
-            className="btn-primary flex items-center justify-center gap-2"
-          >
-            <Send size={16} />
-            Submit for approval
-          </button>
+          {canSubmit ? (
+            <button
+              type="button"
+              onClick={() => persist(true)}
+              disabled={loading || !form.memo_type_id || !form.subject.trim()}
+              className="btn-primary flex items-center justify-center gap-2"
+            >
+              <Send size={16} />
+              Submit for approval
+            </button>
+          ) : null}
           {mode === 'edit' && statusSlug === 'draft' && (
             <button
               type="button"

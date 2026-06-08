@@ -46,8 +46,15 @@ export async function assertCanViewMemo(user: User, memoId: string): Promise<Mem
 
 export async function assertCanEditMemo(user: User, memoId: string): Promise<void> {
   const row = await assertCanViewMemo(user, memoId);
+  const supabase = createServiceClient();
+  const { data: approvals } = await supabase
+    .from('approvals')
+    .select('action')
+    .eq('memo_id', memoId);
   const memo = rowToMemoForAccess(row);
-  if (!canEditMemo(user, memo)) throw new Error('Memo cannot be edited');
+  if (!canEditMemo(user, { ...memo, approvals: approvals || [] })) {
+    throw new Error('Memo cannot be edited');
+  }
 }
 
 export async function assertCanApproveMemo(user: User, memoId: string): Promise<void> {

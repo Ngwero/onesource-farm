@@ -17,7 +17,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Share2, UserMinus, Pencil, Send, Trash2 } from 'lucide-react';
-import { hasPermission, canEditMemo } from '@/lib/auth/rbac';
+import { hasPermission, canEditMemo, canResubmitMemo, memoAwaitingFirstApprover } from '@/lib/auth/rbac';
 import type { RoleSlug } from '@/types';
 import type { Memo, SignatureRecord, BrandingSettings, MemoStatusSlug } from '@/types';
 import { buildWorkflowSteps } from '@/lib/memo/workflowDisplay';
@@ -245,8 +245,13 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
     memo_statuses: (memo as { memo_statuses?: { slug: string } }).memo_statuses,
     departments: (memo as { departments?: { code: string; name?: string } }).departments,
   });
+  const approvals =
+    (memo as { approvals?: { action: string }[] }).approvals || [];
+  const memoForEdit = { ...memoForRbac, approvals };
   const canApprove = user ? canApproveMemo(user, memoForRbac) : false;
-  const canEdit = user ? canEditMemo(user, memoForRbac) : false;
+  const canEdit = user ? canEditMemo(user, memoForEdit) : false;
+  const canSubmit = user ? canResubmitMemo(user, memoForEdit) : false;
+  const pendingFirstStep = memoAwaitingFirstApprover(memoForEdit);
   const isCreator = memo.creator_id === user?.id;
   const isDraft = statusSlug === 'draft';
   const pendingStatuses = [
@@ -318,12 +323,16 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
             <p className="font-medium text-brand-900">
               {isDraft
                 ? 'This memo is a draft'
-                : statusSlug === 'returned'
-                  ? 'Returned for correction'
-                  : 'Rejected — you can revise and resubmit'}
+                : pendingFirstStep
+                  ? 'Waiting on first approval — you can still edit'
+                  : statusSlug === 'returned'
+                    ? 'Returned for correction'
+                    : 'Rejected — you can revise and resubmit'}
             </p>
             <p className="text-sm text-brand-800/80 mt-0.5">
-              Edit fields and attachments, then submit when ready.
+              {pendingFirstStep
+                ? 'Update fields or attachments while no one has approved yet.'
+                : 'Edit fields and attachments, then submit when ready.'}
             </p>
           </div>
           <div className="flex flex-wrap gap-2 shrink-0">
@@ -331,15 +340,17 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
               <Pencil size={16} />
               Edit
             </Link>
-            <button
-              type="button"
-              onClick={handleSubmitDraft}
-              disabled={actionLoading}
-              className="btn-secondary inline-flex items-center gap-2 text-sm"
-            >
-              <Send size={16} />
-              Submit
-            </button>
+            {canSubmit ? (
+              <button
+                type="button"
+                onClick={handleSubmitDraft}
+                disabled={actionLoading}
+                className="btn-secondary inline-flex items-center gap-2 text-sm"
+              >
+                <Send size={16} />
+                Submit
+              </button>
+            ) : null}
             {isDraft && (
               <button
                 type="button"

@@ -228,12 +228,32 @@ export function canViewMemo(user: User, memo: Memo, sharedWith?: string[]): bool
   }
 }
 
-export function canEditMemo(user: User, memo: Memo): boolean {
-  const editableStatuses = ['draft', 'returned', 'rejected'];
-  return (
-    memo.creator_id === user.id &&
-    editableStatuses.includes(memo.status?.slug || '')
-  );
+type MemoEditApprovals = {
+  approvals?: { action: string }[];
+};
+
+type MemoForEditCheck = Pick<Memo, 'creator_id' | 'status'> & MemoEditApprovals;
+
+/** Submitted memo still waiting on the first approver (no approve action yet). */
+export function memoAwaitingFirstApprover(
+  memo: Pick<Memo, 'status'> & MemoEditApprovals
+): boolean {
+  const statusSlug = memo.status?.slug || '';
+  if (!statusSlug.startsWith('pending_')) return false;
+  const approvals = memo.approvals ?? [];
+  return !approvals.some((row) => row.action === 'approve');
+}
+
+export function canEditMemo(user: User, memo: MemoForEditCheck): boolean {
+  if (memo.creator_id !== user.id) return false;
+  const statusSlug = memo.status?.slug || '';
+  if (['draft', 'returned', 'rejected'].includes(statusSlug)) return true;
+  return memoAwaitingFirstApprover(memo);
+}
+
+export function canResubmitMemo(user: User, memo: MemoForEditCheck): boolean {
+  if (memo.creator_id !== user.id) return false;
+  return ['draft', 'returned', 'rejected'].includes(memo.status?.slug || '');
 }
 
 function memoAwaitingApproval(statusSlug?: string): boolean {

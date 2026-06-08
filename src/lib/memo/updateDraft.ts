@@ -43,14 +43,15 @@ export async function patchEditableMemo(
   const supabase = createServiceClient();
   const { data: existing } = await supabase
     .from('memos')
-    .select('*, memo_statuses(slug), current_version')
+    .select('*, memo_statuses(slug), current_version, approvals(action)')
     .eq('id', memoId)
     .single();
 
   if (!existing) throw new Error('Not found');
 
   const memo = rowToMemoForAccess(existing);
-  if (!canEditMemo(user, memo)) {
+  const approvals = (existing as { approvals?: { action: string }[] }).approvals;
+  if (!canEditMemo(user, { ...memo, approvals })) {
     throw new Error('Memo cannot be edited');
   }
 
