@@ -37,6 +37,9 @@ export function FinancialSummary({
             <p className="text-sm text-slate-500 mt-1">
               From {memosWithAmount} of {memoCount} memo{memoCount === 1 ? '' : 's'} with amounts in
               the Financial Implication section
+              {summary.usd_to_ugx_rate
+                ? ` · USD converted at ${summary.usd_to_ugx_rate.toLocaleString('en-UG')} UGX per dollar`
+                : ''}
             </p>
           </div>
         </div>

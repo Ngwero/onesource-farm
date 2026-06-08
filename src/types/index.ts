@@ -204,6 +204,7 @@ export interface BrandingSettings {
   footer_text?: string;
   confidentiality_notice?: string;
   page_number_style?: string;
+  usd_to_ugx_rate?: number;
 }
 
 export interface Notification {

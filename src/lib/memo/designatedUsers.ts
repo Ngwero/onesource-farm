@@ -56,14 +56,11 @@ export function isDesignatedDeptHead(
   return heads.some((e) => emailsMatch(user.email, e));
 }
 
-const MEMO_CREATOR_ROLES = new Set(['staff', 'department_head', 'admin']);
-
 export function canCreateMemoType(
   user: Pick<User, 'role'> | null | undefined,
   _memoTypeSlug: MemoTypeSlug
 ): boolean {
-  const role = user?.role?.slug;
-  return Boolean(role && MEMO_CREATOR_ROLES.has(role));
+  return Boolean(user?.role?.slug);
 }
 
 export function filterCreatableMemoTypes<T extends { slug: string }>(

@@ -29,6 +29,7 @@ import type { Memo, SignatureRecord, BrandingSettings, MemoStatusSlug } from '@/
 import { buildWorkflowSteps } from '@/lib/memo/workflowDisplay';
 import type { WorkflowTimelineStep } from '@/lib/memo/workflowTimeline';
 import { formatCurrency, getMemoFinancialAmount } from '@/lib/memo/financial';
+import { normalizeUsdToUgxRate } from '@/lib/memo/exchangeRate';
 
 type CommentRow = {
   id: string;
@@ -194,6 +195,27 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
     }
   }
 
+  async function handleAdminDelete() {
+    const reason = prompt('Reason for deleting this memo (required):');
+    if (!reason?.trim()) return;
+    if (!confirm('Move this memo to trash? You can restore it from Admin → Trash.')) return;
+    setActionLoading(true);
+    try {
+      const res = await apiFetch(`/api/memos/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      router.push('/admin/trash');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Delete failed');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   async function handlePostComment() {
     if (!comment.trim()) return;
     setPostingComment(true);
@@ -241,6 +263,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
     'pending_exco',
   ];
   const roleSlug = user?.role?.slug as RoleSlug | undefined;
+  const isAdmin = roleSlug === 'admin';
   const canShare =
     isCreator ||
     (roleSlug && (hasPermission(roleSlug, '*') || hasPermission(roleSlug, 'memo:share')));
@@ -263,7 +286,10 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
       createdAt: memo.created_at,
       submittedAt: memo.submitted_at,
     });
-  const memoAmount = getMemoFinancialAmount(memo.financial_implication);
+  const memoAmount = getMemoFinancialAmount(
+    memo.financial_implication,
+    normalizeUsdToUgxRate(branding?.usd_to_ugx_rate)
+  );
 
   return (
     <div className="space-y-6">
@@ -414,6 +440,24 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
             <button onClick={handleWithdraw} className="btn-secondary w-full text-sm">
               Withdraw / Cancel Memo
             </button>
+          )}
+
+          {isAdmin && statusSlug !== 'deleted' && (
+            <div className="card p-4 border-red-100">
+              <h3 className="font-semibold mb-2 text-red-800">Admin</h3>
+              <p className="text-xs text-slate-500 mb-3">
+                Move this memo to trash. Restore or permanently delete from Admin → Trash.
+              </p>
+              <button
+                type="button"
+                onClick={handleAdminDelete}
+                disabled={actionLoading}
+                className="btn-danger w-full flex items-center justify-center gap-2 text-sm"
+              >
+                <Trash2 size={16} />
+                Delete memo
+              </button>
+            </div>
           )}
 
           {canShare && (

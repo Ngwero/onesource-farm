@@ -23,6 +23,7 @@ import {
   marketingDeptHeadCanViewMemo,
 } from '@/lib/memo/marketingRouting';
 import { isDesignatedItSecondChecker } from '@/lib/memo/itRouting';
+import { userInMemoDepartment } from '@/lib/memo/orgVisibility';
 
 export const ROLE_PERMISSIONS: Record<RoleSlug, string[]> = {
   admin: ['*'],
@@ -40,18 +41,89 @@ export const ROLE_PERMISSIONS: Record<RoleSlug, string[]> = {
     'memo:comment',
   ],
   business_head: [
+    'memo:create',
+    'memo:view_own',
+    'memo:edit_draft',
+    'memo:withdraw',
+    'memo:share',
     'memo:view_department',
     'memo:approve',
     'memo:return',
     'memo:reject',
     'memo:comment',
   ],
-  it_checker_first: ['memo:view_it', 'memo:approve', 'memo:return', 'memo:reject', 'memo:comment'],
-  it_checker_second: ['memo:view_it', 'memo:approve', 'memo:return', 'memo:reject', 'memo:comment'],
-  finance_reviewer: ['memo:view_finance', 'memo:approve', 'memo:return', 'memo:reject', 'memo:comment'],
-  hr_reviewer: ['memo:view_hr', 'memo:approve', 'memo:return', 'memo:reject', 'memo:comment'],
-  ceo: ['memo:view_ceo', 'memo:approve', 'memo:return', 'memo:reject', 'memo:comment'],
-  exco_member: ['memo:view_exco', 'memo:approve', 'memo:return', 'memo:reject', 'memo:comment'],
+  it_checker_first: [
+    'memo:create',
+    'memo:view_own',
+    'memo:edit_draft',
+    'memo:withdraw',
+    'memo:share',
+    'memo:view_it',
+    'memo:approve',
+    'memo:return',
+    'memo:reject',
+    'memo:comment',
+  ],
+  it_checker_second: [
+    'memo:create',
+    'memo:view_own',
+    'memo:edit_draft',
+    'memo:withdraw',
+    'memo:share',
+    'memo:view_it',
+    'memo:approve',
+    'memo:return',
+    'memo:reject',
+    'memo:comment',
+  ],
+  finance_reviewer: [
+    'memo:create',
+    'memo:view_own',
+    'memo:edit_draft',
+    'memo:withdraw',
+    'memo:share',
+    'memo:view_finance',
+    'memo:approve',
+    'memo:return',
+    'memo:reject',
+    'memo:comment',
+  ],
+  hr_reviewer: [
+    'memo:create',
+    'memo:view_own',
+    'memo:edit_draft',
+    'memo:withdraw',
+    'memo:share',
+    'memo:view_hr',
+    'memo:approve',
+    'memo:return',
+    'memo:reject',
+    'memo:comment',
+  ],
+  ceo: [
+    'memo:create',
+    'memo:view_own',
+    'memo:edit_draft',
+    'memo:withdraw',
+    'memo:share',
+    'memo:view_ceo',
+    'memo:approve',
+    'memo:return',
+    'memo:reject',
+    'memo:comment',
+  ],
+  exco_member: [
+    'memo:create',
+    'memo:view_own',
+    'memo:edit_draft',
+    'memo:withdraw',
+    'memo:share',
+    'memo:view_exco',
+    'memo:approve',
+    'memo:return',
+    'memo:reject',
+    'memo:comment',
+  ],
 };
 
 export function hasPermission(roleSlug: RoleSlug, permission: string): boolean {
@@ -111,6 +183,15 @@ export function canViewMemo(user: User, memo: Memo, sharedWith?: string[]): bool
   if (role === 'admin') return true;
   if (memo.creator_id === user.id) return true;
   if (sharedWith?.includes(user.id)) return true;
+
+  const statusSlug = memo.status?.slug || '';
+  if (statusSlug === 'draft' || statusSlug === 'deleted') {
+    return false;
+  }
+
+  if (userInMemoDepartment(user, memo)) {
+    return true;
+  }
 
   if (designatedFinanceStepReviewerCanView(user, memo)) return true;
 

@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { createMemo } from '@/lib/memo/service';
 import { getMemoFinancialAmount, summarizeMemoFinancials } from '@/lib/memo/financial';
+import { fetchUsdToUgxRate } from '@/lib/memo/exchangeRate';
+import {
+  applyDepartmentMemoListFilter,
+  getPrivateMemoStatusIds,
+  shouldUseRoleScopedMemoList,
+} from '@/lib/memo/orgVisibility';
 import { requireAuth, authErrorResponse } from '@/lib/auth/session';
 import { memoFromLineForUser } from '@/lib/memo/personLine';
 import { fetchMemoIdsForApprovedTab } from '@/lib/memo/approvedMemos';
@@ -85,65 +91,80 @@ export async function GET(request: NextRequest) {
       query = query.order('created_at', { ascending: false });
     }
 
-    if (role === 'staff' && staffShouldUseFinanceQueueList(user, status)) {
+    const sharedOnly = searchParams.get('shared') === '1';
+    const financeStaffQueue = role === 'staff' && staffShouldUseFinanceQueueList(user, status);
+    const roleScopedList = shouldUseRoleScopedMemoList({
+      status,
+      view,
+      sharedOnly,
+      financeStaffQueue,
+    });
+
+    if (financeStaffQueue) {
       const typeIds = await interdeptFinanceMemoTypeIds(supabase);
       if (typeIds.length === 0) {
         return NextResponse.json({ memos: [], financial_summary: null });
       }
       query = query.in('memo_type_id', typeIds);
-    } else if (role === 'staff') {
-      const sharedOnly = searchParams.get('shared') === '1';
+    } else if (sharedOnly) {
       const { data: sharedRows } = await supabase
         .from('shared_memo_access')
         .select('memo_id')
         .eq('shared_with', user.id);
       const sharedIds = (sharedRows || []).map((r) => r.memo_id as string);
-
-      if (sharedOnly) {
-        if (sharedIds.length === 0) {
-          return NextResponse.json({ memos: [], financial_summary: null });
+      if (sharedIds.length === 0) {
+        return NextResponse.json({ memos: [], financial_summary: null });
+      }
+      query = query.in('id', sharedIds);
+    } else if (roleScopedList) {
+      if (role === 'finance_reviewer' && financeReviewerUsesFinanceRequestOnly(user)) {
+        const financeTypeId = await financeRequestMemoTypeId(supabase);
+        if (financeTypeId) {
+          query = query.eq('memo_type_id', financeTypeId);
         }
-        query = query.in('id', sharedIds);
-      } else if (sharedIds.length > 0) {
-        query = query.or(`creator_id.eq.${user.id},id.in.(${sharedIds.join(',')})`);
-      } else {
-        query = query.eq('creator_id', user.id);
-      }
-    } else if (role === 'finance_reviewer' && financeReviewerUsesFinanceRequestOnly(user)) {
-      const financeTypeId = await financeRequestMemoTypeId(supabase);
-      if (financeTypeId) {
-        query = query.eq('memo_type_id', financeTypeId);
-      }
-    } else if (role === 'department_head' && user.department_id) {
-      if (isItDepartmentHead(user)) {
-        const [{ data: itType }, { data: pendingDeptHead }] = await Promise.all([
-          supabase.from('memo_types').select('id').eq('slug', 'it_request').single(),
-          supabase.from('memo_statuses').select('id').eq('slug', 'pending_department_head').single(),
-        ]);
-        if (itType?.id && pendingDeptHead?.id) {
-          query = query.or(
-            `department_id.eq.${user.department_id},and(memo_type_id.eq.${itType.id},status_id.eq.${pendingDeptHead.id})`
-          );
+      } else if (role === 'department_head' && user.department_id) {
+        if (isItDepartmentHead(user)) {
+          const [{ data: itType }, { data: pendingDeptHead }] = await Promise.all([
+            supabase.from('memo_types').select('id').eq('slug', 'it_request').single(),
+            supabase
+              .from('memo_statuses')
+              .select('id')
+              .eq('slug', 'pending_department_head')
+              .single(),
+          ]);
+          if (itType?.id && pendingDeptHead?.id) {
+            query = query.or(
+              `department_id.eq.${user.department_id},and(memo_type_id.eq.${itType.id},status_id.eq.${pendingDeptHead.id})`
+            );
+          } else {
+            query = query.eq('department_id', user.department_id);
+          }
         } else {
           query = query.eq('department_id', user.department_id);
         }
-      } else {
-        query = query.eq('department_id', user.department_id);
+      } else if (role === 'business_head') {
+        const { data: marketingType } = await supabase
+          .from('memo_types')
+          .select('id')
+          .eq('slug', 'marketing_request')
+          .single();
+        if (marketingType?.id) query = query.eq('memo_type_id', marketingType.id);
+      } else if (role === 'it_checker_first' || role === 'it_checker_second') {
+        const { data: itType } = await supabase
+          .from('memo_types')
+          .select('id')
+          .eq('slug', 'it_request')
+          .single();
+        if (itType) query = query.eq('memo_type_id', itType.id);
       }
-    } else if (role === 'business_head') {
-      const { data: marketingType } = await supabase
-        .from('memo_types')
-        .select('id')
-        .eq('slug', 'marketing_request')
-        .single();
-      if (marketingType?.id) query = query.eq('memo_type_id', marketingType.id);
-    } else if (role === 'it_checker_first' || role === 'it_checker_second') {
-      const { data: itType } = await supabase
-        .from('memo_types')
-        .select('id')
-        .eq('slug', 'it_request')
-        .single();
-      if (itType) query = query.eq('memo_type_id', itType.id);
+    } else if (role !== 'admin') {
+      const statusIds = await getPrivateMemoStatusIds(supabase);
+      query = applyDepartmentMemoListFilter(
+        query,
+        user.id,
+        user.department_id,
+        statusIds
+      );
     }
 
     if (status === 'approved') {
@@ -215,12 +236,13 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
     if (error) throw error;
 
+    const usdToUgx = await fetchUsdToUgxRate(supabase);
     const withAssignees = await attachPendingAssigneeNames(supabase, data || [], user.id);
     const memos = withAssignees.map((memo) => ({
       ...memo,
-      parsed_financial_amount: getMemoFinancialAmount(memo.financial_implication),
+      parsed_financial_amount: getMemoFinancialAmount(memo.financial_implication, usdToUgx),
     }));
-    const financial_summary = summarizeMemoFinancials(memos);
+    const financial_summary = summarizeMemoFinancials(memos, usdToUgx);
 
     return NextResponse.json(
       { memos, financial_summary },
@@ -242,6 +264,9 @@ export async function POST(request: NextRequest) {
     const { department_id, memo_type_id, ...input } = body;
 
     const role = (user.role?.slug || 'staff') as RoleSlug;
+    if (!user.role?.slug) {
+      return NextResponse.json({ error: 'Your role cannot create memos' }, { status: 403 });
+    }
     if (!canCreateMemo(role) && !hasPermission(role, '*')) {
       return NextResponse.json({ error: 'Your role cannot create memos' }, { status: 403 });
     }

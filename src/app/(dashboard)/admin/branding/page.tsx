@@ -34,6 +34,12 @@ export default function AdminBrandingPage() {
     { key: 'footer_text', label: 'Footer Text', textarea: true },
     { key: 'confidentiality_notice', label: 'Confidentiality Notice', textarea: true },
     { key: 'page_number_style', label: 'Page Number Style (use {current} and {total})' },
+    {
+      key: 'usd_to_ugx_rate',
+      label: 'USD to UGX exchange rate',
+      number: true,
+      hint: 'Used when financial implication amounts are entered in USD (e.g. USD 500).',
+    },
   ];
 
   return (
@@ -41,7 +47,7 @@ export default function AdminBrandingPage() {
       <h1 className="text-2xl font-bold text-slate-800 mb-6">Branding Settings</h1>
 
       <form onSubmit={handleSave} className="card p-6 space-y-4">
-        {fields.map(({ key, label, textarea }) => (
+        {fields.map(({ key, label, textarea, number, hint }) => (
           <div key={key}>
             <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
             {textarea ? (
@@ -52,11 +58,24 @@ export default function AdminBrandingPage() {
               />
             ) : (
               <input
-                value={(branding as Record<string, string>)[key] || ''}
-                onChange={(e) => setBranding({ ...branding, [key]: e.target.value })}
+                type={number ? 'number' : 'text'}
+                min={number ? 1 : undefined}
+                step={number ? '0.01' : undefined}
+                value={
+                  number
+                    ? (branding as Record<string, number | string>)[key] ?? ''
+                    : (branding as Record<string, string>)[key] || ''
+                }
+                onChange={(e) =>
+                  setBranding({
+                    ...branding,
+                    [key]: number ? parseFloat(e.target.value) || '' : e.target.value,
+                  })
+                }
                 className="input-field"
               />
             )}
+            {hint ? <p className="text-xs text-slate-500 mt-1">{hint}</p> : null}
           </div>
         ))}
 
