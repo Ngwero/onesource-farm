@@ -24,6 +24,7 @@ import { RukaPayLogo } from '@/components/brand/RukaPayLogo';
 import { canCreateMemo } from '@/lib/auth/rbac';
 import { isDesignatedItFirstChecker } from '@/lib/workflow/itCheckers';
 import { isBusinessHead } from '@/lib/memo/marketingRouting';
+import { isDesignatedCfo } from '@/lib/memo/designatedUsers';
 import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
 import type { User } from '@/types';
 import type { RoleSlug } from '@/types';
@@ -215,6 +216,19 @@ export function Sidebar() {
       roleSlug,
       user
     );
+  }
+
+  if (roleSlug === 'exco_member' && user && isDesignatedCfo(user)) {
+    const financePending: NavItem = {
+      label: 'Christine — Finance memos',
+      href: '/memos?status=pending_finance&memo_type=finance_request',
+      icon: <FileText size={18} />,
+    };
+    if (!navItems.some((i) => i.href === financePending.href)) {
+      const dashIdx = navItems.findIndex((i) => i.href.startsWith('/dashboard'));
+      const insertAt = dashIdx >= 0 ? dashIdx + 1 : 1;
+      navItems = [...navItems.slice(0, insertAt), financePending, ...navItems.slice(insertAt)];
+    }
   }
 
   if (roleSlug === 'admin' && isDesignatedItFirstChecker(user)) {

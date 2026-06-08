@@ -3,6 +3,7 @@ import type { Memo, MemoStatusSlug, MemoTypeSlug } from '@/types';
 export type MemoAccessRow = {
   id: string;
   creator_id: string;
+  creator?: { email?: string } | { email?: string }[] | null;
   department_id: string;
   requires_exco?: boolean;
   requires_finance?: boolean;
@@ -26,6 +27,12 @@ export function rowToMemoForAccess(row: MemoAccessRow): Memo {
   const statusSlug = joinSlug(row.memo_statuses);
   const deptRel = row.departments;
   const dept = deptRel ? (Array.isArray(deptRel) ? deptRel[0] : deptRel) : undefined;
+  const creatorRel = row.creator;
+  const creator = creatorRel
+    ? Array.isArray(creatorRel)
+      ? creatorRel[0]
+      : creatorRel
+    : undefined;
 
   return {
     id: row.id,
@@ -57,6 +64,15 @@ export function rowToMemoForAccess(row: MemoAccessRow): Memo {
           id: row.department_id,
           name: dept.name || '',
           code: dept.code,
+          is_active: true,
+        }
+      : undefined,
+    creator: creator?.email
+      ? {
+          id: row.creator_id,
+          full_name: '',
+          email: creator.email,
+          role_id: '',
           is_active: true,
         }
       : undefined,

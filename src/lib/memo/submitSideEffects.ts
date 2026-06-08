@@ -15,6 +15,7 @@ export type SubmitSideEffectsPayload = {
   userId: string;
   departmentId: string;
   memoTypeSlug: MemoTypeSlug;
+  creatorEmail?: string | null;
   firstStep: WorkflowStep;
   notifyCtx: MemoNotificationContext;
 };
@@ -59,13 +60,20 @@ async function ensureCreatorPreparedSignature(memoId: string, creatorId: string)
 
 /** Notifications, SLA, signatures, audit — run after the submit HTTP response is sent. */
 export async function runSubmitMemoSideEffects(payload: SubmitSideEffectsPayload) {
-  const { memoId, userId, departmentId, memoTypeSlug, firstStep, notifyCtx } = payload;
+  const { memoId, userId, departmentId, memoTypeSlug, creatorEmail, firstStep, notifyCtx } =
+    payload;
 
   await resetWorkflowSignaturesForResubmit(memoId);
 
   const [, approverIds] = await Promise.all([
     ensureCreatorPreparedSignature(memoId, userId),
-    findApproversForStep(firstStep.role_slug, departmentId, memoTypeSlug, firstStep.step_order),
+    findApproversForStep(
+      firstStep.role_slug,
+      departmentId,
+      memoTypeSlug,
+      firstStep.step_order,
+      creatorEmail
+    ),
   ]);
 
   await startSlaTracking(

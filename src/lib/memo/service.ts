@@ -182,6 +182,7 @@ export async function submitMemo(memoId: string, userId: string) {
     userId,
     departmentId: memo.department_id as string,
     memoTypeSlug,
+    creatorEmail: creator?.email,
     firstStep,
     notifyCtx: {
       referenceNumber: memo.reference_number,
@@ -210,6 +211,7 @@ async function adminApprovalIsOverride(
     current_step_order?: number | null;
     memo_types?: { slug: string } | { slug: string }[] | null;
     memo_statuses?: { slug: string } | { slug: string }[] | null;
+    creator?: { email?: string } | { email?: string }[] | null;
   }
 ): Promise<boolean> {
   if (approverRole !== 'admin') return false;
@@ -225,11 +227,14 @@ async function adminApprovalIsOverride(
   const memoTypeSlug = joinSlug(
     memo.memo_types as { slug: string } | { slug: string }[] | null
   ) as MemoTypeSlug;
+  const creatorRel = memo.creator;
+  const creatorEmail = Array.isArray(creatorRel) ? creatorRel[0]?.email : creatorRel?.email;
   const expectedIds = await findApproversForStep(
     pendingRole,
     memo.department_id,
     memoTypeSlug,
-    memo.current_step_order ?? 0
+    memo.current_step_order ?? 0,
+    creatorEmail
   );
   return !expectedIds.includes(approverId);
 }
@@ -249,11 +254,14 @@ export async function processApproval(
 
   const { data: memo } = await supabase
     .from('memos')
-    .select('*, memo_types(slug), memo_statuses(slug)')
+    .select('*, memo_types(slug), memo_statuses(slug), creator:users!creator_id(email)')
     .eq('id', memoId)
     .single();
 
   if (!memo) throw new Error('Memo not found');
+
+  const creatorRel = memo.creator as { email?: string } | { email?: string }[] | null;
+  const creatorEmail = Array.isArray(creatorRel) ? creatorRel[0]?.email : creatorRel?.email;
 
   if (input.action === 'reject' && !input.comments) {
     throw new Error('Rejection reason is required');
@@ -478,7 +486,8 @@ export async function processApproval(
     nextStep.role_slug,
     memo.department_id,
     memoTypeSlug,
-    nextStep.step_order
+    nextStep.step_order,
+    creatorEmail
   );
   await resolveSlaTracking(memoId);
   await startSlaTracking(memoId, nextStep.step_order, nextStep.role_slug, approverIds[0] ?? null);

@@ -10,7 +10,7 @@ import { IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL } from '@/lib/workflow/
 /** Final approver (CEO). */
 export const CEO_APPROVER_EMAIL = 'rowena.turinawe@rukapay.co.ug';
 
-/** Finance department head (Amara). Finance review step is Christine for all memo types. */
+/** Finance department head (Amara). Reviews Finance Request memos from Christine. */
 export const CFO_EMAIL = 'amara.oto@rukapay.co.ug';
 
 /** IT department heads. */

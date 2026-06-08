@@ -40,7 +40,7 @@ const WORKFLOW_HINTS: Record<MemoTypeSlug, string> = {
   it_request:
     'Route: You → Department Head → Emmanuel (1st IT check) → Jim (2nd IT check) → CEO. Check “Budget involved” if Finance must review.',
   marketing_request: 'Route: Norman (Business) → Christine → CEO',
-  finance_request: 'Route: You → Christine (finance) → CEO (other finance staff: same route)',
+  finance_request: 'Route: You → Christine (finance) → CEO',
   general_internal:
     'Route: You → Department Head → Finance Review → CEO or EXCO (set importance level below)',
 };
@@ -225,7 +225,7 @@ export function MemoEditorForm({
   const workflowHint = useMemo(() => {
     if (!typeSlug) return undefined;
     if (typeSlug === 'finance_request' && isFinanceRequestCreator(user)) {
-      return 'Route: You → CEO (finance review is skipped for memos you create)';
+      return 'Route: You → Amara (CFO) → CEO';
     }
     return WORKFLOW_HINTS[typeSlug];
   }, [typeSlug, user]);

@@ -238,6 +238,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
   const memoForRbac = rowToMemoForAccess({
     id: memo.id,
     creator_id: memo.creator_id,
+    creator: (memo as { creator?: { email?: string } }).creator,
     department_id: memo.department_id,
     requires_exco: memo.requires_exco,
     requires_finance: memo.requires_finance,

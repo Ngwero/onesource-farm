@@ -9,6 +9,8 @@ type MemoRowForAssignee = {
   current_step_order?: number | null;
   memo_statuses?: { slug?: string } | { slug?: string }[] | null;
   memo_types?: { slug?: string } | { slug?: string }[] | null;
+  creator?: { email?: string } | { email?: string }[] | null;
+  creator_id?: string | null;
 };
 
 function joinSlug<T extends { slug?: string }>(
@@ -44,11 +46,14 @@ async function resolveAssigneeFromWorkflow(
   if (!roleSlug || !memo.department_id) return null;
 
   const memoTypeSlug = joinSlug(memo.memo_types) as MemoTypeSlug | string | undefined;
+  const creatorRel = memo.creator;
+  const creatorEmail = Array.isArray(creatorRel) ? creatorRel[0]?.email : creatorRel?.email;
   const approverIds = await findApproversForStep(
     roleSlug,
     memo.department_id,
     memoTypeSlug,
-    memo.current_step_order ?? undefined
+    memo.current_step_order ?? undefined,
+    creatorEmail
   );
   if (approverIds.length === 0) return null;
   return userLabelForId(supabase, approverIds[0]);

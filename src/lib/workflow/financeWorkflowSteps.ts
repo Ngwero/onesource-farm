@@ -1,16 +1,13 @@
 import { emailsMatch } from '@/lib/memo/designatedUsers';
-import {
-  sortedWorkflowSteps,
-  type WorkflowDefinition,
-  type WorkflowStep,
-} from '@/lib/workflow/engine';
+import { INTERDEPT_FINANCE_REVIEWER_EMAIL } from '@/lib/workflow/interdeptFinanceReviewer';
+import type { WorkflowDefinition, WorkflowStep } from '@/lib/workflow/engine';
 
-/** Finance Request (from finance dept): Christine → CEO */
+/** Finance Request: finance review → CEO (Amara when Christine authors; Christine for other authors). */
 export const FINANCE_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
   {
     step_order: 1,
     role_slug: 'finance_reviewer',
-    step_name: 'Finance Review (Christine)',
+    step_name: 'Finance Review',
     is_parallel: false,
     sla_hours: 48,
   },
@@ -24,45 +21,41 @@ export const FINANCE_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
 ];
 
 export const FINANCE_MEMO_CREATOR_EMAIL = 'christine.kangume@rukapay.co.ug';
-/** Finance step approver for all memo types (including Finance Request). */
 export const FINANCE_MEMO_APPROVER_EMAIL = 'christine.kangume@rukapay.co.ug';
 export const FINANCE_DEPT_HEAD_EMAIL = 'amara.oto@rukapay.co.ug';
-
-/** Christine's Finance Request memos skip finance review and go straight to the CEO. */
-export function financeRequestSkipsFinanceReview(
-  creatorEmail: string | null | undefined
-): boolean {
-  return emailsMatch(creatorEmail ?? undefined, FINANCE_MEMO_CREATOR_EMAIL);
-}
 
 export function isFinanceRequestCreator(
   user: { email?: string | null } | null | undefined
 ): boolean {
-  return financeRequestSkipsFinanceReview(user?.email);
+  return emailsMatch(user?.email ?? undefined, FINANCE_MEMO_CREATOR_EMAIL);
+}
+
+/** Christine's finance requests go to Amara; all other finance steps stay with Christine. */
+export function resolveFinanceReviewerEmail(
+  memoTypeSlug?: string,
+  creatorEmail?: string | null
+): string {
+  if (
+    memoTypeSlug === 'finance_request' &&
+    emailsMatch(creatorEmail ?? undefined, FINANCE_MEMO_CREATOR_EMAIL)
+  ) {
+    return FINANCE_DEPT_HEAD_EMAIL;
+  }
+  return INTERDEPT_FINANCE_REVIEWER_EMAIL;
 }
 
 export function workflowForFinanceCreator(
   workflow: WorkflowDefinition,
-  memoTypeSlug: string | undefined,
-  creatorEmail: string | null | undefined
+  _memoTypeSlug?: string,
+  _creatorEmail?: string | null
 ): WorkflowDefinition {
-  if (memoTypeSlug !== 'finance_request' || !financeRequestSkipsFinanceReview(creatorEmail)) {
-    return workflow;
-  }
-  return {
-    ...workflow,
-    steps: sortedWorkflowSteps(workflow).filter((s) => s.role_slug !== 'finance_reviewer'),
-  };
+  return workflow;
 }
 
 export function resolveFinanceRequestSubmitStep(
   workflow: WorkflowDefinition,
-  creatorEmail: string | null | undefined
+  _creatorEmail?: string | null
 ): WorkflowStep {
-  const steps = sortedWorkflowSteps(workflow);
-  if (financeRequestSkipsFinanceReview(creatorEmail)) {
-    const ceoStep = steps.find((s) => s.role_slug === 'ceo');
-    if (ceoStep) return ceoStep;
-  }
+  const steps = [...workflow.steps].sort((a, b) => a.step_order - b.step_order);
   return steps[0];
 }

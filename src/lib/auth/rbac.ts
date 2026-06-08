@@ -5,6 +5,8 @@ import {
 } from '@/lib/memo/itRouting';
 import { isDesignatedItFirstChecker } from '@/lib/workflow/itCheckers';
 import {
+  designatedCfoFinanceRequestCanApprove,
+  designatedCfoFinanceRequestCanView,
   designatedFinanceStepReviewerCanApprove,
   designatedFinanceStepReviewerCanView,
   isInterdeptFinanceReviewer,
@@ -191,6 +193,7 @@ export function canViewMemo(user: User, memo: Memo, sharedWith?: string[]): bool
   }
 
   if (designatedFinanceStepReviewerCanView(user, memo)) return true;
+  if (designatedCfoFinanceRequestCanView(user, memo)) return true;
 
   switch (role) {
     case 'department_head':
@@ -271,6 +274,10 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
   }
 
   if (designatedFinanceStepReviewerCanApprove(user, memo)) {
+    return true;
+  }
+
+  if (designatedCfoFinanceRequestCanApprove(user, memo)) {
     return true;
   }
 

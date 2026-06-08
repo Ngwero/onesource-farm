@@ -3,7 +3,7 @@ import {
   CEO_APPROVER_EMAIL,
   DESIGNATED_DEPT_HEAD_EMAILS,
 } from '@/lib/memo/designatedUsers';
-import { INTERDEPT_FINANCE_REVIEWER_EMAIL } from '@/lib/workflow/interdeptFinanceReviewer';
+import { resolveFinanceReviewerEmail } from '@/lib/workflow/financeWorkflowSteps';
 import { BUSINESS_HEAD_EMAIL } from '@/lib/workflow/marketingWorkflowSteps';
 import { IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL } from '@/lib/workflow/itCheckers';
 import type { MemoTypeSlug } from '@/types';
@@ -68,7 +68,8 @@ export async function findApproversForStep(
   roleSlug: string,
   departmentId: string,
   memoTypeSlug?: MemoTypeSlug | string,
-  _stepOrder?: number
+  _stepOrder?: number,
+  creatorEmail?: string | null
 ): Promise<string[]> {
   const supabase = createServiceClient();
   const type = memoTypeSlug as MemoTypeSlug | undefined;
@@ -90,7 +91,10 @@ export async function findApproversForStep(
   }
 
   if (roleSlug === 'finance_reviewer') {
-    return approverIdsForEmail(supabase, INTERDEPT_FINANCE_REVIEWER_EMAIL);
+    return approverIdsForEmail(
+      supabase,
+      resolveFinanceReviewerEmail(memoTypeSlug, creatorEmail)
+    );
   }
 
   if (roleSlug === 'department_head') {

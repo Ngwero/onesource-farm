@@ -16,7 +16,9 @@ import { canCreateMemo, hasPermission } from '@/lib/auth/rbac';
 import type { RoleSlug } from '@/types';
 import { isItDepartmentHead } from '@/lib/memo/itRouting';
 import {
+  amaraFinanceRequestCreatorId,
   financeStepMemoTypeIds,
+  usesAmaraFinanceRequestQueue,
   usesChristineFinanceQueue,
 } from '@/lib/memo/financeQueueList';
 import { memoSearchOrFilter, sanitizeMemoSearchQuery } from '@/lib/memo/search';
@@ -86,19 +88,35 @@ export async function GET(request: NextRequest) {
 
     const sharedOnly = searchParams.get('shared') === '1';
     const christineFinanceQueue = usesChristineFinanceQueue(user, status);
+    const amaraFinanceQueue = usesAmaraFinanceRequestQueue(user, status);
     const roleScopedList = shouldUseRoleScopedMemoList({
       status,
       view,
       sharedOnly,
-      financeStaffQueue: christineFinanceQueue,
+      financeStaffQueue: christineFinanceQueue || amaraFinanceQueue,
     });
 
-    if (christineFinanceQueue) {
-      const typeIds = await financeStepMemoTypeIds(supabase);
+    if (amaraFinanceQueue) {
+      const [creatorId, { data: finType }] = await Promise.all([
+        amaraFinanceRequestCreatorId(supabase),
+        supabase.from('memo_types').select('id').eq('slug', 'finance_request').maybeSingle(),
+      ]);
+      if (!creatorId || !finType?.id) {
+        return NextResponse.json({ memos: [], financial_summary: null });
+      }
+      query = query.eq('memo_type_id', finType.id).eq('creator_id', creatorId);
+    } else if (christineFinanceQueue) {
+      const [typeIds, { data: finType }] = await Promise.all([
+        financeStepMemoTypeIds(supabase),
+        supabase.from('memo_types').select('id').eq('slug', 'finance_request').maybeSingle(),
+      ]);
       if (typeIds.length === 0) {
         return NextResponse.json({ memos: [], financial_summary: null });
       }
       query = query.in('memo_type_id', typeIds);
+      if (finType?.id) {
+        query = query.or(`memo_type_id.neq.${finType.id},creator_id.neq.${user.id}`);
+      }
     } else if (sharedOnly) {
       const { data: sharedRows } = await supabase
         .from('shared_memo_access')

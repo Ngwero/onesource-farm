@@ -226,7 +226,8 @@ export async function buildWorkflowTimelineForMemo(
         step.role_slug,
         memo.department_id,
         memoTypeSlug,
-        step.step_order
+        step.step_order,
+        creatorEmail
       );
       return ids[0] ?? null;
     })

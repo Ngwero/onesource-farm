@@ -29,7 +29,7 @@ export async function assertCanViewMemo(user: User, memoId: string): Promise<Mem
   const { data: row, error } = await supabase
     .from('memos')
     .select(
-      'id, creator_id, department_id, requires_exco, requires_finance, memo_types(slug), memo_statuses(slug), departments(code, name)'
+      'id, creator_id, department_id, requires_exco, requires_finance, memo_types(slug), memo_statuses(slug), departments(code, name), creator:users!creator_id(email)'
     )
     .eq('id', memoId)
     .single();

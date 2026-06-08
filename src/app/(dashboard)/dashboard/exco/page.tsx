@@ -1,10 +1,13 @@
 'use client';
 
-import { Clock, CheckCircle2, GitBranch } from 'lucide-react';
+import { Clock, CheckCircle2, GitBranch, FileText } from 'lucide-react';
 import { DashboardPage } from '@/components/dashboard/DashboardPage';
 import { useMemos } from '@/hooks/useMemos';
+import { useAuth } from '@/context/AuthContext';
+import { isDesignatedCfo } from '@/lib/memo/designatedUsers';
 
 export default function EXCODashboard() {
+  const { user } = useAuth();
   const { memos, financialSummary, loading } = useMemos({ status: 'pending_exco' });
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
   const all = memos as Array<{ memo_statuses?: { slug: string } }>;
@@ -31,11 +34,25 @@ export default function EXCODashboard() {
     },
   ];
 
+  const quickLinks =
+    user && isDesignatedCfo(user)
+      ? [
+          {
+            href: '/memos?status=pending_finance&memo_type=finance_request',
+            label: 'Christine — Finance memos',
+            description: 'Finance Request memos awaiting CFO review',
+            icon: <FileText size={20} />,
+          },
+        ]
+      : undefined;
+
   return (
     <DashboardPage
       title="EXCO Dashboard"
       banner="EXCO approvals run in parallel. All four members (CEO, CBDO, CTO, CFO) must approve."
       stats={stats}
+      quickLinks={quickLinks}
+      quickLinksTitle={quickLinks ? 'CFO review' : undefined}
       loading={loading || loadingApproved}
       memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
       financialSummary={financialSummary}
