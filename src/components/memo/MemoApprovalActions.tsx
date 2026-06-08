@@ -1,6 +1,7 @@
 'use client';
 
 import { CheckCircle, RotateCcw, XCircle } from 'lucide-react';
+import { SignatureRequiredNotice } from '@/components/memo/SignatureRequiredNotice';
 
 type ApprovalAction = 'approve' | 'return' | 'reject';
 
@@ -13,6 +14,7 @@ type MemoApprovalActionsProps = {
   setApprovalComments: (comments: string) => void;
   actionLoading: boolean;
   onConfirm: () => void;
+  needsSignatureReminder?: boolean;
 };
 
 function ApprovalForm({
@@ -22,6 +24,7 @@ function ApprovalForm({
   actionLoading,
   onConfirm,
   onCancel,
+  needsSignatureReminder = false,
   className = '',
 }: {
   approvalAction: ApprovalAction;
@@ -30,11 +33,15 @@ function ApprovalForm({
   actionLoading: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  needsSignatureReminder?: boolean;
   className?: string;
 }) {
   return (
     <div className={`space-y-3 ${className}`}>
       <p className="text-sm font-medium capitalize">{approvalAction} memo</p>
+      {needsSignatureReminder && approvalAction === 'approve' ? (
+        <SignatureRequiredNotice variant="approve" compact />
+      ) : null}
       <textarea
         value={approvalComments}
         onChange={(e) => setApprovalComments(e.target.value)}
@@ -112,6 +119,7 @@ export function MemoApprovalActions({
   setApprovalComments,
   actionLoading,
   onConfirm,
+  needsSignatureReminder = false,
 }: MemoApprovalActionsProps) {
   function openAction(action: ApprovalAction) {
     setApprovalAction(action);
@@ -126,6 +134,9 @@ export function MemoApprovalActions({
     <>
       <div className="hidden lg:block card p-4">
         <h3 className="font-semibold mb-3">Approval Actions</h3>
+        {needsSignatureReminder ? (
+          <SignatureRequiredNotice variant="approve" compact />
+        ) : null}
         {!showApproval ? (
           <ActionButtons onSelect={openAction} />
         ) : (
@@ -136,6 +147,7 @@ export function MemoApprovalActions({
             actionLoading={actionLoading}
             onConfirm={onConfirm}
             onCancel={closeApproval}
+            needsSignatureReminder={needsSignatureReminder}
           />
         )}
       </div>
@@ -157,11 +169,17 @@ export function MemoApprovalActions({
                 actionLoading={actionLoading}
                 onConfirm={onConfirm}
                 onCancel={closeApproval}
+                needsSignatureReminder={needsSignatureReminder}
               />
             </div>
           </>
         ) : (
           <div className="memo-approval-bar__actions">
+            {needsSignatureReminder ? (
+              <div className="px-3 pb-2">
+                <SignatureRequiredNotice variant="approve" compact />
+              </div>
+            ) : null}
             <ActionButtons onSelect={openAction} compact />
           </div>
         )}

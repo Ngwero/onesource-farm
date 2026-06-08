@@ -173,7 +173,7 @@ export const SIGNATURE_REQUIRED_FOR_MEMO_MESSAGE =
   'Upload your signature under Settings → My Signature before you can create memos.';
 
 export const SIGNATURE_REQUIRED_FOR_APPROVAL_MESSAGE =
-  'Upload your signature under Settings → My Signature before you can approve memos.';
+  'Please upload your signature under Settings → My Signature before you approve, so it appears on this memo.';
 
 export function canViewMemo(user: User, memo: Memo, sharedWith?: string[]): boolean {
   const role = user.role?.slug as RoleSlug;

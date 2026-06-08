@@ -17,7 +17,14 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Share2, UserMinus, Pencil, Send, Trash2 } from 'lucide-react';
-import { hasPermission, canEditMemo, canResubmitMemo, memoAwaitingFirstApprover } from '@/lib/auth/rbac';
+import {
+  hasPermission,
+  canEditMemo,
+  canResubmitMemo,
+  memoAwaitingFirstApprover,
+  hasUploadedSignature,
+  SIGNATURE_REQUIRED_FOR_APPROVAL_MESSAGE,
+} from '@/lib/auth/rbac';
 import type { RoleSlug } from '@/types';
 import type { Memo, SignatureRecord, BrandingSettings, MemoStatusSlug } from '@/types';
 import { buildWorkflowSteps } from '@/lib/memo/workflowDisplay';
@@ -88,6 +95,12 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
     if ((approvalAction === 'return' || approvalAction === 'reject') && !approvalComments) {
       alert('Comments are required for return/reject actions');
       return;
+    }
+    if (approvalAction === 'approve' && !hasUploadedSignature(user)) {
+      const proceed = window.confirm(
+        `${SIGNATURE_REQUIRED_FOR_APPROVAL_MESSAGE}\n\nApprove without your signature on this memo?`
+      );
+      if (!proceed) return;
     }
     setActionLoading(true);
     try {
@@ -247,6 +260,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
     (memo as { approvals?: { action: string }[] }).approvals || [];
   const memoForEdit = { ...memoForRbac, approvals };
   const canApprove = user ? canApproveMemo(user, memoForRbac) : false;
+  const needsSignatureReminder = canApprove && user ? !hasUploadedSignature(user) : false;
   const canEdit = user ? canEditMemo(user, memoForEdit) : false;
   const canSubmit = user ? canResubmitMemo(user, memoForEdit) : false;
   const pendingFirstStep = memoAwaitingFirstApprover(memoForEdit);
@@ -376,6 +390,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
               setApprovalComments={setApprovalComments}
               actionLoading={actionLoading}
               onConfirm={handleApproval}
+              needsSignatureReminder={needsSignatureReminder}
             />
           ) : null}
 
