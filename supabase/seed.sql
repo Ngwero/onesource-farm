@@ -216,6 +216,7 @@ INSERT INTO notification_settings (event_type, email_enabled, in_app_enabled) VA
   ('memo_rejected', TRUE, TRUE),
   ('memo_resubmitted', TRUE, TRUE),
   ('memo_fully_approved', TRUE, TRUE),
+  ('memo_trail_fully_approved', TRUE, TRUE),
   ('memo_withdrawn', TRUE, TRUE),
   ('sla_reminder', TRUE, TRUE),
   ('sla_breached', TRUE, TRUE),

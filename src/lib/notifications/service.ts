@@ -10,6 +10,7 @@ export type NotificationEvent =
   | 'memo_rejected'
   | 'memo_resubmitted'
   | 'memo_fully_approved'
+  | 'memo_trail_fully_approved'
   | 'memo_withdrawn'
   | 'sla_reminder'
   | 'sla_breached'
@@ -81,6 +82,23 @@ const EVENT_COPY: Partial<Record<NotificationEvent, (ctx: MemoNotificationContex
     bodyHtml: `<p style="margin:0;">Your memo has completed all approval steps and is now <strong>approved</strong>.</p>`,
     highlightText: `Memo : ${ctx.referenceNumber}`,
     highlightSubtext: 'You may export the approved memo as a watermarked PDF (E-Copy).',
+  }),
+  memo_trail_fully_approved: (ctx) => ({
+    title: 'Memo fully approved',
+    emailSubject: `[RukaPay e-Memo] Approved: ${ctx.referenceNumber}`,
+    message: `Memo ${ctx.referenceNumber} has been fully approved.`,
+    bodyHtml: `<p style="margin:0;">A memo you were part of in the approval trail is now <strong>fully approved</strong>.</p>`,
+    highlightText: `Memo : ${ctx.referenceNumber}`,
+    highlightSubtext: [
+      ctx.subject ? `Subject: ${ctx.subject}` : '',
+      ctx.memoFrom ? `From: ${ctx.memoFrom}` : '',
+    ]
+      .filter(Boolean)
+      .join(' · '),
+    bullets: [
+      'Sign in to view the approved memo and signatures on the portal.',
+      'This is an automated notification from RukaPay e-Memo.',
+    ],
   }),
   memo_approved: (ctx) => ({
     title: 'Memo approved at current step',
@@ -173,6 +191,30 @@ export async function sendNotification(params: {
       await supabase.from('notifications').update({ email_sent: true }).eq('id', notificationId);
     }
   }
+}
+
+/** Everyone who signed or approved on the memo (creator + each workflow step). */
+export async function fetchMemoApprovalTrailUserIds(memoId: string): Promise<string[]> {
+  const supabase = createServiceClient();
+  const ids = new Set<string>();
+
+  const [{ data: signatures }, { data: excoApprovals }] = await Promise.all([
+    supabase.from('signature_records').select('approver_id').eq('memo_id', memoId),
+    supabase
+      .from('exco_approvals')
+      .select('approver_id')
+      .eq('memo_id', memoId)
+      .eq('action', 'approve'),
+  ]);
+
+  for (const row of signatures || []) {
+    if (row.approver_id) ids.add(row.approver_id);
+  }
+  for (const row of excoApprovals || []) {
+    if (row.approver_id) ids.add(row.approver_id);
+  }
+
+  return [...ids];
 }
 
 export async function notifyApprovers(

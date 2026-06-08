@@ -1,5 +1,6 @@
 import { logAudit, type AuditAction } from '@/lib/audit/logger';
 import {
+  fetchMemoApprovalTrailUserIds,
   notifyApprovers,
   sendNotification,
   type MemoNotificationContext,
@@ -29,6 +30,40 @@ export type ApprovalSideEffectsPayload = {
   audit: { action: AuditAction; newValues?: Record<string, unknown> };
   notifications: ApprovalNotificationTask[];
 };
+
+export async function buildFullyApprovedNotifications(
+  memoId: string,
+  creatorId: string,
+  context: MemoNotificationContext,
+  options?: { creatorTitle?: string; creatorMessage?: string }
+): Promise<ApprovalNotificationTask[]> {
+  const trailIds = await fetchMemoApprovalTrailUserIds(memoId);
+  const otherParticipants = trailIds.filter((id) => id !== creatorId);
+
+  const tasks: ApprovalNotificationTask[] = [
+    {
+      kind: 'single',
+      userId: creatorId,
+      type: 'memo_fully_approved',
+      context,
+      title: options?.creatorTitle ?? 'Memo Fully Approved',
+      message:
+        options?.creatorMessage ??
+        `Your memo ${context.referenceNumber} has been fully approved.`,
+    },
+  ];
+
+  if (otherParticipants.length > 0) {
+    tasks.push({
+      kind: 'approvers',
+      userIds: otherParticipants,
+      type: 'memo_trail_fully_approved',
+      context,
+    });
+  }
+
+  return tasks;
+}
 
 export function notifyCtxFromMemo(
   memo: {

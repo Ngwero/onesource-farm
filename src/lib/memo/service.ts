@@ -5,6 +5,7 @@ import { startSlaTracking, resolveSlaTracking } from '@/lib/sla/service';
 import { logAudit } from '@/lib/audit/logger';
 import type { SubmitSideEffectsPayload } from '@/lib/memo/submitSideEffects';
 import {
+  buildFullyApprovedNotifications,
   notifyCtxFromMemo,
   type ApprovalSideEffectsPayload,
 } from '@/lib/memo/approvalSideEffects';
@@ -361,16 +362,11 @@ export async function processApproval(
         memoId,
         approverId,
         audit: { action: 'memo_approved' },
-        notifications: [
-          {
-            kind: 'single',
-            userId: memo.creator_id,
-            type: 'memo_fully_approved',
-            context: approvedCtx,
-            title: 'Memo Fully Approved',
-            message: `Your memo ${memo.reference_number} has been fully approved.`,
-          },
-        ],
+        notifications: await buildFullyApprovedNotifications(
+          memoId,
+          memo.creator_id,
+          approvedCtx
+        ),
       },
     };
   }
@@ -480,16 +476,14 @@ async function processExcoApproval(
         memoId,
         approverId,
         audit: { action: 'memo_approved' },
-        notifications: [
+        notifications: await buildFullyApprovedNotifications(
+          memoId,
+          memo.creator_id as string,
+          approvedCtx,
           {
-            kind: 'single',
-            userId: memo.creator_id as string,
-            type: 'memo_fully_approved',
-            context: approvedCtx,
-            title: 'Memo Fully Approved',
-            message: `Your memo ${approvedCtx.referenceNumber} has been fully approved by EXCO.`,
-          },
-        ],
+            creatorMessage: `Your memo ${approvedCtx.referenceNumber} has been fully approved by EXCO.`,
+          }
+        ),
       },
     };
   }
