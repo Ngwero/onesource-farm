@@ -8,6 +8,14 @@ import { DraftAttachments } from '@/components/memo/DraftAttachments';
 import { apiFetch } from '@/lib/api/client';
 import { memoFromLineForUser, getPeopleForStyle, type MemoPersonOption } from '@/lib/memo/personLine';
 import { memoAwaitingFirstApprover } from '@/lib/auth/rbac';
+import {
+  EMPTY_LEAVE_FIELDS,
+  LEAVE_TYPES,
+  packLeaveToMemoFields,
+  parseLeaveFromMemo,
+  type LeaveTemplateFields,
+  validateLeaveFields,
+} from '@/lib/memo/leaveTemplate';
 import { isFinanceRequestCreator } from '@/lib/workflow/financeWorkflowSteps';
 import type { MemoStatusSlug, MemoTypeSlug } from '@/types';
 
@@ -158,6 +166,17 @@ export function MemoEditorForm({
     importance_level: 'normal',
     ...initialForm,
   });
+  const [leaveFields, setLeaveFields] = useState<LeaveTemplateFields>(() => {
+    if (initialForm?.financial_implication || initialForm?.background) {
+      return parseLeaveFromMemo({
+        background: initialForm.background,
+        financial_implication: initialForm.financial_implication,
+        justification: initialForm.justification,
+        recommendation: initialForm.recommendation,
+      });
+    }
+    return { ...EMPTY_LEAVE_FIELDS };
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -213,7 +232,19 @@ export function MemoEditorForm({
 
   const selectedType = lookup?.memo_types.find((t) => t.id === form.memo_type_id);
   const typeSlug = selectedType?.slug as MemoTypeSlug | undefined;
+  const isLeaveForm = typeSlug === 'leave_request';
   const showFinance = typeSlug === 'it_request';
+
+  useEffect(() => {
+    if (!isLeaveForm) return;
+    setLeaveFields((prev) => {
+      if (prev.leave_start || prev.leave_end || prev.duties_not_delegated) return prev;
+      if (form.financial_implication || form.background || form.recommendation) {
+        return parseLeaveFromMemo(form);
+      }
+      return prev;
+    });
+  }, [isLeaveForm, form.background, form.financial_implication, form.justification, form.recommendation]);
 
   useEffect(() => {
     if (typeSlug === 'it_request' && !form.requires_finance) {
@@ -245,8 +276,7 @@ export function MemoEditorForm({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         department_id: targetDepartmentId,
-        ...form,
-        memo_from: senderLine,
+        ...memoPayloadForSave(),
       }),
     });
     const data = await res.json();
@@ -254,6 +284,18 @@ export function MemoEditorForm({
     const id = data.memo.id as string;
     setDraftMemoId(id);
     return id;
+  }
+
+  function memoPayloadForSave() {
+    if (!isLeaveForm) {
+      return { ...form, memo_from: senderLine };
+    }
+    const packed = packLeaveToMemoFields(leaveFields);
+    return {
+      ...form,
+      ...packed,
+      memo_from: senderLine,
+    };
   }
 
   async function persist(submit: boolean) {
@@ -265,9 +307,17 @@ export function MemoEditorForm({
       alert('Memo type and subject are required.');
       return;
     }
+    if (isLeaveForm) {
+      const leaveError = validateLeaveFields(leaveFields);
+      if (leaveError) {
+        alert(leaveError);
+        return;
+      }
+    }
 
     setLoading(true);
     try {
+      const payload = memoPayloadForSave();
       let id = effectiveMemoId;
 
       if (!id) {
@@ -276,8 +326,7 @@ export function MemoEditorForm({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             department_id: targetDepartmentId,
-            ...form,
-            memo_from: senderLine,
+            ...payload,
           }),
         });
         const data = await res.json();
@@ -288,8 +337,7 @@ export function MemoEditorForm({
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            ...form,
-            memo_from: senderLine,
+            ...payload,
             change_reason: submit ? 'Updated before submit' : 'Draft saved',
           }),
         });
@@ -304,8 +352,7 @@ export function MemoEditorForm({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            ...form,
-            memo_from: senderLine,
+            ...payload,
             change_reason: mode === 'edit' ? 'Updated before submit' : undefined,
           }),
         });
@@ -535,29 +582,135 @@ export function MemoEditorForm({
             value={form.subject}
             onChange={(e) => setForm({ ...form, subject: e.target.value })}
             className="input-field"
-            placeholder={FIELDS.subject.placeholder}
+            placeholder={
+              isLeaveForm
+                ? 'e.g. Application for annual leave — June 2026'
+                : FIELDS.subject.placeholder
+            }
             required
           />
         </div>
 
-        {(['background', 'financial_implication', 'justification', 'recommendation'] as const).map(
-          (key) => {
-            const cfg = FIELDS[key];
-            return (
-              <div key={key}>
-                <Label htmlFor={key}>{cfg.label}</Label>
-                <textarea
-                  id={key}
-                  value={form[key]}
-                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                  className="input-field min-h-[100px]"
-                  rows={4}
-                  placeholder={cfg.placeholder}
+        {isLeaveForm ? (
+          <div className="space-y-5 rounded-lg border border-slate-200 bg-slate-50/80 p-4">
+            <p className="text-sm font-medium text-slate-800">Leave details</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="leave_start" required>
+                  Leave start date
+                </Label>
+                <input
+                  id="leave_start"
+                  type="date"
+                  value={leaveFields.leave_start}
+                  onChange={(e) =>
+                    setLeaveFields({ ...leaveFields, leave_start: e.target.value })
+                  }
+                  className="input-field"
+                  required
                 />
-                <FieldHint text={cfg.hint} />
               </div>
-            );
-          }
+              <div>
+                <Label htmlFor="leave_end" required>
+                  Leave end date
+                </Label>
+                <input
+                  id="leave_end"
+                  type="date"
+                  value={leaveFields.leave_end}
+                  min={leaveFields.leave_start || undefined}
+                  onChange={(e) => setLeaveFields({ ...leaveFields, leave_end: e.target.value })}
+                  className="input-field"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="leave_type" required>
+                Type of leave
+              </Label>
+              <select
+                id="leave_type"
+                value={leaveFields.leave_type}
+                onChange={(e) => setLeaveFields({ ...leaveFields, leave_type: e.target.value })}
+                className="input-field"
+                required
+              >
+                {LEAVE_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="leave_reason">Reason (optional)</Label>
+              <textarea
+                id="leave_reason"
+                value={leaveFields.reason}
+                onChange={(e) => setLeaveFields({ ...leaveFields, reason: e.target.value })}
+                className="input-field min-h-[80px]"
+                rows={3}
+                placeholder="Brief reason for the leave, if needed..."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="duties_not_delegated" required>
+                Duties not to be delegated
+              </Label>
+              <textarea
+                id="duties_not_delegated"
+                value={leaveFields.duties_not_delegated}
+                onChange={(e) =>
+                  setLeaveFields({ ...leaveFields, duties_not_delegated: e.target.value })
+                }
+                className="input-field min-h-[100px]"
+                rows={4}
+                placeholder="List responsibilities that must remain with you and cannot be delegated while you are away..."
+                required
+              />
+              <FieldHint text="State which duties stay with you only — not handed to a colleague." />
+            </div>
+
+            <div>
+              <Label htmlFor="handover_contact">Handover & contact while on leave</Label>
+              <textarea
+                id="handover_contact"
+                value={leaveFields.handover_contact}
+                onChange={(e) =>
+                  setLeaveFields({ ...leaveFields, handover_contact: e.target.value })
+                }
+                className="input-field min-h-[80px]"
+                rows={3}
+                placeholder="Who covers urgent matters, emergency contact number, email access arrangements..."
+              />
+              <FieldHint text="Who to contact and what is handed over for day-to-day work." />
+            </div>
+          </div>
+        ) : (
+          (['background', 'financial_implication', 'justification', 'recommendation'] as const).map(
+            (key) => {
+              const cfg = FIELDS[key];
+              return (
+                <div key={key}>
+                  <Label htmlFor={key}>{cfg.label}</Label>
+                  <textarea
+                    id={key}
+                    value={form[key]}
+                    onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                    className="input-field min-h-[100px]"
+                    rows={4}
+                    placeholder={cfg.placeholder}
+                  />
+                  <FieldHint text={cfg.hint} />
+                </div>
+              );
+            }
+          )
         )}
 
         {showFinance && (

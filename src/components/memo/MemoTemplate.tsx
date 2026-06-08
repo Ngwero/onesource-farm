@@ -9,6 +9,7 @@ import {
   getCompanyContactLines,
 } from '@/lib/memo/coverLetterDefaults';
 import { formatCurrency, getMemoFinancialAmount } from '@/lib/memo/financial';
+import { getLeaveDisplaySections, isLeaveMemo } from '@/lib/memo/leaveTemplate';
 import { resolveSignatureForBlock } from '@/lib/memo/signatureBlocks';
 
 interface MemoTemplateProps {
@@ -37,6 +38,8 @@ export function MemoTemplate({ memo, branding, signatures = [] }: MemoTemplatePr
   const logoSrc = branding?.logo_path
     ? `/api/files/${branding.logo_path}`
     : '/rukapay-logo-white.png';
+  const leaveMemo = isLeaveMemo(memo);
+  const leaveSections = leaveMemo ? getLeaveDisplaySections(memo) : [];
 
   const metaFields = [
     { label: 'From', value: memo.memo_from },
@@ -69,7 +72,7 @@ export function MemoTemplate({ memo, branding, signatures = [] }: MemoTemplatePr
         <div className="memo-doc-hero">
           <div>
             <p className="memo-doc-eyebrow">Official correspondence</p>
-            <h1 className="memo-doc-title">Internal Memo</h1>
+            <h1 className="memo-doc-title">{leaveMemo ? 'Leave Application' : 'Internal Memo'}</h1>
           </div>
           {memo.reference_number ? (
             <div className="memo-doc-ref-badge">
@@ -96,23 +99,30 @@ export function MemoTemplate({ memo, branding, signatures = [] }: MemoTemplatePr
         ) : null}
 
         <div className="memo-doc-sections">
-          {BODY_SECTIONS.map(({ key, label }) => {
-            const content = memo[key];
-            if (!content) return null;
-            return (
-              <section key={key} className="memo-doc-block">
-                <h2 className="memo-doc-block-title">
-                  {label}
-                  {key === 'financial_implication' && financialAmount ? (
-                    <span className="memo-doc-financial-badge">
-                      {formatCurrency(financialAmount)}
-                    </span>
-                  ) : null}
-                </h2>
-                <p className="memo-doc-block-text">{content}</p>
-              </section>
-            );
-          })}
+          {leaveMemo
+            ? leaveSections.map(({ label, content }) => (
+                <section key={label} className="memo-doc-block">
+                  <h2 className="memo-doc-block-title">{label}</h2>
+                  <p className="memo-doc-block-text">{content}</p>
+                </section>
+              ))
+            : BODY_SECTIONS.map(({ key, label }) => {
+                const content = memo[key];
+                if (!content) return null;
+                return (
+                  <section key={key} className="memo-doc-block">
+                    <h2 className="memo-doc-block-title">
+                      {label}
+                      {key === 'financial_implication' && financialAmount ? (
+                        <span className="memo-doc-financial-badge">
+                          {formatCurrency(financialAmount)}
+                        </span>
+                      ) : null}
+                    </h2>
+                    <p className="memo-doc-block-text">{content}</p>
+                  </section>
+                );
+              })}
         </div>
 
         <section className="memo-doc-approvals" aria-label="Approvals and signatures">

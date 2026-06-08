@@ -9,6 +9,7 @@ import {
   formatSignerLine,
   getCompanyContactLines,
 } from '@/lib/memo/coverLetterDefaults';
+import { getMemoBodyRowsForExport, memoDocumentTitle } from '@/lib/memo/leaveTemplate';
 import { resolveSignatureForBlock } from '@/lib/memo/signatureBlocks';
 import {
   drawMemoEcopyWatermark,
@@ -112,7 +113,7 @@ export async function generateMemoPDF(
     y += 12;
 
     doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(20);
-    doc.text('Internal Memo', x, y);
+    doc.text(memoDocumentTitle(memo), x, y);
     y += 26;
 
     if (memo.reference_number) {
@@ -157,15 +158,11 @@ export async function generateMemoPDF(
     });
     y = metaY + Math.ceil(metaRows.length / 2) * 34 + 12;
 
-    const sections: [string, string | undefined][] = [
-      ['BACKGROUND', memo.background],
-      ['FINANCIAL IMPLICATION', memo.financial_implication],
-      ['JUSTIFICATION', memo.justification],
-      ['RECOMMENDATION', memo.recommendation],
-    ];
+    const sections = getMemoBodyRowsForExport(memo).map(
+      ([label, content]) => [label.toUpperCase(), content] as [string, string]
+    );
 
     for (const [label, content] of sections) {
-      if (!content) continue;
       doc.font('Helvetica').fontSize(8.5);
       const textH = doc.heightOfString(content, { width: contentWidth - 24 });
       const blockH = textH + 28;

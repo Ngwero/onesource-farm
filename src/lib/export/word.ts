@@ -18,6 +18,7 @@ import {
   formatSignerLine,
   getCompanyContactLines,
 } from '@/lib/memo/coverLetterDefaults';
+import { getMemoBodyRowsForExport, memoDocumentTitle } from '@/lib/memo/leaveTemplate';
 import { resolveSignatureForBlock } from '@/lib/memo/signatureBlocks';
 
 const NAVY = '001D6E';
@@ -74,12 +75,7 @@ export async function generateMemoWord(
     ['Subject', memo.subject],
   ].filter(([, v]) => v) as [string, string][];
 
-  const bodyRows = [
-    ['Background', memo.background],
-    ['Financial Implication', memo.financial_implication],
-    ['Justification', memo.justification],
-    ['Recommendation', memo.recommendation],
-  ].filter(([, v]) => v) as [string, string][];
+  const bodyRows = getMemoBodyRowsForExport(memo);
 
   const sigBlocks = [
     { label: 'Prepared By', type: 'prepared' as const },
@@ -128,7 +124,7 @@ export async function generateMemoWord(
             alignment: AlignmentType.CENTER,
             children: [
               new TextRun({
-                text: 'Internal Memo',
+                text: memoDocumentTitle(memo),
                 size: 36,
                 color: NAVY,
                 underline: {},
