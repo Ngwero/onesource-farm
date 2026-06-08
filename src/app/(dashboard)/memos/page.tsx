@@ -8,7 +8,6 @@ import { MemosFilterTabs } from '@/components/memo/MemosFilterTabs';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { MemoListFilters } from '@/components/memo/MemoListFilters';
 import { formatPeriodLabel, parseMemoPeriodFilter } from '@/lib/memo/periodFilter';
-import { FinancialSummary } from '@/components/memo/FinancialSummary';
 import { useAuth } from '@/context/AuthContext';
 import { useMemos } from '@/hooks/useMemos';
 
@@ -45,7 +44,7 @@ function MemosContent() {
     if (month) f.month = month;
     return Object.keys(f).length ? f : undefined;
   }, [status, view, memoType, q, year, month]);
-  const { memos, financialSummary, loading } = useMemos(filters);
+  const { memos, loading } = useMemos(filters);
 
   const query = searchParams.toString();
   const fullPath = query ? `${pathname}?${query}` : pathname;
@@ -105,7 +104,6 @@ function MemosContent() {
         </div>
       ) : (
         <>
-          {financialSummary ? <FinancialSummary summary={financialSummary} /> : null}
           <MemoList
             memos={memos as Parameters<typeof MemoList>[0]['memos']}
             currentUserId={user?.id}

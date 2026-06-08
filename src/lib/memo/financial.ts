@@ -65,6 +65,17 @@ function pushParsedAmount(
   if (amount !== null) amounts.push(amount);
 }
 
+/** Leave memos store structured metadata in financial_implication — not monetary amounts. */
+export function isLeaveFinancialMeta(text?: string | null): boolean {
+  const raw = text?.trim();
+  if (!raw?.startsWith('{')) return false;
+  try {
+    return (JSON.parse(raw) as { _leave_v?: number })._leave_v === 1;
+  } catch {
+    return false;
+  }
+}
+
 /** Extract monetary amounts from free-text financial implication fields (totals in UGX). */
 export function extractAmountsFromFinancialText(
   text: string,
@@ -114,7 +125,7 @@ export function getMemoFinancialAmount(
   text?: string | null,
   usdToUgx = DEFAULT_USD_TO_UGX_RATE
 ): number | null {
-  if (!text?.trim()) return null;
+  if (!text?.trim() || isLeaveFinancialMeta(text)) return null;
   const amounts = extractAmountsFromFinancialText(text, usdToUgx);
   if (amounts.length === 0) return null;
   return amounts.reduce((sum, n) => sum + n, 0);

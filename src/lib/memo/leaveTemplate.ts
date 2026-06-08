@@ -76,21 +76,11 @@ function backgroundFromLeave(leaveType: string, reason: string): string {
   return typeLine || reasonText;
 }
 
-export function calendarDaysBetween(start: string, end: string): number | null {
-  if (!start || !end) return null;
-  const a = new Date(`${start}T12:00:00`);
-  const b = new Date(`${end}T12:00:00`);
-  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime()) || b < a) return null;
-  return Math.round((b.getTime() - a.getTime()) / 86_400_000) + 1;
-}
-
 export function formatLeavePeriod(start: string, end: string): string {
   if (!start && !end) return '';
-  const days = calendarDaysBetween(start, end);
   const startLabel = start ? formatMemoDate(start) : '—';
   const endLabel = end ? formatMemoDate(end) : '—';
-  const duration = days ? ` (${days} calendar day${days === 1 ? '' : 's'})` : '';
-  return `${startLabel} to ${endLabel}${duration}`;
+  return `${startLabel} to ${endLabel}`;
 }
 
 export function parseLeaveFromMemo(

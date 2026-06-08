@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { createMemo } from '@/lib/memo/service';
-import { getMemoFinancialAmount, summarizeMemoFinancials } from '@/lib/memo/financial';
+import { summarizeMemoFinancials } from '@/lib/memo/financial';
 import { fetchUsdToUgxRate } from '@/lib/memo/exchangeRate';
 import {
   applyDepartmentMemoListFilter,
@@ -244,10 +244,7 @@ export async function GET(request: NextRequest) {
 
     const usdToUgx = await fetchUsdToUgxRate(supabase);
     const withAssignees = await attachPendingAssigneeNames(supabase, data || [], user.id);
-    const memos = withAssignees.map((memo) => ({
-      ...memo,
-      parsed_financial_amount: getMemoFinancialAmount(memo.financial_implication, usdToUgx),
-    }));
+    const memos = withAssignees;
     const financial_summary = summarizeMemoFinancials(memos, usdToUgx);
 
     return NextResponse.json(

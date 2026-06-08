@@ -22,9 +22,6 @@ import type { RoleSlug } from '@/types';
 import type { Memo, SignatureRecord, BrandingSettings, MemoStatusSlug } from '@/types';
 import { buildWorkflowSteps } from '@/lib/memo/workflowDisplay';
 import type { WorkflowTimelineStep } from '@/lib/memo/workflowTimeline';
-import { formatCurrency, getMemoFinancialAmount } from '@/lib/memo/financial';
-import { normalizeUsdToUgxRate } from '@/lib/memo/exchangeRate';
-
 type CommentRow = {
   id: string;
   content: string;
@@ -286,11 +283,6 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
       createdAt: memo.created_at,
       submittedAt: memo.submitted_at,
     });
-  const memoAmount = getMemoFinancialAmount(
-    memo.financial_implication,
-    normalizeUsdToUgxRate(branding?.usd_to_ugx_rate)
-  );
-
   return (
     <div className={`space-y-6 memo-detail-page${canApprove ? ' memo-detail-page--approver' : ''}`}>
       <PageHeader
@@ -308,13 +300,6 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
               (memo as { pending_assignee_is_you?: boolean }).pending_assignee_is_you
             }
           />
-        }
-        actions={
-          memoAmount ? (
-            <span className="text-sm font-semibold text-brand-700 bg-brand-50 border border-brand-100 px-3 py-1.5 rounded-lg">
-              {formatCurrency(memoAmount)}
-            </span>
-          ) : undefined
         }
       />
 

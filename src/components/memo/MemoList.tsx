@@ -3,8 +3,6 @@
 import Link from 'next/link';
 import { StatusBadge } from '../ui/StatusBadge';
 import { FileText, Eye, Pencil } from 'lucide-react';
-import { formatCurrency } from '@/lib/memo/financial';
-
 const EDITABLE_STATUSES = ['draft', 'returned', 'rejected'];
 
 interface MemoListItem {
@@ -23,7 +21,6 @@ interface MemoListItem {
   created_at: string;
   updated_at?: string;
   submitted_at?: string;
-  parsed_financial_amount?: number | null;
 }
 
 function formatListDate(value: string | null | undefined): string {
@@ -45,8 +42,6 @@ export function MemoList({
   /** When true, show memo date column (period filter / sort by memo date). */
   sortByMemoDate?: boolean;
 }) {
-  const showAmounts = memos.some((m) => m.parsed_financial_amount != null && m.parsed_financial_amount > 0);
-
   if (!memos.length) {
     return (
       <div className="card empty-state">
@@ -69,7 +64,6 @@ export function MemoList({
             <th>Type</th>
             <th>Department</th>
             <th>Status</th>
-            {showAmounts ? <th className="text-right">Amount (UGX)</th> : null}
             <th>{sortByMemoDate ? 'Memo date' : 'Last activity'}</th>
             <th />
           </tr>
@@ -93,13 +87,6 @@ export function MemoList({
                   assigneeIsYou={memo.pending_assignee_is_you}
                 />
               </td>
-              {showAmounts ? (
-                <td className="text-right text-sm font-semibold text-slate-800 whitespace-nowrap">
-                  {memo.parsed_financial_amount
-                    ? formatCurrency(memo.parsed_financial_amount)
-                    : '—'}
-                </td>
-              ) : null}
               <td className="text-slate-500 text-xs whitespace-nowrap">
                 {sortByMemoDate
                   ? formatListDate(memo.memo_date)
