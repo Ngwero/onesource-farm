@@ -2,6 +2,10 @@ import type { SignatureRecord } from '@/types';
 
 export type SignatureBlockType = 'prepared' | 'checked' | 'reviewed' | 'approved';
 
+export type SignatureRecordForDisplay = SignatureRecord & {
+  approver?: { signature_path?: string | null } | null;
+};
+
 export type MemoCreatorProfile = {
   id: string;
   full_name: string;
@@ -17,14 +21,24 @@ type MemoForPrepared = {
   created_at: string;
 };
 
+function effectiveSignaturePath(record: SignatureRecordForDisplay): string {
+  const current = record.approver?.signature_path?.trim();
+  const stored = record.signature_path?.trim();
+  return current || stored || '';
+}
+
 /** Prepared By is always the memo creator; other blocks use approval signature records. */
 export function resolveSignatureForBlock(
   blockType: SignatureBlockType,
-  signatures: SignatureRecord[],
+  signatures: SignatureRecordForDisplay[],
   memo: MemoForPrepared
 ): SignatureRecord | null {
   if (blockType !== 'prepared') {
-    return signatures.find((s) => s.block_type === blockType && s.signature_path?.trim()) ?? null;
+    const record = signatures.find((s) => s.block_type === blockType);
+    if (!record) return null;
+    const signature_path = effectiveSignaturePath(record);
+    if (!signature_path) return null;
+    return { ...record, signature_path };
   }
 
   const fromRecord = signatures.find((s) => s.block_type === 'prepared');

@@ -12,7 +12,14 @@ function isBlankSignaturePath(path: string | null | undefined): boolean {
   return !path?.trim();
 }
 
-/** Fill signature_path on memo records where this user signed without an image on file. */
+function needsSignaturePathSync(
+  storedPath: string | null | undefined,
+  currentPath: string
+): boolean {
+  return isBlankSignaturePath(storedPath) || storedPath !== currentPath;
+}
+
+/** Point memo signature rows at the user's current upload (blank or stale paths). */
 export async function backfillBlankUserSignatures(
   userId: string,
   signaturePath: string,
@@ -26,11 +33,11 @@ export async function backfillBlankUserSignatures(
     .select('id, signature_path')
     .eq('approver_id', userId);
 
-  const blankRecordIds = (records || [])
-    .filter((row) => isBlankSignaturePath(row.signature_path as string | null))
+  const recordIds = (records || [])
+    .filter((row) => needsSignaturePathSync(row.signature_path as string | null, signaturePath))
     .map((row) => row.id as string);
 
-  if (blankRecordIds.length > 0) {
+  if (recordIds.length > 0) {
     const { error } = await supabase
       .from('signature_records')
       .update({
@@ -38,9 +45,9 @@ export async function backfillBlankUserSignatures(
         ...(profile?.full_name ? { approver_name: profile.full_name } : {}),
         ...(profile?.title !== undefined ? { approver_title: profile.title } : {}),
       })
-      .in('id', blankRecordIds);
+      .in('id', recordIds);
     if (error) throw error;
-    updated += blankRecordIds.length;
+    updated += recordIds.length;
   }
 
   const { data: approvals } = await supabase
@@ -48,17 +55,86 @@ export async function backfillBlankUserSignatures(
     .select('id, signature_path')
     .eq('approver_id', userId);
 
-  const blankApprovalIds = (approvals || [])
-    .filter((row) => isBlankSignaturePath(row.signature_path as string | null))
+  const approvalIds = (approvals || [])
+    .filter((row) => needsSignaturePathSync(row.signature_path as string | null, signaturePath))
     .map((row) => row.id as string);
 
-  if (blankApprovalIds.length > 0) {
+  if (approvalIds.length > 0) {
     const { error } = await supabase
       .from('approvals')
       .update({ signature_path: signaturePath })
-      .in('id', blankApprovalIds);
+      .in('id', approvalIds);
     if (error) throw error;
-    updated += blankApprovalIds.length;
+    updated += approvalIds.length;
+  }
+
+  return updated;
+}
+
+async function repairStaleSignatureRows(
+  rows: Array<{
+    id: string;
+    signature_path: string | null;
+    approver: { signature_path?: string | null } | null;
+  }>
+): Promise<number> {
+  const supabase = createServiceClient();
+  let updated = 0;
+
+  for (const row of rows) {
+    const currentPath = row.approver?.signature_path?.trim();
+    if (!currentPath) continue;
+    if (!needsSignaturePathSync(row.signature_path, currentPath)) continue;
+
+    const { error } = await supabase
+      .from('signature_records')
+      .update({ signature_path: currentPath })
+      .eq('id', row.id);
+    if (error) throw error;
+    updated += 1;
+  }
+
+  return updated;
+}
+
+/** Repair memo stamps that still reference an approver's old signature file. */
+export async function repairStaleSignatureRecordsForMemo(memoId: string): Promise<number> {
+  const supabase = createServiceClient();
+
+  const { data: records, error } = await supabase
+    .from('signature_records')
+    .select('id, signature_path, approver:users!approver_id(signature_path)')
+    .eq('memo_id', memoId);
+
+  if (error) throw error;
+  return repairStaleSignatureRows(
+    (records || []) as Array<{
+      id: string;
+      signature_path: string | null;
+      approver: { signature_path?: string | null } | null;
+    }>
+  );
+}
+
+/** Repair stale or blank signature paths for every user who has a signature on file. */
+export async function repairAllStaleSignatureRecords(): Promise<number> {
+  const supabase = createServiceClient();
+
+  const { data: users, error } = await supabase
+    .from('users')
+    .select('id, full_name, title, signature_path')
+    .not('signature_path', 'is', null);
+
+  if (error) throw error;
+
+  let updated = 0;
+  for (const user of users || []) {
+    const signaturePath = (user.signature_path as string | null)?.trim();
+    if (!signaturePath) continue;
+    updated += await backfillBlankUserSignatures(user.id as string, signaturePath, {
+      full_name: user.full_name as string,
+      title: user.title as string | null | undefined,
+    });
   }
 
   return updated;
@@ -82,7 +158,9 @@ export async function syncPreparedSignatureIfBlank(
     .maybeSingle();
 
   if (existing) {
-    if (!isBlankSignaturePath(existing.signature_path as string | null)) return;
+    if (!needsSignaturePathSync(existing.signature_path as string | null, creator.signature_path)) {
+      return;
+    }
 
     const { error } = await supabase
       .from('signature_records')

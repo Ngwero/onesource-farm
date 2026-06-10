@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { after } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { storeFile } from '@/lib/storage';
 import { requireAuth, authErrorResponse } from '@/lib/auth/session';
-import { backfillBlankUserSignatures } from '@/lib/signature/sync';
+import {
+  backfillBlankUserSignatures,
+  repairAllStaleSignatureRecords,
+} from '@/lib/signature/sync';
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,6 +43,14 @@ export async function POST(request: NextRequest) {
     await backfillBlankUserSignatures(user.id, stored.relativePath, {
       full_name: data.full_name,
       title: data.title,
+    });
+
+    after(async () => {
+      try {
+        await repairAllStaleSignatureRecords();
+      } catch (err) {
+        console.error('Global signature repair failed:', err);
+      }
     });
 
     return NextResponse.json({ user: data });

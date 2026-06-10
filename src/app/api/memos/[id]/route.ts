@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { after } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { logAudit } from '@/lib/audit/logger';
 import { requireAuth, authErrorResponse } from '@/lib/auth/session';
@@ -8,6 +9,10 @@ import { patchEditableMemo } from '@/lib/memo/updateDraft';
 import { attachPendingAssigneeNames } from '@/lib/memo/pendingAssignee';
 import { buildWorkflowTimelineForMemo } from '@/lib/memo/workflowTimeline';
 import { buildMemoActivity } from '@/lib/memo/memoActivity';
+import {
+  repairAllStaleSignatureRecords,
+  repairStaleSignatureRecordsForMemo,
+} from '@/lib/signature/sync';
 
 const MEMO_DETAIL_SELECT = `
   *,
@@ -17,7 +22,7 @@ const MEMO_DETAIL_SELECT = `
   creator:users!creator_id(id, full_name, email, title, signature_path),
   memo_attachments(*),
   approvals(*, approver:users!approver_id(full_name, title)),
-  signature_records(*),
+  signature_records(*, approver:users!approver_id(signature_path)),
   exco_approvals(*, exco_member:exco_members(position))
 `;
 
@@ -40,11 +45,32 @@ export async function GET(
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
-    const [memo] = await attachPendingAssigneeNames(supabase, [data], user.id);
+
+    await repairStaleSignatureRecordsForMemo(id);
+
+    const { data: refreshed, error: refreshError } = await supabase
+      .from('memos')
+      .select(MEMO_DETAIL_SELECT)
+      .eq('id', id)
+      .single();
+    if (refreshError || !refreshed) {
+      return NextResponse.json({ error: refreshError?.message || 'Not found' }, { status: 404 });
+    }
+
+    const [memo] = await attachPendingAssigneeNames(supabase, [refreshed], user.id);
     const [workflow_timeline, activity] = await Promise.all([
       buildWorkflowTimelineForMemo(memo, user.id),
       buildMemoActivity(id),
     ]);
+
+    after(async () => {
+      try {
+        await repairAllStaleSignatureRecords();
+      } catch (err) {
+        console.error('Global signature repair failed:', err);
+      }
+    });
+
     return NextResponse.json({ memo: { ...memo, workflow_timeline, activity } });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Memo not found';

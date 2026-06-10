@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { generateMemoPDF } from '@/lib/export/pdf';
 import { requireAuth, authErrorResponse } from '@/lib/auth/session';
 import { assertCanViewMemo } from '@/lib/auth/memoAccess';
+import { repairStaleSignatureRecordsForMemo } from '@/lib/signature/sync';
 
 export async function GET(
   request: NextRequest,
@@ -24,9 +25,11 @@ export async function GET(
     if (!memo) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     const { data: branding } = await supabase.from('branding_settings').select('*').limit(1).single();
+    await repairStaleSignatureRecordsForMemo(id);
+
     const { data: signatures } = await supabase
       .from('signature_records')
-      .select('*')
+      .select('*, approver:users!approver_id(signature_path)')
       .eq('memo_id', id)
       .order('signed_at');
 
