@@ -120,7 +120,11 @@ export async function createMemo(creatorId: string, departmentId: string, input:
   return memo;
 }
 
-export async function submitMemo(memoId: string, userId: string) {
+export async function submitMemo(
+  memoId: string,
+  actorId: string,
+  options?: { actorRole?: string }
+) {
   const supabase = createServiceClient();
 
   const { data: memo } = await supabase
@@ -129,7 +133,12 @@ export async function submitMemo(memoId: string, userId: string) {
     .eq('id', memoId)
     .single();
 
-  if (!memo || memo.creator_id !== userId) throw new Error('Unauthorized');
+  const isAdmin = options?.actorRole === 'admin';
+  const creatorId = memo?.creator_id as string | undefined;
+  if (!memo || !creatorId || (creatorId !== actorId && !isAdmin)) {
+    throw new Error('Unauthorized');
+  }
+  const adminResubmit = isAdmin && creatorId !== actorId;
 
   const currentStatus = joinSlug(
     memo.memo_statuses as { slug: string } | { slug: string }[] | null
@@ -194,7 +203,9 @@ export async function submitMemo(memoId: string, userId: string) {
 
   const sideEffects: SubmitSideEffectsPayload = {
     memoId,
-    userId,
+    userId: creatorId,
+    submittedById: actorId,
+    adminResubmit,
     departmentId: memo.department_id as string,
     memoTypeSlug,
     creatorEmail: creator?.email,

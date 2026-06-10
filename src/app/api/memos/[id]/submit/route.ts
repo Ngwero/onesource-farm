@@ -35,12 +35,13 @@ export async function POST(
         .eq('id', id)
         .single();
 
-      if (!memo || memo.creator_id !== user.id) {
+      const isAdmin = user.role?.slug === 'admin';
+      if (!memo || (memo.creator_id !== user.id && !isAdmin)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
     }
 
-    const result = await submitMemo(id, user.id);
+    const result = await submitMemo(id, user.id, { actorRole: user.role?.slug });
 
     after(async () => {
       try {

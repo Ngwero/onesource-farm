@@ -18,11 +18,14 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Share2, UserMinus, Pencil, Send, Trash2 } from 'lucide-react';
+import { Share2, UserMinus, Pencil, Send, Trash2, RotateCcw } from 'lucide-react';
+import { getUserRoleSlug } from '@/lib/auth/profile';
 import {
   hasPermission,
   canEditMemo,
   canResubmitMemo,
+  canAdminResubmitMemo,
+  canAdminReturnMemo,
   memoAwaitingFirstApprover,
   hasUploadedSignature,
   SIGNATURE_REQUIRED_FOR_APPROVAL_MESSAGE,
@@ -168,19 +171,24 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
     if (res.ok) setShares((prev) => prev.filter((s) => s.shared_with !== sharedWith));
   }
 
-  async function handleSubmitDraft() {
-    if (!user?.id) return;
+  function submitConfirmMessage(asAdmin = false): string {
     const currentStatus =
       joinSlug(
         (memo as { memo_statuses?: { slug: string } | { slug: string }[] } | null)?.memo_statuses
       ) || memo?.status?.slug;
-    const submitMessage =
-      currentStatus === 'returned'
-        ? 'Resubmit this memo to the same approver for review?'
-        : currentStatus === 'rejected'
-          ? 'Resubmit this memo for approval from the first step?'
-          : 'Submit this memo for approval? You will not be able to edit it until it is returned.';
-    if (!confirm(submitMessage)) {
+    const prefix = asAdmin ? 'Resubmit this memo on behalf of the author? ' : '';
+    if (currentStatus === 'returned') {
+      return `${prefix}It will go back to the same approver for review.`;
+    }
+    if (currentStatus === 'rejected') {
+      return `${prefix}It will re-enter approval from the first step.`;
+    }
+    return `${prefix}Submit this memo for approval? You will not be able to edit it until it is returned.`;
+  }
+
+  async function handleSubmitDraft(asAdmin = false) {
+    if (!user?.id) return;
+    if (!confirm(submitConfirmMessage(asAdmin))) {
       return;
     }
     setActionLoading(true);
@@ -206,6 +214,33 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
       router.push('/memos?status=draft');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Delete failed');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleAdminReturn() {
+    const comments = prompt('Reason for returning this memo to the author (required):');
+    if (!comments?.trim()) return;
+    if (
+      !confirm(
+        'Return this memo to the author for correction? They (or you as admin) can edit and resubmit.'
+      )
+    ) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await apiFetch(`/api/memos/${id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'return', comments: comments.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      void refreshMemo();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Return failed');
     } finally {
       setActionLoading(false);
     }
@@ -266,7 +301,8 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
     requires_exco: memo.requires_exco,
     requires_finance: memo.requires_finance,
     memo_types: (memo as { memo_types?: { slug: string } }).memo_types,
-    memo_statuses: (memo as { memo_statuses?: { slug: string } }).memo_statuses,
+    memo_statuses: (memo as { memo_statuses?: { slug: string } | { slug: string }[] })
+      .memo_statuses,
     departments: (memo as { departments?: { code: string; name?: string } }).departments,
   });
   const approvals =
@@ -283,10 +319,14 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
   const isReturned = statusSlug === 'returned';
   const canApprove = user ? canApproveMemo(user, memoForRbac) : false;
   const needsSignatureReminder = canApprove && user ? !hasUploadedSignature(user) : false;
-  const canEdit = user ? canEditMemo(user, memoForEdit) : false;
-  const canSubmit = user ? canResubmitMemo(user, memoForEdit) : false;
-  const pendingFirstStep = memoAwaitingFirstApprover(memoForEdit);
   const isCreator = memo.creator_id === user?.id;
+  const canEdit = user ? canEditMemo(user, memoForEdit) : false;
+  const canSubmit = user ? canResubmitMemo(user, memoForEdit) && isCreator : false;
+  const roleSlug = getUserRoleSlug(user) as RoleSlug | undefined;
+  const isAdmin = roleSlug === 'admin';
+  const canAdminResubmit = user ? canAdminResubmitMemo(user, memoForEdit) : false;
+  const canAdminReturn = user ? canAdminReturnMemo(user, memoForRbac) : false;
+  const pendingFirstStep = memoAwaitingFirstApprover(memoForEdit);
   const isDraft = statusSlug === 'draft';
   const pendingStatuses = [
     'pending_department_head',
@@ -294,9 +334,10 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
     'pending_hr',
     'pending_ceo',
     'pending_exco',
+    'pending_it_checker_first',
+    'pending_it_checker_second',
+    'pending_business_head',
   ];
-  const roleSlug = user?.role?.slug as RoleSlug | undefined;
-  const isAdmin = roleSlug === 'admin';
   const canShare =
     isCreator ||
     (roleSlug && (hasPermission(roleSlug, '*') || hasPermission(roleSlug, 'memo:share')));
@@ -344,7 +385,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
           memoId={id}
           returnFeedback={returnFeedback}
           actionLoading={actionLoading}
-          onResubmit={handleSubmitDraft}
+          onResubmit={() => handleSubmitDraft(false)}
         />
       ) : null}
 
@@ -372,7 +413,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
             {canSubmit ? (
               <button
                 type="button"
-                onClick={handleSubmitDraft}
+                onClick={() => handleSubmitDraft(false)}
                 disabled={actionLoading}
                 className="btn-secondary inline-flex items-center gap-2 text-sm"
               >
@@ -436,8 +477,47 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
           )}
 
           {isAdmin && statusSlug !== 'deleted' && (
-            <div className="card p-4 border-red-100">
-              <h3 className="font-semibold mb-2 text-red-800">Admin</h3>
+            <div className="card p-4 border-slate-200">
+              <h3 className="font-semibold mb-2 text-slate-800">Admin</h3>
+              {canAdminReturn || canAdminResubmit ? (
+                <div className="space-y-2 mb-4">
+                  {canAdminReturn ? (
+                    <>
+                      <p className="text-xs text-slate-500">
+                        Send this memo back to the author for correction. After they update it,
+                        use Resubmit memo or the author can resubmit.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleAdminReturn}
+                        disabled={actionLoading}
+                        className="btn-secondary w-full flex items-center justify-center gap-2 text-sm"
+                      >
+                        <RotateCcw size={16} />
+                        Return for correction
+                      </button>
+                    </>
+                  ) : null}
+                  {canAdminResubmit ? (
+                    <>
+                      <p className="text-xs text-slate-500">
+                        {isReturned
+                          ? 'Resubmit on behalf of the author — goes back to the same approver.'
+                          : 'Submit or resubmit this memo on behalf of the author.'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleSubmitDraft(true)}
+                        disabled={actionLoading}
+                        className="btn-primary w-full flex items-center justify-center gap-2 text-sm"
+                      >
+                        <Send size={16} />
+                        {isReturned || statusSlug === 'rejected' ? 'Resubmit memo' : 'Submit memo'}
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
               <p className="text-xs text-slate-500 mb-3">
                 Move this memo to trash. Restore or permanently delete from Admin → Trash.
               </p>

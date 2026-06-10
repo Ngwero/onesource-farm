@@ -255,8 +255,31 @@ export function canEditMemo(user: User, memo: MemoForEditCheck): boolean {
 }
 
 export function canResubmitMemo(user: User, memo: MemoForEditCheck): boolean {
-  if (memo.creator_id !== user.id) return false;
-  return ['draft', 'returned', 'rejected'].includes(memo.status?.slug || '');
+  const statusSlug = memo.status?.slug || '';
+  if (!['draft', 'returned', 'rejected'].includes(statusSlug)) return false;
+  if (memo.creator_id === user.id) return true;
+  return user.role?.slug === 'admin';
+}
+
+function isAdminUser(user: User): boolean {
+  return user.role?.slug === 'admin';
+}
+
+/** Super admin resubmit on behalf of the memo author. */
+export function canAdminResubmitMemo(user: User, memo: MemoForEditCheck): boolean {
+  if (!isAdminUser(user)) return false;
+  if (memo.creator_id === user.id) return false;
+  return canResubmitMemo(user, memo);
+}
+
+/** Super admin can send a pending memo back to the author for correction. */
+export function canAdminReturnMemo(
+  user: User,
+  memo: Pick<Memo, 'creator_id' | 'status'>
+): boolean {
+  if (!isAdminUser(user)) return false;
+  if (memo.creator_id === user.id) return false;
+  return memo.status?.slug?.startsWith('pending_') ?? false;
 }
 
 function memoAwaitingApproval(statusSlug?: string): boolean {

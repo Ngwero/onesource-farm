@@ -12,7 +12,11 @@ export type MemoResubmitKind = 'initial' | 'returned' | 'rejected';
 
 export type SubmitSideEffectsPayload = {
   memoId: string;
+  /** Memo author — used for prepared signature stamping. */
   userId: string;
+  /** User who triggered submit (author or admin). */
+  submittedById: string;
+  adminResubmit?: boolean;
   departmentId: string;
   memoTypeSlug: MemoTypeSlug;
   creatorEmail?: string | null;
@@ -45,6 +49,8 @@ export async function runSubmitMemoSideEffects(payload: SubmitSideEffectsPayload
   const {
     memoId,
     userId,
+    submittedById,
+    adminResubmit,
     departmentId,
     memoTypeSlug,
     creatorEmail,
@@ -80,6 +86,11 @@ export async function runSubmitMemoSideEffects(payload: SubmitSideEffectsPayload
 
   await Promise.all([
     notifyApprovers(approverIds, memoId, notifyCtx, notifyEvent),
-    logAudit({ memoId, userId, action: auditAction }),
+    logAudit({
+      memoId,
+      userId: submittedById,
+      action: auditAction,
+      newValues: adminResubmit ? { admin_resubmit: true, on_behalf_of: userId } : undefined,
+    }),
   ]);
 }
