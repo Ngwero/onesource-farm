@@ -7,8 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { MemoEditorForm, type MemoFormState } from '@/components/memo/MemoEditorForm';
 import { canEditMemo } from '@/lib/auth/rbac';
 import { getLatestReturnFeedback } from '@/lib/memo/returnFeedback';
-import { rowToMemoForAccess } from '@/lib/auth/memoRbacShape';
-import { joinSlug } from '@/lib/auth/memoAccess';
+import { joinSlug, rowToMemoForAccess } from '@/lib/auth/memoRbacShape';
 import { apiFetch } from '@/lib/api/client';
 import type { Memo } from '@/types';
 
