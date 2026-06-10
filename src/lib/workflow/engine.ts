@@ -146,6 +146,13 @@ export function getStatusForStep(roleSlug: string): MemoStatusSlug {
   return ROLE_TO_STATUS[roleSlug] || 'submitted';
 }
 
+export function getWorkflowStepByOrder(
+  workflow: WorkflowDefinition,
+  stepOrder: number
+): WorkflowStep | null {
+  return workflow.steps.find((step) => step.step_order === stepOrder) ?? null;
+}
+
 export function getNextStep(
   workflow: WorkflowDefinition,
   currentStepOrder: number,

@@ -4,6 +4,7 @@ export type AuditAction =
   | 'memo_created'
   | 'memo_edited'
   | 'memo_submitted'
+  | 'memo_resubmitted'
   | 'memo_approved'
   | 'memo_returned'
   | 'memo_rejected'

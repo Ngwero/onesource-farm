@@ -5,6 +5,7 @@ import type { MemoActivityItem } from '@/lib/memo/memoActivityTypes';
 const AUDIT_LABELS: Partial<Record<AuditAction, string>> = {
   memo_created: 'Memo created',
   memo_submitted: 'Submitted for approval',
+  memo_resubmitted: 'Resubmitted after correction',
   memo_approved: 'Approved',
   memo_returned: 'Returned for correction',
   memo_rejected: 'Rejected',
@@ -37,6 +38,7 @@ export async function buildMemoActivity(memoId: string): Promise<MemoActivityIte
       .in('action', [
         'memo_created',
         'memo_submitted',
+        'memo_resubmitted',
         'memo_approved',
         'memo_returned',
         'memo_rejected',

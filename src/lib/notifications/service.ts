@@ -67,6 +67,20 @@ const EVENT_COPY: Partial<Record<NotificationEvent, (ctx: MemoNotificationContex
     highlightText: `Memo : ${ctx.referenceNumber}`,
     highlightSubtext: 'Action required: update and resubmit.',
   }),
+  memo_resubmitted: (ctx) => ({
+    title: 'Memo resubmitted for your approval',
+    emailSubject: `[RukaPay e-Memo] Resubmitted: ${ctx.referenceNumber}`,
+    message: `Memo ${ctx.referenceNumber} was corrected and sent back for approval.`,
+    bodyHtml: `<p style="margin:0;">A returned memo has been <strong>updated and resubmitted</strong> to you for approval.</p>`,
+    highlightText: `Memo : ${ctx.referenceNumber}`,
+    highlightSubtext: [
+      ctx.subject ? `Subject: ${ctx.subject}` : '',
+      ctx.stepName ? `Step: ${ctx.stepName}` : '',
+      ctx.actorName ? `Resubmitted by: ${ctx.actorName}` : '',
+    ]
+      .filter(Boolean)
+      .join(' · '),
+  }),
   memo_rejected: (ctx) => ({
     title: 'Memo rejected',
     emailSubject: `[RukaPay e-Memo] Rejected: ${ctx.referenceNumber}`,

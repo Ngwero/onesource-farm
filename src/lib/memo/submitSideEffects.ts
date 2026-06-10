@@ -8,13 +8,16 @@ import { syncPreparedSignatureIfBlank } from '@/lib/signature/sync';
 import type { WorkflowStep } from '@/lib/workflow/engine';
 import type { MemoTypeSlug } from '@/types';
 
+export type MemoResubmitKind = 'initial' | 'returned' | 'rejected';
+
 export type SubmitSideEffectsPayload = {
   memoId: string;
   userId: string;
   departmentId: string;
   memoTypeSlug: MemoTypeSlug;
   creatorEmail?: string | null;
-  firstStep: WorkflowStep;
+  routeStep: WorkflowStep;
+  resubmitKind: MemoResubmitKind;
   notifyCtx: MemoNotificationContext;
 };
 
@@ -39,31 +42,44 @@ async function ensureCreatorPreparedSignature(memoId: string, creatorId: string)
 
 /** Notifications, SLA, signatures, audit — run after the submit HTTP response is sent. */
 export async function runSubmitMemoSideEffects(payload: SubmitSideEffectsPayload) {
-  const { memoId, userId, departmentId, memoTypeSlug, creatorEmail, firstStep, notifyCtx } =
-    payload;
+  const {
+    memoId,
+    userId,
+    departmentId,
+    memoTypeSlug,
+    creatorEmail,
+    routeStep,
+    resubmitKind,
+    notifyCtx,
+  } = payload;
 
-  await resetWorkflowSignaturesForResubmit(memoId);
+  if (resubmitKind !== 'returned') {
+    await resetWorkflowSignaturesForResubmit(memoId);
+  }
 
   const [, approverIds] = await Promise.all([
     ensureCreatorPreparedSignature(memoId, userId),
     findApproversForStep(
-      firstStep.role_slug,
+      routeStep.role_slug,
       departmentId,
       memoTypeSlug,
-      firstStep.step_order,
+      routeStep.step_order,
       creatorEmail
     ),
   ]);
 
   await startSlaTracking(
     memoId,
-    firstStep.step_order,
-    firstStep.role_slug,
+    routeStep.step_order,
+    routeStep.role_slug,
     approverIds[0] ?? null
   );
 
+  const notifyEvent = resubmitKind === 'returned' ? 'memo_resubmitted' : 'memo_routed';
+  const auditAction = resubmitKind === 'returned' ? 'memo_resubmitted' : 'memo_submitted';
+
   await Promise.all([
-    notifyApprovers(approverIds, memoId, notifyCtx, 'memo_routed'),
-    logAudit({ memoId, userId, action: 'memo_submitted' }),
+    notifyApprovers(approverIds, memoId, notifyCtx, notifyEvent),
+    logAudit({ memoId, userId, action: auditAction }),
   ]);
 }

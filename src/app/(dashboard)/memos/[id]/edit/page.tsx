@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { MemoEditorForm, type MemoFormState } from '@/components/memo/MemoEditorForm';
 import { canEditMemo } from '@/lib/auth/rbac';
+import { getLatestReturnFeedback } from '@/lib/memo/returnFeedback';
 import { rowToMemoForAccess } from '@/lib/auth/memoRbacShape';
 import { joinSlug } from '@/lib/auth/memoAccess';
 import { apiFetch } from '@/lib/api/client';
@@ -29,7 +30,12 @@ export default function EditMemoPage({ params }: { params: Promise<{ id: string 
           memo_statuses?: { slug: string } | { slug: string }[];
           memo_types?: { slug: string };
           departments?: { code: string; name?: string };
-          approvals?: { action: string }[];
+          approvals?: {
+            action: string;
+            comments?: string | null;
+            signed_at?: string | null;
+            approver?: { full_name?: string };
+          }[];
         };
         const memoForRbac = rowToMemoForAccess({
           id: m.id,
@@ -88,6 +94,16 @@ export default function EditMemoPage({ params }: { params: Promise<{ id: string 
         initialForm={initialForm}
         statusSlug={statusSlug}
         approvals={(memo as { approvals?: { action: string }[] })?.approvals}
+        returnFeedback={getLatestReturnFeedback(
+          (memo as {
+            approvals?: {
+              action: string;
+              comments?: string | null;
+              signed_at?: string | null;
+              approver?: { full_name?: string };
+            }[];
+          })?.approvals
+        )}
         user={{
           id: user.id,
           email: user.email,

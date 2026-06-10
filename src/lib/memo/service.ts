@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import {
   getStatusForStep,
   getNextStepAfterStatus,
+  getWorkflowStepByOrder,
   isExcoWorkflow,
   PENDING_STATUS_TO_ROLE,
 } from '@/lib/workflow/engine';
@@ -151,8 +152,21 @@ export async function submitMemo(memoId: string, userId: string) {
   });
 
   const creator = memo.creator as { full_name?: string; email?: string } | null;
-  const firstStep = resolveFinanceRequestSubmitStep(workflow, creator?.email);
-  const statusSlug = getStatusForStep(firstStep.role_slug);
+  const entryStep = resolveFinanceRequestSubmitStep(workflow, creator?.email);
+
+  let routeStep = entryStep;
+  let resubmitKind: SubmitSideEffectsPayload['resubmitKind'] = 'initial';
+  if (currentStatus === 'returned') {
+    const returnStep =
+      getWorkflowStepByOrder(workflow, memo.current_step_order ?? entryStep.step_order) ??
+      entryStep;
+    routeStep = returnStep;
+    resubmitKind = 'returned';
+  } else if (currentStatus === 'rejected') {
+    resubmitKind = 'rejected';
+  }
+
+  const statusSlug = getStatusForStep(routeStep.role_slug);
 
   const { data: status } = await supabase
     .from('memo_statuses')
@@ -164,16 +178,17 @@ export async function submitMemo(memoId: string, userId: string) {
     throw new Error(`Approval status "${statusSlug}" is not configured. Contact your administrator.`);
   }
 
-  const submittedAt = nowIso();
-  const { error: updateError } = await supabase
-    .from('memos')
-    .update({
-      status_id: status.id,
-      current_step_order: firstStep.step_order,
-      submitted_at: submittedAt,
-      updated_at: submittedAt,
-    })
-    .eq('id', memoId);
+  const stampedAt = nowIso();
+  const memoUpdate: Record<string, unknown> = {
+    status_id: status.id,
+    current_step_order: routeStep.step_order,
+    updated_at: stampedAt,
+  };
+  if (currentStatus !== 'returned') {
+    memoUpdate.submitted_at = stampedAt;
+  }
+
+  const { error: updateError } = await supabase.from('memos').update(memoUpdate).eq('id', memoId);
 
   if (updateError) throw updateError;
 
@@ -183,13 +198,14 @@ export async function submitMemo(memoId: string, userId: string) {
     departmentId: memo.department_id as string,
     memoTypeSlug,
     creatorEmail: creator?.email,
-    firstStep,
+    routeStep,
+    resubmitKind,
     notifyCtx: {
       referenceNumber: memo.reference_number,
       subject: memo.subject,
       memoFrom: memo.memo_from,
       actorName: creator?.full_name,
-      stepName: firstStep.step_name || firstStep.role_slug.replace(/_/g, ' '),
+      stepName: routeStep.step_name || routeStep.role_slug.replace(/_/g, ' '),
     },
   };
 

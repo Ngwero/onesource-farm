@@ -17,6 +17,7 @@ import {
   validateLeaveFields,
 } from '@/lib/memo/leaveTemplate';
 import { isFinanceRequestCreator } from '@/lib/workflow/financeWorkflowSteps';
+import type { MemoReturnFeedback } from '@/lib/memo/returnFeedback';
 import type { MemoStatusSlug, MemoTypeSlug } from '@/types';
 
 export type MemoFormState = {
@@ -123,6 +124,7 @@ type MemoEditorFormProps = {
   initialForm?: Partial<MemoFormState>;
   statusSlug?: string;
   approvals?: { action: string }[];
+  returnFeedback?: MemoReturnFeedback | null;
   user: {
     id: string;
     email: string;
@@ -141,6 +143,7 @@ export function MemoEditorForm({
   initialForm,
   statusSlug,
   approvals,
+  returnFeedback,
   user,
 }: MemoEditorFormProps) {
   const router = useRouter();
@@ -409,18 +412,23 @@ export function MemoEditorForm({
     mode === 'create' ||
     !statusSlug ||
     ['draft', 'returned', 'rejected'].includes(statusSlug);
+  const isReturned = statusSlug === 'returned';
   const title =
     mode === 'create'
       ? 'Create New Memo'
-      : `Edit ${statusSlug === 'draft' ? 'Draft' : 'Memo'}`;
+      : isReturned
+        ? 'Correct returned memo'
+        : `Edit ${statusSlug === 'draft' ? 'Draft' : 'Memo'}`;
   const subtitle =
     mode === 'create'
       ? 'Add attachments, save as draft to finish later, or submit to start approval.'
-      : pendingFirstStep
-        ? `${referenceNumber} — update while waiting on the first approver, then save.`
-        : referenceNumber
-          ? `${referenceNumber} — update fields and attachments, then save or submit.`
-          : 'Update your memo and save changes.';
+      : isReturned
+        ? `${referenceNumber} — apply the feedback below, save, then resubmit to the same approver.`
+        : pendingFirstStep
+          ? `${referenceNumber} — update while waiting on the first approver, then save.`
+          : referenceNumber
+            ? `${referenceNumber} — update fields and attachments, then save or submit.`
+            : 'Update your memo and save changes.';
 
   if (lookupLoading) {
     return (
@@ -468,10 +476,20 @@ export function MemoEditorForm({
                 Still with the first approver — save changes here until someone approves.
               </p>
             )}
-            {statusSlug === 'returned' && (
-              <p className="text-amber-700 font-medium">
-                This memo was returned for correction — update and submit again.
-              </p>
+            {isReturned && (
+              <div className="text-amber-800 space-y-2">
+                <p className="font-medium">
+                  Returned for correction — edit the memo, then resubmit for approval.
+                </p>
+                {returnFeedback ? (
+                  <div className="rounded-md border border-amber-200 bg-white/80 p-3">
+                    <p className="font-medium text-amber-950">
+                      {returnFeedback.approverName} asked for changes:
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap">{returnFeedback.comments}</p>
+                  </div>
+                ) : null}
+              </div>
             )}
           </div>
         </div>
@@ -763,7 +781,7 @@ export function MemoEditorForm({
               className="btn-primary flex items-center justify-center gap-2"
             >
               <Send size={16} />
-              Submit for approval
+              {isReturned ? 'Resubmit for approval' : 'Submit for approval'}
             </button>
           ) : null}
           {mode === 'edit' && statusSlug === 'draft' && (

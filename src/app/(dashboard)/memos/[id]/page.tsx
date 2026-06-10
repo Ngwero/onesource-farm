@@ -12,6 +12,8 @@ import { MemoDocumentExport } from '@/components/memo/MemoDocumentExport';
 import { WorkflowTimeline } from '@/components/memo/WorkflowTimeline';
 import { MemoActivity } from '@/components/memo/MemoActivity';
 import { MemoApprovalActions } from '@/components/memo/MemoApprovalActions';
+import { ReturnedMemoBanner } from '@/components/memo/ReturnedMemoBanner';
+import { getLatestReturnFeedback } from '@/lib/memo/returnFeedback';
 import type { MemoActivityItem } from '@/lib/memo/memoActivityTypes';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -174,9 +176,11 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
         (memo as { memo_statuses?: { slug: string } | { slug: string }[] } | null)?.memo_statuses
       ) || memo?.status?.slug;
     const submitMessage =
-      currentStatus === 'returned' || currentStatus === 'rejected'
-        ? 'Resubmit this memo for approval?'
-        : 'Submit this memo for approval? You will not be able to edit it until it is returned.';
+      currentStatus === 'returned'
+        ? 'Resubmit this memo to the same approver for review?'
+        : currentStatus === 'rejected'
+          ? 'Resubmit this memo for approval from the first step?'
+          : 'Submit this memo for approval? You will not be able to edit it until it is returned.';
     if (!confirm(submitMessage)) {
       return;
     }
@@ -267,8 +271,17 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
     departments: (memo as { departments?: { code: string; name?: string } }).departments,
   });
   const approvals =
-    (memo as { approvals?: { action: string }[] }).approvals || [];
+    (memo as {
+      approvals?: {
+        action: string;
+        comments?: string | null;
+        signed_at?: string | null;
+        approver?: { full_name?: string };
+      }[];
+    }).approvals || [];
   const memoForEdit = { ...memoForRbac, approvals };
+  const returnFeedback = getLatestReturnFeedback(approvals);
+  const isReturned = statusSlug === 'returned';
   const canApprove = user ? canApproveMemo(user, memoForRbac) : false;
   const needsSignatureReminder = canApprove && user ? !hasUploadedSignature(user) : false;
   const canEdit = user ? canEditMemo(user, memoForEdit) : false;
@@ -327,7 +340,16 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
         }
       />
 
-      {canEdit && (
+      {canEdit && isReturned ? (
+        <ReturnedMemoBanner
+          memoId={id}
+          returnFeedback={returnFeedback}
+          actionLoading={actionLoading}
+          onResubmit={handleSubmitDraft}
+        />
+      ) : null}
+
+      {canEdit && !isReturned ? (
         <div className="card p-4 bg-brand-50 border-brand-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <p className="font-medium text-brand-900">
@@ -335,9 +357,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
                 ? 'This memo is a draft'
                 : pendingFirstStep
                   ? 'Waiting on first approval — you can still edit'
-                  : statusSlug === 'returned'
-                    ? 'Returned for correction'
-                    : 'Rejected — you can revise and resubmit'}
+                  : 'Rejected — you can revise and resubmit'}
             </p>
             <p className="text-sm text-brand-800/80 mt-0.5">
               {pendingFirstStep
@@ -358,7 +378,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
                 className="btn-secondary inline-flex items-center gap-2 text-sm"
               >
                 <Send size={16} />
-                Submit
+                {statusSlug === 'rejected' ? 'Resubmit' : 'Submit'}
               </button>
             ) : null}
             {isDraft && (
@@ -374,7 +394,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
             )}
           </div>
         </div>
-      )}
+      ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
         <div className="lg:col-span-2 space-y-5 order-2 lg:order-1">
