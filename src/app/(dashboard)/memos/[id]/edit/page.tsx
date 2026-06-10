@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { MemoEditorForm, type MemoFormState } from '@/components/memo/MemoEditorForm';
 import { canEditMemo } from '@/lib/auth/rbac';
+import { rowToMemoForAccess } from '@/lib/auth/memoRbacShape';
+import { joinSlug } from '@/lib/auth/memoAccess';
 import { apiFetch } from '@/lib/api/client';
-import type { Memo, MemoStatusSlug } from '@/types';
+import type { Memo } from '@/types';
 
 export default function EditMemoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -24,17 +26,22 @@ export default function EditMemoPage({ params }: { params: Promise<{ id: string 
         const data = await r.json();
         if (!r.ok) throw new Error(data.error);
         const m = data.memo as Memo & {
-          memo_statuses?: { slug: string };
+          memo_statuses?: { slug: string } | { slug: string }[];
           memo_types?: { slug: string };
+          departments?: { code: string; name?: string };
           approvals?: { action: string }[];
         };
-        const statusSlug = m.memo_statuses?.slug as MemoStatusSlug | undefined;
-        const memoForRbac: Memo = {
-          ...m,
-          status: statusSlug
-            ? { id: '', name: '', slug: statusSlug, sort_order: 0 }
-            : m.status,
-        };
+        const memoForRbac = rowToMemoForAccess({
+          id: m.id,
+          creator_id: m.creator_id,
+          department_id: m.department_id,
+          requires_exco: m.requires_exco,
+          requires_finance: m.requires_finance,
+          memo_types: m.memo_types,
+          memo_statuses: m.memo_statuses,
+          departments: m.departments,
+          creator: m.creator,
+        });
         if (!canEditMemo(user, { ...memoForRbac, approvals: m.approvals })) {
           router.replace(`/memos/${id}`);
           return;
@@ -64,7 +71,8 @@ export default function EditMemoPage({ params }: { params: Promise<{ id: string 
   }
 
   const statusSlug =
-    (memo as { memo_statuses?: { slug: string } })?.memo_statuses?.slug || memo?.status?.slug;
+    joinSlug((memo as { memo_statuses?: { slug: string } | { slug: string }[] })?.memo_statuses) ||
+    memo?.status?.slug;
 
   return (
     <div>

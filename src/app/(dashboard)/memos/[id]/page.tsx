@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api/client';
 import { canApproveMemo } from '@/lib/auth/rbac';
 import { rowToMemoForAccess } from '@/lib/auth/memoRbacShape';
+import { joinSlug } from '@/lib/auth/memoAccess';
 import { MemoTemplate } from '@/components/memo/MemoTemplate';
 import { MemoAttachmentList } from '@/components/memo/MemoAttachmentList';
 import { MemoDocumentExport } from '@/components/memo/MemoDocumentExport';
@@ -168,7 +169,15 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
 
   async function handleSubmitDraft() {
     if (!user?.id) return;
-    if (!confirm('Submit this memo for approval? You will not be able to edit it until it is returned.')) {
+    const currentStatus =
+      joinSlug(
+        (memo as { memo_statuses?: { slug: string } | { slug: string }[] } | null)?.memo_statuses
+      ) || memo?.status?.slug;
+    const submitMessage =
+      currentStatus === 'returned' || currentStatus === 'rejected'
+        ? 'Resubmit this memo for approval?'
+        : 'Submit this memo for approval? You will not be able to edit it until it is returned.';
+    if (!confirm(submitMessage)) {
       return;
     }
     setActionLoading(true);
@@ -244,7 +253,8 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
   if (!memo) return <div className="text-center py-12 text-red-500">Memo not found</div>;
 
   const statusSlug =
-    (memo as { memo_statuses?: { slug: string } }).memo_statuses?.slug || memo.status?.slug;
+    joinSlug((memo as { memo_statuses?: { slug: string } | { slug: string }[] }).memo_statuses) ||
+    memo.status?.slug;
   const memoForRbac = rowToMemoForAccess({
     id: memo.id,
     creator_id: memo.creator_id,

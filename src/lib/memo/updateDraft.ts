@@ -1,9 +1,10 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { logAudit } from '@/lib/audit/logger';
 import { nowIso } from '@/lib/memo/actionTimestamps';
-import { assertCanEditMemo, rowToMemoForAccess } from '@/lib/auth/memoAccess';
+import { assertCanEditMemo, joinSlug, rowToMemoForAccess } from '@/lib/auth/memoAccess';
 import { canEditMemo } from '@/lib/auth/rbac';
 import { memoFromLineForUser } from '@/lib/memo/personLine';
+import { syncPreparedSignatureIfBlank } from '@/lib/signature/sync';
 import type { User } from '@/types';
 
 export const MEMO_PATCH_FIELDS = [
@@ -78,4 +79,16 @@ export async function patchEditableMemo(
     action: 'memo_edited',
     newValues: updates,
   });
+
+  const statusSlug = joinSlug(
+    (existing as { memo_statuses?: { slug: string } | { slug: string }[] | null }).memo_statuses
+  );
+  if (statusSlug && ['draft', 'returned', 'rejected'].includes(statusSlug)) {
+    await syncPreparedSignatureIfBlank(memoId, {
+      id: user.id,
+      full_name: user.full_name,
+      title: user.title,
+      signature_path: user.signature_path || '',
+    });
+  }
 }

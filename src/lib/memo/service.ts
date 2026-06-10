@@ -690,36 +690,6 @@ async function getActiveDelegation(approverId: string) {
   };
 }
 
-async function ensureCreatorPreparedSignature(memoId: string, creatorId: string) {
-  const supabase = createServiceClient();
-
-  const { data: existing } = await supabase
-    .from('signature_records')
-    .select('id')
-    .eq('memo_id', memoId)
-    .eq('block_type', 'prepared')
-    .maybeSingle();
-
-  if (existing) return;
-
-  const { data: creator } = await supabase
-    .from('users')
-    .select('full_name, title, signature_path')
-    .eq('id', creatorId)
-    .single();
-
-  if (!creator?.signature_path) return;
-
-  await supabase.from('signature_records').insert({
-    memo_id: memoId,
-    approver_id: creatorId,
-    approver_name: creator.full_name,
-    approver_title: creator.title,
-    signature_path: creator.signature_path,
-    block_type: 'prepared',
-  });
-}
-
 function resolveApprovalBlockType(
   approver: {
     email?: string;

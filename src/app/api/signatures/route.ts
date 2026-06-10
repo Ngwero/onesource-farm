@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { storeFile } from '@/lib/storage';
 import { requireAuth, authErrorResponse } from '@/lib/auth/session';
+import { backfillBlankUserSignatures } from '@/lib/signature/sync';
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,6 +35,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) throw error;
+
+    await backfillBlankUserSignatures(user.id, stored.relativePath, {
+      full_name: data.full_name,
+      title: data.title,
+    });
+
     return NextResponse.json({ user: data });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Upload failed';

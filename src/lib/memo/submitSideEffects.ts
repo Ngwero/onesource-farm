@@ -3,10 +3,8 @@ import { logAudit } from '@/lib/audit/logger';
 import { startSlaTracking } from '@/lib/sla/service';
 import { notifyApprovers, type MemoNotificationContext } from '@/lib/notifications/service';
 import { findApproversForStep } from '@/lib/memo/approvers';
-import {
-  nowIso,
-  resetWorkflowSignaturesForResubmit,
-} from '@/lib/memo/actionTimestamps';
+import { resetWorkflowSignaturesForResubmit } from '@/lib/memo/actionTimestamps';
+import { syncPreparedSignatureIfBlank } from '@/lib/signature/sync';
 import type { WorkflowStep } from '@/lib/workflow/engine';
 import type { MemoTypeSlug } from '@/types';
 
@@ -22,22 +20,6 @@ export type SubmitSideEffectsPayload = {
 
 async function ensureCreatorPreparedSignature(memoId: string, creatorId: string) {
   const supabase = createServiceClient();
-  const stampedAt = nowIso();
-
-  const { data: existing } = await supabase
-    .from('signature_records')
-    .select('id')
-    .eq('memo_id', memoId)
-    .eq('block_type', 'prepared')
-    .maybeSingle();
-
-  if (existing) {
-    await supabase
-      .from('signature_records')
-      .update({ signed_at: stampedAt })
-      .eq('id', existing.id);
-    return;
-  }
 
   const { data: creator } = await supabase
     .from('users')
@@ -47,14 +29,11 @@ async function ensureCreatorPreparedSignature(memoId: string, creatorId: string)
 
   if (!creator?.signature_path) return;
 
-  await supabase.from('signature_records').insert({
-    memo_id: memoId,
-    approver_id: creatorId,
-    approver_name: creator.full_name,
-    approver_title: creator.title,
+  await syncPreparedSignatureIfBlank(memoId, {
+    id: creatorId,
+    full_name: creator.full_name,
+    title: creator.title,
     signature_path: creator.signature_path,
-    block_type: 'prepared',
-    signed_at: stampedAt,
   });
 }
 

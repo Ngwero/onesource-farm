@@ -24,11 +24,11 @@ export function resolveSignatureForBlock(
   memo: MemoForPrepared
 ): SignatureRecord | null {
   if (blockType !== 'prepared') {
-    return signatures.find((s) => s.block_type === blockType) ?? null;
+    return signatures.find((s) => s.block_type === blockType && s.signature_path?.trim()) ?? null;
   }
 
   const fromRecord = signatures.find((s) => s.block_type === 'prepared');
-  if (fromRecord) return fromRecord;
+  if (fromRecord?.signature_path?.trim()) return fromRecord;
 
   const creator = memo.creator;
   if (!creator || creator.id !== memo.creator_id) return null;
