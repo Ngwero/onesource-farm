@@ -298,8 +298,8 @@ async function main() {
     (await fetchDeptHead(supabase, 'OPS')) ||
     (await promoteUserForTest(
       supabase,
-      'mutorine.silas@rukapay.co.ug',
-      'department_head',
+      'emmanuel.ngwero@rukapay.co.ug',
+      'admin',
       'OPS',
       'OPS — Dept Head (test)'
     ));

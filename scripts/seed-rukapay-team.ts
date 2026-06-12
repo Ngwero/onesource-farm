@@ -81,6 +81,9 @@ const HR_MEMO_CREATOR_EMAIL = 'dorothy.kubakurungi@rukapay.co.ug';
 const IT_FIRST_CHECKER_EMAIL = ADMIN_EMAIL;
 const IT_SECOND_CHECKER_EMAIL = 'jim.ntare@rukapay.co.ug';
 
+/** Business Development staff (Silas). */
+const BD_STAFF_EMAIL = 'mutorine.silas@rukapay.co.ug';
+
 function fullNameFromEmail(email: string): string {
   const local = email.split('@')[0] || '';
   return local
@@ -124,6 +127,7 @@ async function seed() {
 
   const { data: itDept } = await supabase.from('departments').select('id').eq('code', 'IT').single();
   const { data: hrDept } = await supabase.from('departments').select('id').eq('code', 'HR').single();
+  const { data: bdDept } = await supabase.from('departments').select('id').eq('code', 'BD').single();
 
   if (!staffRoleId || !adminRoleId) {
     console.error('Run supabase/seed.sql first (roles missing).');
@@ -140,6 +144,7 @@ async function seed() {
     const isHrStaff = email === HR_MEMO_CREATOR_EMAIL;
     const isItCheckerFirst = !isAdmin && email === IT_FIRST_CHECKER_EMAIL;
     const isItCheckerSecond = !isAdmin && email === IT_SECOND_CHECKER_EMAIL;
+    const isBdStaff = email === BD_STAFF_EMAIL;
     const isFinanceReviewer = isFinanceMemoApprover || isFinanceMemoCreator;
     const role_id = isAdmin
       ? adminRoleId
@@ -160,7 +165,9 @@ async function seed() {
           ? hrDept.id
           : (isItCheckerFirst || isItCheckerSecond) && itDept?.id
             ? itDept.id
-            : null;
+            : isBdStaff && bdDept?.id
+              ? bdDept.id
+              : null;
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
@@ -216,7 +223,9 @@ async function seed() {
             ? 'IT Checker (1st)'
             : isItCheckerSecond
               ? 'IT Checker (2nd) — Jim'
-              : full_name,
+              : isBdStaff
+                ? 'Business Development — Staff'
+                : full_name,
       role_id,
       department_id,
       is_active: true,

@@ -19,6 +19,8 @@ import { CFO_EMAIL } from '../src/lib/memo/designatedUsers';
 import { HR_MEMO_CREATOR_EMAIL } from '../src/lib/workflow/hrWorkflowSteps';
 import { IT_FIRST_CHECKER_EMAIL } from '../src/lib/workflow/itCheckers';
 
+const BD_STAFF_EMAIL = 'mutorine.silas@rukapay.co.ug';
+
 function loadEnvLocal() {
   const envPath = resolve(process.cwd(), '.env.local');
   if (!existsSync(envPath)) return;
@@ -112,6 +114,7 @@ async function main() {
   await assignUser(supabase, BUSINESS_HEAD_EMAIL, 'business_head', 'BD', 'Business Head (marketing workflow)');
   await assignUser(supabase, CFO_EMAIL, 'finance_reviewer', 'FIN', 'CFO / Finance Reviewer');
   await assignUser(supabase, IT_FIRST_CHECKER_EMAIL, 'admin', 'IT', 'IT Head / Admin / 1st checker');
+  await assignUser(supabase, BD_STAFF_EMAIL, 'staff', 'BD', 'Business Development — Staff');
 
   console.log(
     '\nDone. MKT head: Margaret | Business: Norman | Leave: Dept head → CEO | Finance: Amara / Christine'
