@@ -8,21 +8,10 @@ import { workflowForCeoCreator } from '@/lib/workflow/ceoWorkflowSteps';
 import { PENDING_STATUS_TO_ROLE, sortedWorkflowSteps, type WorkflowStep } from '@/lib/workflow/engine';
 import { formatActionTimestamp } from '@/lib/memo/actionTimestamps';
 import type { ImportanceLevel, MemoTypeSlug, SignatureRecord } from '@/types';
+import type { WorkflowTimelineStep, WorkflowTimelineStepStatus } from '@/lib/memo/workflowTimelineTypes';
 
-export type WorkflowTimelineStepStatus =
-  | 'completed'
-  | 'current'
-  | 'pending'
-  | 'rejected'
-  | 'returned';
-
-export interface WorkflowTimelineStep {
-  name: string;
-  status: WorkflowTimelineStepStatus;
-  approver?: string;
-  date?: string;
-  note?: string;
-}
+export type { WorkflowTimelineStep, WorkflowTimelineStepStatus } from '@/lib/memo/workflowTimelineTypes';
+export { workflowStepsForDocumentApprovals } from '@/lib/memo/workflowTimelineTypes';
 
 type MemoForTimeline = {
   id: string;
@@ -345,13 +334,4 @@ export async function buildWorkflowTimelineForMemo(
   }
 
   return [...preamble, ...approvalSteps, footer];
-}
-
-const DOCUMENT_APPROVAL_SKIP = new Set(['Created', 'Submitted', 'Approved']);
-
-/** Workflow steps shown on the memo document approvals section (roles + names only). */
-export function workflowStepsForDocumentApprovals(
-  steps: WorkflowTimelineStep[]
-): WorkflowTimelineStep[] {
-  return steps.filter((step) => !DOCUMENT_APPROVAL_SKIP.has(step.name));
 }

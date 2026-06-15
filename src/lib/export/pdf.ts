@@ -12,7 +12,7 @@ import { getMemoBodyRowsForExport, memoDocumentTitle } from '@/lib/memo/leaveTem
 import {
   workflowStepsForDocumentApprovals,
   type WorkflowTimelineStep,
-} from '@/lib/memo/workflowTimeline';
+} from '@/lib/memo/workflowTimelineTypes';
 import {
   drawMemoEcopyWatermark,
   MEMO_ECOPY_WATERMARK_SUB,

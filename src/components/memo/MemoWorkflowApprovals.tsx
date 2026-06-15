@@ -3,7 +3,7 @@
 import {
   workflowStepsForDocumentApprovals,
   type WorkflowTimelineStep,
-} from '@/lib/memo/workflowTimeline';
+} from '@/lib/memo/workflowTimelineTypes';
 
 type MemoWorkflowApprovalsProps = {
   steps: WorkflowTimelineStep[];

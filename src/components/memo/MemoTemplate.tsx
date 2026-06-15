@@ -10,7 +10,7 @@ import { formatCurrency, getMemoFinancialAmount } from '@/lib/memo/financial';
 import { isLeaveMemo } from '@/lib/memo/leaveTemplate';
 import { LeaveMemoBody, type LeaveMemoBodyProps } from '@/components/memo/LeaveMemoBody';
 import { MemoWorkflowApprovals } from '@/components/memo/MemoWorkflowApprovals';
-import type { WorkflowTimelineStep } from '@/lib/memo/workflowTimeline';
+import type { WorkflowTimelineStep } from '@/lib/memo/workflowTimelineTypes';
 
 interface MemoTemplateProps {
   memo: Memo;
