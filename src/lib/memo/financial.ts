@@ -16,6 +16,11 @@ export interface MemoFinancialSummary {
   usd_to_ugx_rate?: number;
 }
 
+/** Digits with optional thousand separators — no trailing comma. */
+const AMOUNT = String.raw`\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?`;
+/** k/m/b multiplier only when not the start of a word (avoids ", broken" → billion). */
+const MULT = String.raw`\s*([kKmMbB])(?![a-zA-Z])`;
+
 function applyMultiplier(value: number, suffix?: string): number {
   if (!suffix) return value;
   const s = suffix.toLowerCase();
@@ -77,6 +82,34 @@ export function isLeaveFinancialMeta(text?: string | null): boolean {
   }
 }
 
+function extractExplicitTotalAmount(
+  text: string,
+  usdToUgx = DEFAULT_USD_TO_UGX_RATE
+): number | null {
+  const patterns = [
+    new RegExp(
+      String.raw`\btotal\s+(?:cost|amount|expenditure|payment|sum)\b(?:\s*\(UGX\))?[^0-9]{0,24}(${AMOUNT})${MULT}?`,
+      'i'
+    ),
+    new RegExp(String.raw`\bamounted\s+to\s+(?:UGX\s*)?(${AMOUNT})${MULT}?`, 'i'),
+    new RegExp(
+      String.raw`\b(?:approve(?:d)?\s+)?payment\s+of\s+(?:UGX\s*)?(${AMOUNT})${MULT}?`,
+      'i'
+    ),
+    new RegExp(String.raw`\btotal\b[^0-9]{0,16}(?:UGX\s*)?(${AMOUNT})${MULT}?`, 'i'),
+  ];
+
+  for (const pattern of patterns) {
+    const match = pattern.exec(text);
+    if (match) {
+      const amount = toUgxAmount(match[1], match[2], 'UGX', usdToUgx);
+      if (amount !== null) return amount;
+    }
+  }
+
+  return null;
+}
+
 /** Extract monetary amounts from free-text financial implication fields (totals in UGX). */
 export function extractAmountsFromFinancialText(
   text: string,
@@ -87,22 +120,32 @@ export function extractAmountsFromFinancialText(
 
   const amounts: number[] = [];
 
-  const currencyFirst =
-    /(UGX|USh\.?|USD)\s*[:.]?\s*([\d,]+(?:\.\d{1,2})?)\s*([kKmMbB])?/gi;
+  const currencyFirst = new RegExp(
+    String.raw`(UGX|USh\.?|USD)\s*[:.]?\s*(${AMOUNT})${MULT}`,
+    'gi'
+  );
   let match: RegExpExecArray | null;
   while ((match = currencyFirst.exec(src)) !== null) {
     pushParsedAmount(amounts, match[2], match[3], match[1], usdToUgx);
   }
 
-  const currencyAfter =
-    /([\d,]+(?:\.\d{1,2})?)\s*([kKmMbB])?\s*(UGX|USh\.?|USD)\b/gi;
+  const currencyAfter = new RegExp(
+    String.raw`(${AMOUNT})${MULT}\s*(UGX|USh\.?|USD)\b`,
+    'gi'
+  );
   while ((match = currencyAfter.exec(src)) !== null) {
     pushParsedAmount(amounts, match[1], match[2], match[3], usdToUgx);
   }
 
   const ugxOnlyPatterns = [
-    /(?:amount|total|cost|payment|budget|sum|worth|price)(?:\s+of)?\s*[:.]?\s*(?:UGX\s*)?([\d,]+(?:\.\d{1,2})?)\s*([kKmMbB])?/gi,
-    /(?:approve(?:d)?\s+)?payment\s+of\s+(?:UGX\s*)?([\d,]+(?:\.\d{1,2})?)\s*([kKmMbB])?/gi,
+    new RegExp(
+      String.raw`\b(?:amount|total|cost|payment|budget|sum|worth|price)\b(?:\s+of)?\s*[:.]?\s*(?:UGX\s*)?(${AMOUNT})${MULT}`,
+      'gi'
+    ),
+    new RegExp(
+      String.raw`\b(?:approve(?:d)?\s+)?payment\s+of\s+(?:UGX\s*)?(${AMOUNT})${MULT}`,
+      'gi'
+    ),
   ];
 
   for (const pattern of ugxOnlyPatterns) {
@@ -112,7 +155,7 @@ export function extractAmountsFromFinancialText(
   }
 
   if (amounts.length === 0) {
-    const plain = /\b(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d{4,}(?:\.\d+)?)\b/g;
+    const plain = new RegExp(String.raw`\b(${AMOUNT})\b`, 'g');
     while ((match = plain.exec(src)) !== null) {
       pushParsedAmount(amounts, match[1], undefined, 'UGX', usdToUgx);
     }
@@ -121,15 +164,39 @@ export function extractAmountsFromFinancialText(
   return amounts;
 }
 
-/** Single memo total from its financial implication text (sum of amounts found, in UGX). */
+function pickMemoTotal(amounts: number[]): number {
+  if (amounts.length === 1) return amounts[0];
+
+  const rounded = amounts.map((n) => Math.round(n));
+  const unique = [...new Set(rounded)];
+  if (unique.length === 1) return unique[0];
+
+  const sorted = [...unique].sort((a, b) => b - a);
+  const max = sorted[0];
+  const othersSum = sorted.slice(1).reduce((sum, n) => sum + n, 0);
+
+  if (Math.abs(max - othersSum) < 1) return max;
+
+  const totalSum = rounded.reduce((sum, n) => sum + n, 0);
+  const maxOccurrences = rounded.filter((n) => n === max).length;
+  if (maxOccurrences === 1 && totalSum > max) return totalSum;
+
+  return max;
+}
+
+/** Single memo total from its financial implication text (in UGX). */
 export function getMemoFinancialAmount(
   text?: string | null,
   usdToUgx = DEFAULT_USD_TO_UGX_RATE
 ): number | null {
   if (!text?.trim() || isLeaveFinancialMeta(text)) return null;
+
+  const explicit = extractExplicitTotalAmount(text, usdToUgx);
+  if (explicit !== null) return explicit;
+
   const amounts = extractAmountsFromFinancialText(text, usdToUgx);
   if (amounts.length === 0) return null;
-  return amounts.reduce((sum, n) => sum + n, 0);
+  return pickMemoTotal(amounts);
 }
 
 const EXCLUDED_FINANCIAL_STATUS_SLUGS = new Set(['rejected']);
