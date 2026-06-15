@@ -72,6 +72,7 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
   staff: [
     { label: 'Dashboard', href: '/dashboard/staff', icon: <LayoutDashboard size={18} /> },
     { label: 'Create Memo', href: '/memos/create', icon: <PlusCircle size={18} /> },
+    { label: 'My Memos', href: '/memos?view=mine', icon: <FileEdit size={18} /> },
     { label: 'My Drafts', href: '/memos?status=draft', icon: <FileText size={18} /> },
     { label: 'In progress', href: '/memos?view=active', icon: <FileText size={18} /> },
     { label: 'Shared with Me', href: '/memos?shared=1', icon: <Share2 size={18} /> },
@@ -208,6 +209,7 @@ export function Sidebar() {
     navItems = navWithCreateMemo(
       [
         { label: 'Dashboard', href: '/dashboard/finance', icon: <LayoutDashboard size={18} /> },
+        { label: 'My Memos', href: '/memos?view=mine', icon: <FileEdit size={18} /> },
         { label: 'Pending Finance', href: '/memos?status=pending_finance', icon: <FileText size={18} /> },
         {
           label: 'Awaiting payment',
@@ -220,6 +222,7 @@ export function Sidebar() {
           icon: <FileText size={18} />,
         },
         { label: 'I approved', href: '/memos?status=approved', icon: <FileText size={18} /> },
+        { label: 'All memos', href: '/memos', icon: <Building2 size={18} /> },
         { label: 'Notifications', href: '/notifications', icon: <Bell size={18} /> },
         { label: 'My Signature', href: '/settings/signature', icon: <PenLine size={18} /> },
         { label: 'Delegation', href: '/settings/delegation', icon: <UserCog size={18} /> },

@@ -12,7 +12,7 @@ import { DashboardPage } from '@/components/dashboard/DashboardPage';
 import { useMemos } from '@/hooks/useMemos';
 
 export default function StaffDashboard() {
-  const { memos, loading } = useMemos();
+  const { memos, loading } = useMemos({ view: 'mine' });
   const { memos: approvedMemos, loading: loadingApproved } = useMemos({ status: 'approved' });
   const all = memos as Array<{ memo_statuses?: { slug: string } }>;
 

@@ -12,7 +12,8 @@ export default function FinanceDashboard() {
   const financeReviewer = isInterdeptFinanceReviewer(user);
   const cfoFinanceChecker = isDesignatedCfo(user);
 
-  const { memos, loading } = useMemos({ status: 'pending_finance' });
+  const { memos: pendingFinance, loading } = useMemos({ status: 'pending_finance' });
+  const { memos: myMemos, loading: loadingMine } = useMemos({ view: 'mine' });
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
   const { memos: awaitingPayment, loading: loadingUnpaid } = useMemos({
     status: 'approved',
@@ -22,10 +23,17 @@ export default function FinanceDashboard() {
     status: 'approved',
     payment_status: 'paid',
   });
-  const all = memos as Array<{ memo_statuses?: { slug: string } }>;
+  const all = pendingFinance as Array<{ memo_statuses?: { slug: string } }>;
 
   const stats = financeReviewer
     ? [
+        {
+          label: 'My memos',
+          value: myMemos.length,
+          variant: 'info' as const,
+          icon: <FileStack size={16} />,
+          href: '/memos?view=mine',
+        },
         {
           label: 'Awaiting my review',
           value: all.filter((m) => m.memo_statuses?.slug === 'pending_finance').length,
@@ -36,7 +44,7 @@ export default function FinanceDashboard() {
         {
           label: 'Awaiting payment',
           value: awaitingPayment.length,
-          variant: 'info' as const,
+          variant: 'warning' as const,
           icon: <Banknote size={16} />,
           href: '/memos?status=approved&payment_status=not_paid',
         },
@@ -50,7 +58,7 @@ export default function FinanceDashboard() {
       ]
     : [
         {
-          label: cfoFinanceChecker ? 'Pending finance' : 'Pending finance',
+          label: 'Pending finance',
           value: all.filter((m) => m.memo_statuses?.slug === 'pending_finance').length,
           variant: 'pending' as const,
           icon: <Clock size={16} />,
@@ -83,13 +91,27 @@ export default function FinanceDashboard() {
     : financeReviewer
       ? [
           {
+            href: '/memos?view=mine',
+            label: 'All my memos',
+            description: 'Every memo you created — drafts, in progress, approved, and rejected',
+            icon: <FileStack size={20} />,
+          },
+          {
+            href: '/memos?status=pending_finance',
+            label: 'Pending my review',
+            description: 'Inter-department memos waiting for finance sign-off',
+            icon: <FileText size={20} />,
+          },
+          {
             href: '/memos?status=approved&payment_status=not_paid',
             label: 'Mark payments',
-            description: 'Approved memos not yet paid — update status when payment is done',
+            description: 'Approved memos not yet paid',
             icon: <Banknote size={20} />,
           },
         ]
       : undefined;
+
+  const dashboardMemos = financeReviewer ? myMemos : pendingFinance;
 
   return (
     <DashboardPage
@@ -104,16 +126,20 @@ export default function FinanceDashboard() {
         cfoFinanceChecker
           ? 'You review Finance Request memos from Christine, then they go to the CEO for final approval.'
           : financeReviewer
-            ? 'Review the finance step on inter-department memos, then mark approved memos as paid once payment is processed.'
+            ? 'Use My memos for everything you created. Pending Finance is only memos waiting for your review.'
             : undefined
       }
       stats={stats}
       quickLinks={quickLinks}
-      quickLinksTitle={quickLinks ? 'Your queue' : undefined}
-      loading={loading || loadingApproved || loadingUnpaid || loadingPaid}
-      memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
-      memosTitle="Memos awaiting finance review"
-      emptyMessage="No memos pending finance review"
+      quickLinksTitle={quickLinks ? 'Shortcuts' : undefined}
+      loading={loading || loadingMine || loadingApproved || loadingUnpaid || loadingPaid}
+      memos={dashboardMemos as Parameters<typeof DashboardPage>[0]['memos']}
+      memosTitle={financeReviewer ? 'My memos' : 'Memos awaiting finance review'}
+      emptyMessage={
+        financeReviewer
+          ? 'No memos yet — create one from the sidebar'
+          : 'No memos pending finance review'
+      }
     />
   );
 }

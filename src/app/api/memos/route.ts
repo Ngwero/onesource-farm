@@ -43,9 +43,6 @@ const MEMO_LIST_SELECT = `
   importance_level,
   financial_implication,
   requires_finance,
-  payment_status,
-  payment_note,
-  paid_at,
   memo_types(name, slug),
   memo_statuses(name, slug),
   departments(name, code),
@@ -102,16 +99,25 @@ export async function GET(request: NextRequest) {
     }
 
     const sharedOnly = searchParams.get('shared') === '1';
+    const mineView = view === 'mine';
     const christineFinanceQueue = usesChristineFinanceQueue(user, status);
     const amaraFinanceQueue = usesAmaraFinanceRequestQueue(user, status);
-    const roleScopedList = shouldUseRoleScopedMemoList({
-      status,
-      view,
-      sharedOnly,
-      financeStaffQueue: christineFinanceQueue || amaraFinanceQueue,
-    });
+    const roleScopedList =
+      !mineView &&
+      shouldUseRoleScopedMemoList({
+        status,
+        view,
+        sharedOnly,
+        financeStaffQueue: christineFinanceQueue || amaraFinanceQueue,
+      });
 
-    if (amaraFinanceQueue) {
+    if (mineView) {
+      const statusIds = await getPrivateMemoStatusIds(supabase);
+      query = query.eq('creator_id', user.id);
+      if (statusIds.deletedId) {
+        query = query.neq('status_id', statusIds.deletedId);
+      }
+    } else if (amaraFinanceQueue) {
       const [creatorId, { data: finType }] = await Promise.all([
         amaraFinanceRequestCreatorId(supabase),
         supabase.from('memo_types').select('id').eq('slug', 'finance_request').maybeSingle(),
@@ -177,6 +183,14 @@ export async function GET(request: NextRequest) {
           .eq('slug', 'it_request')
           .single();
         if (itType) query = query.eq('memo_type_id', itType.id);
+      } else if (role === 'staff') {
+        const statusIds = await getPrivateMemoStatusIds(supabase);
+        query = applyDepartmentMemoListFilter(
+          query,
+          user.id,
+          user.department_id,
+          statusIds
+        );
       }
     } else if (role !== 'admin' && !chairmanViewer) {
       const statusIds = await getPrivateMemoStatusIds(supabase);
@@ -216,7 +230,12 @@ export async function GET(request: NextRequest) {
           query = query.eq('payment_status', paymentStatusFilter);
         }
       } else {
-        const approvedMemoIds = await fetchMemoIdsForApprovedTab(supabase, user.id, role);
+        const approvedMemoIds = await fetchMemoIdsForApprovedTab(
+          supabase,
+          user.id,
+          role,
+          user
+        );
 
         if (approvedMemoIds !== null) {
           if (approvedMemoIds.length === 0) {

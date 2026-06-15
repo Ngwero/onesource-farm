@@ -80,16 +80,20 @@ function MemosContent() {
             ? status === 'approved' && isApproverRole
               ? PAGE_TITLES.approved_approver
               : PAGE_TITLES[status] || status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-            : view === 'active'
-              ? 'Memos in progress'
-              : 'My Memos';
+            : view === 'mine'
+              ? 'My memos'
+              : view === 'active'
+                ? 'Memos in progress'
+                : 'My Memos';
 
   const subtitle =
     q && q.trim().length >= 2
       ? `Showing memos matching “${q.trim()}” in your visible list.`
       : period
         ? `Sorted by memo date (newest first) for ${formatPeriodLabel(period)}.`
-        : paymentStatus === 'not_paid' || paymentStatus === 'paid'
+        : view === 'mine'
+          ? 'Every memo you have created, in any status.'
+          : paymentStatus === 'not_paid' || paymentStatus === 'paid'
           ? 'Update payment status on each memo once funds have been processed.'
           : status === 'draft'
             ? 'Drafts are private until you submit them for approval.'

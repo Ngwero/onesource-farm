@@ -9,6 +9,7 @@ import type { RoleSlug } from '@/types';
 
 const TABS = [
   { label: 'All', href: '/memos' },
+  { label: 'My memos', href: '/memos?view=mine' },
   { label: 'My Drafts', href: '/memos?status=draft' },
   { label: 'In progress', href: '/memos?view=active' },
   { label: 'Returned', href: '/memos?status=returned' },

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { RoleSlug } from '@/types';
+import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
+import type { RoleSlug, User } from '@/types';
 
 const APPROVER_ROLES: RoleSlug[] = [
   'department_head',
@@ -21,13 +22,18 @@ const APPROVER_ROLES: RoleSlug[] = [
 export async function fetchMemoIdsForApprovedTab(
   supabase: SupabaseClient,
   userId: string,
-  role: RoleSlug
+  role: RoleSlug,
+  user?: Pick<User, 'email' | 'role'> | null
 ): Promise<string[] | null> {
   if (role === 'admin') {
     return null;
   }
 
-  if (APPROVER_ROLES.includes(role)) {
+  const actsAsApprover =
+    APPROVER_ROLES.includes(role) ||
+    (role === 'staff' && user && isInterdeptFinanceReviewer(user));
+
+  if (actsAsApprover) {
     const ids = new Set<string>();
 
     const { data: signatures } = await supabase
@@ -48,6 +54,26 @@ export async function fetchMemoIdsForApprovedTab(
 
       for (const row of exco || []) {
         ids.add(row.memo_id as string);
+      }
+    }
+
+    if (role === 'staff') {
+      const { data: approvedStatus } = await supabase
+        .from('memo_statuses')
+        .select('id')
+        .eq('slug', 'approved')
+        .single();
+
+      if (approvedStatus?.id) {
+        const { data: fullyApproved } = await supabase
+          .from('memos')
+          .select('id')
+          .eq('creator_id', userId)
+          .eq('status_id', approvedStatus.id);
+
+        for (const row of fullyApproved || []) {
+          ids.add(row.id as string);
+        }
       }
     }
 
