@@ -22,7 +22,8 @@ export type AuditAction =
   | 'memo_shared'
   | 'status_changed'
   | 'comment_added'
-  | 'version_created';
+  | 'version_created'
+  | 'payment_updated';
 
 export async function logAudit(params: {
   memoId?: string;

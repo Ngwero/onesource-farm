@@ -276,7 +276,7 @@ body {
 
 .stat-card--success::before,
 .stat-card--default::before {
-  background: linear-gradient(90deg, var(--color-brand-700), var(--color-brand-400));
+  background: linear-gradient(90deg, #047857, #34d399);
 }
 
 .stat-card--warning::before {
@@ -313,8 +313,8 @@ body {
 
 .stat-card--success .stat-card-icon,
 .stat-card--default .stat-card-icon {
-  background: rgb(0 29 110 / 0.08);
-  color: var(--color-brand-600);
+  background: rgb(4 120 87 / 0.12);
+  color: #047857;
 }
 
 .stat-card--danger .stat-card-icon {
@@ -703,51 +703,88 @@ body {
 }
 
 .status-badge--submitted,
-.status-badge--pending_it_checker_first,
-.status-badge--pending_it_checker_second,
-.status-badge--pending_it_review {
-  background: #ecfeff;
-  color: #0e7490;
-  border-color: #a5f3fc;
-}
-
 .status-badge--pending_department_head,
 .status-badge--pending_business_head,
-.status-badge--returned {
-  background: #fffbeb;
-  color: #b45309;
-  border-color: #fde68a;
-}
-
-.status-badge--pending_finance {
-  background: #fff7ed;
-  color: #c2410c;
-  border-color: #fed7aa;
-}
-
-.status-badge--pending_hr {
-  background: #faf5ff;
-  color: #7e22ce;
-  border-color: #e9d5ff;
-}
-
+.status-badge--pending_it_review,
+.status-badge--pending_it_checker_first,
+.status-badge--pending_it_checker_second,
+.status-badge--pending_finance,
+.status-badge--pending_hr,
 .status-badge--pending_ceo,
-.status-badge--pending_exco {
-  background: #eef2ff;
-  color: #4338ca;
-  border-color: #c7d2fe;
+.status-badge--pending_exco,
+.status-badge--returned {
+  background: #fefce8;
+  color: #a16207;
+  border-color: #fde047;
 }
 
 .status-badge--approved {
-  background: #eef3ff;
-  color: #001d6e;
-  border-color: #a8bff5;
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #6ee7b7;
+}
+
+.payment-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.payment-badge--not-paid {
+  background: #fefce8;
+  color: #a16207;
+  border-color: #fde047;
+}
+
+.payment-badge--paid {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.payment-toggle {
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.625rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #475569;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.payment-toggle:hover:not(:disabled) {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.payment-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.payment-toggle--active.payment-toggle--pending {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.payment-toggle--active.payment-toggle--paid {
+  border-color: #10b981;
+  background: #ecfdf5;
+  color: #047857;
 }
 
 .status-badge--rejected {
   background: #fef2f2;
-  color: #b91c1c;
-  border-color: #fecaca;
+  color: #dc2626;
+  border-color: #fca5a5;
 }
 
 .status-badge--withdrawn,
@@ -1984,9 +2021,9 @@ body {
 
 .memo-doc-workflow-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) minmax(0, 5rem);
   gap: 0.75rem 1rem;
-  align-items: baseline;
+  align-items: center;
   padding: 0.7rem 0.9rem;
   background: #fff;
   border: 1px solid #e8edf5;
@@ -2020,14 +2057,46 @@ body {
   color: #94a3b8;
 }
 
+.memo-doc-workflow-row__sig {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 2rem;
+}
+
+.memo-doc-workflow-row__sig--empty {
+  border-bottom: 1px dashed #cbd5e1;
+  min-height: 1.75rem;
+}
+
+.memo-doc-workflow-row__sig .memo-signature-img {
+  max-height: 2.25rem;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: right center;
+}
+
 @media (max-width: 520px) {
   .memo-doc-workflow-row {
-    grid-template-columns: 1fr;
-    gap: 0.25rem;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'role sig'
+      'name sig';
+    gap: 0.25rem 0.75rem;
+  }
+
+  .memo-doc-workflow-row__role {
+    grid-area: role;
   }
 
   .memo-doc-workflow-row__name {
+    grid-area: name;
     text-align: left;
+  }
+
+  .memo-doc-workflow-row__sig {
+    grid-area: sig;
+    align-self: center;
   }
 }
 

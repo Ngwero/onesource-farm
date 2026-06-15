@@ -114,7 +114,9 @@ export function MemoTemplate({ memo, branding, workflowSteps = [] }: MemoTemplat
           )}
         </div>
 
-        {workflowSteps.length > 0 ? <MemoWorkflowApprovals steps={workflowSteps} /> : null}
+        {workflowSteps.length > 0 || memo.creator ? (
+          <MemoWorkflowApprovals steps={workflowSteps} memo={memo} />
+        ) : null}
 
         <footer className="memo-doc-footer">
           <p>{MEMO_VISION_STATEMENT}</p>

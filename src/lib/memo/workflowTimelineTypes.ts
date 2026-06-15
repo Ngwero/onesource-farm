@@ -11,8 +11,10 @@ export interface WorkflowTimelineStep {
   name: string;
   status: WorkflowTimelineStepStatus;
   approver?: string;
+  approver_title?: string;
   date?: string;
   note?: string;
+  signature_path?: string;
 }
 
 const DOCUMENT_APPROVAL_SKIP = new Set(['Created', 'Submitted', 'Approved']);

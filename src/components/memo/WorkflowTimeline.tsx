@@ -17,11 +17,11 @@ interface WorkflowTimelineProps {
 
 export function WorkflowTimeline({ steps, slaDueAt }: WorkflowTimelineProps) {
   const icons = {
-    completed: <CheckCircle className="text-brand-500" size={20} />,
+    completed: <CheckCircle className="text-emerald-600" size={20} />,
     current: <Clock className="text-amber-500 animate-pulse" size={20} />,
-    pending: <Circle className="text-slate-300" size={20} />,
-    rejected: <XCircle className="text-red-500" size={20} />,
-    returned: <RotateCcw className="text-yellow-500" size={20} />,
+    pending: <Circle className="text-amber-400" size={20} />,
+    rejected: <XCircle className="text-red-600" size={20} />,
+    returned: <RotateCcw className="text-amber-500" size={20} />,
   };
 
   const slaRemaining = slaDueAt
@@ -48,7 +48,13 @@ export function WorkflowTimeline({ steps, slaDueAt }: WorkflowTimelineProps) {
             <div className="mt-0.5">{icons[step.status]}</div>
             <div className="flex-1">
               <p className={`text-sm font-medium ${
-                step.status === 'current' ? 'text-amber-700' : 'text-slate-700'
+                step.status === 'completed'
+                  ? 'text-emerald-700'
+                  : step.status === 'current' || step.status === 'pending'
+                    ? 'text-amber-700'
+                    : step.status === 'rejected'
+                      ? 'text-red-700'
+                      : 'text-slate-700'
               }`}>
                 {step.name}
               </p>

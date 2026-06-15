@@ -16,6 +16,7 @@ import { defaultStatusForRole } from '@/lib/auth/memoAccess';
 import { canCreateMemo, hasPermission } from '@/lib/auth/rbac';
 import type { RoleSlug } from '@/types';
 import { isItDepartmentHead } from '@/lib/memo/itRouting';
+import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
 import {
   amaraFinanceRequestCreatorId,
   financeStepMemoTypeIds,
@@ -42,6 +43,9 @@ const MEMO_LIST_SELECT = `
   importance_level,
   financial_implication,
   requires_finance,
+  payment_status,
+  payment_note,
+  paid_at,
   memo_types(name, slug),
   memo_statuses(name, slug),
   departments(name, code),
@@ -67,6 +71,11 @@ export async function GET(request: NextRequest) {
       searchParams.get('month')
     );
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100);
+    const paymentStatusFilter = searchParams.get('payment_status');
+    const christinePaymentQueue =
+      isInterdeptFinanceReviewer(user) &&
+      status === 'approved' &&
+      (paymentStatusFilter === 'not_paid' || paymentStatusFilter === 'paid');
 
     if (chairmanViewer && status === 'deleted') {
       return NextResponse.json({ memos: [], financial_summary: null });
@@ -190,20 +199,38 @@ export async function GET(request: NextRequest) {
     }
 
     if (status === 'approved') {
-      const approvedMemoIds = await fetchMemoIdsForApprovedTab(supabase, user.id, role);
-
-      if (approvedMemoIds !== null) {
-        if (approvedMemoIds.length === 0) {
+      if (christinePaymentQueue) {
+        const [typeIds, { data: approvedStatus }] = await Promise.all([
+          financeStepMemoTypeIds(supabase),
+          supabase.from('memo_statuses').select('id').eq('slug', 'approved').single(),
+        ]);
+        if (typeIds.length === 0 || !approvedStatus?.id) {
           return NextResponse.json({ memos: [], financial_summary: null });
         }
-        query = query.in('id', approvedMemoIds);
+        query = query
+          .in('memo_type_id', typeIds)
+          .eq('status_id', approvedStatus.id);
+        if (paymentStatusFilter === 'not_paid') {
+          query = query.or('payment_status.eq.not_paid,payment_status.is.null');
+        } else {
+          query = query.eq('payment_status', paymentStatusFilter);
+        }
       } else {
-        const { data: statusRow } = await supabase
-          .from('memo_statuses')
-          .select('id')
-          .eq('slug', 'approved')
-          .single();
-        if (statusRow) query = query.eq('status_id', statusRow.id);
+        const approvedMemoIds = await fetchMemoIdsForApprovedTab(supabase, user.id, role);
+
+        if (approvedMemoIds !== null) {
+          if (approvedMemoIds.length === 0) {
+            return NextResponse.json({ memos: [], financial_summary: null });
+          }
+          query = query.in('id', approvedMemoIds);
+        } else {
+          const { data: statusRow } = await supabase
+            .from('memo_statuses')
+            .select('id')
+            .eq('slug', 'approved')
+            .single();
+          if (statusRow) query = query.eq('status_id', statusRow.id);
+        }
       }
     } else if (status) {
       const { data: statusRow } = await supabase

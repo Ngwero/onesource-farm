@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, FileStack, CheckCircle2, FileText } from 'lucide-react';
+import { Clock, FileStack, CheckCircle2, FileText, Banknote } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { DashboardPage } from '@/components/dashboard/DashboardPage';
 import { useMemos } from '@/hooks/useMemos';
@@ -14,30 +14,62 @@ export default function FinanceDashboard() {
 
   const { memos, loading } = useMemos({ status: 'pending_finance' });
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
+  const { memos: awaitingPayment, loading: loadingUnpaid } = useMemos({
+    status: 'approved',
+    payment_status: 'not_paid',
+  });
+  const { memos: paidMemos, loading: loadingPaid } = useMemos({
+    status: 'approved',
+    payment_status: 'paid',
+  });
   const all = memos as Array<{ memo_statuses?: { slug: string } }>;
 
-  const stats = [
-    {
-      label: financeReviewer ? 'Awaiting my review' : 'Pending finance',
-      value: all.filter((m) => m.memo_statuses?.slug === 'pending_finance').length,
-      variant: 'pending' as const,
-      icon: <Clock size={16} />,
-      href: '/memos?status=pending_finance',
-    },
-    {
-      label: 'In finance queue',
-      value: all.length,
-      variant: 'info' as const,
-      icon: <FileStack size={16} />,
-    },
-    {
-      label: 'Reviewed by me',
-      value: approvedByMe.length,
-      variant: 'success' as const,
-      icon: <CheckCircle2 size={16} />,
-      href: '/memos?status=approved',
-    },
-  ];
+  const stats = financeReviewer
+    ? [
+        {
+          label: 'Awaiting my review',
+          value: all.filter((m) => m.memo_statuses?.slug === 'pending_finance').length,
+          variant: 'pending' as const,
+          icon: <Clock size={16} />,
+          href: '/memos?status=pending_finance',
+        },
+        {
+          label: 'Awaiting payment',
+          value: awaitingPayment.length,
+          variant: 'info' as const,
+          icon: <Banknote size={16} />,
+          href: '/memos?status=approved&payment_status=not_paid',
+        },
+        {
+          label: 'Paid',
+          value: paidMemos.length,
+          variant: 'success' as const,
+          icon: <CheckCircle2 size={16} />,
+          href: '/memos?status=approved&payment_status=paid',
+        },
+      ]
+    : [
+        {
+          label: cfoFinanceChecker ? 'Pending finance' : 'Pending finance',
+          value: all.filter((m) => m.memo_statuses?.slug === 'pending_finance').length,
+          variant: 'pending' as const,
+          icon: <Clock size={16} />,
+          href: '/memos?status=pending_finance',
+        },
+        {
+          label: 'In finance queue',
+          value: all.length,
+          variant: 'info' as const,
+          icon: <FileStack size={16} />,
+        },
+        {
+          label: 'Reviewed by me',
+          value: approvedByMe.length,
+          variant: 'success' as const,
+          icon: <CheckCircle2 size={16} />,
+          href: '/memos?status=approved',
+        },
+      ];
 
   const quickLinks = cfoFinanceChecker
     ? [
@@ -48,7 +80,16 @@ export default function FinanceDashboard() {
           icon: <FileText size={20} />,
         },
       ]
-    : undefined;
+    : financeReviewer
+      ? [
+          {
+            href: '/memos?status=approved&payment_status=not_paid',
+            label: 'Mark payments',
+            description: 'Approved memos not yet paid — update status when payment is done',
+            icon: <Banknote size={20} />,
+          },
+        ]
+      : undefined;
 
   return (
     <DashboardPage
@@ -63,13 +104,13 @@ export default function FinanceDashboard() {
         cfoFinanceChecker
           ? 'You review Finance Request memos from Christine, then they go to the CEO for final approval.'
           : financeReviewer
-            ? 'You review the finance step on inter-department memos (not your own Finance Requests), then memos go to the CEO.'
+            ? 'Review the finance step on inter-department memos, then mark approved memos as paid once payment is processed.'
             : undefined
       }
       stats={stats}
       quickLinks={quickLinks}
       quickLinksTitle={quickLinks ? 'Your queue' : undefined}
-      loading={loading || loadingApproved}
+      loading={loading || loadingApproved || loadingUnpaid || loadingPaid}
       memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
       memosTitle="Memos awaiting finance review"
       emptyMessage="No memos pending finance review"

@@ -6,6 +6,7 @@ const AUDIT_LABELS: Partial<Record<AuditAction, string>> = {
   memo_created: 'Memo created',
   memo_submitted: 'Submitted for approval',
   memo_resubmitted: 'Resubmitted after correction',
+  payment_updated: 'Payment status updated',
   memo_approved: 'Approved',
   memo_returned: 'Returned for correction',
   memo_rejected: 'Rejected',
@@ -46,6 +47,7 @@ export async function buildMemoActivity(memoId: string): Promise<MemoActivityIte
         'memo_edited',
         'attachment_uploaded',
         'attachment_deleted',
+        'payment_updated',
       ])
       .order('created_at', { ascending: true }),
   ]);

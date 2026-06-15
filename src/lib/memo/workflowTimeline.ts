@@ -281,6 +281,9 @@ export async function buildWorkflowTimelineForMemo(
     const sig = sigByStep.get(i);
     let approver: string | undefined;
 
+    let signature_path: string | undefined;
+    let approver_title: string | undefined;
+
     if (sig && (status === 'completed' || approved)) {
       approver = approverLine(
         userLabels,
@@ -288,6 +291,8 @@ export async function buildWorkflowTimelineForMemo(
         sig.approver_name,
         viewingUserId
       );
+      approver_title = sig.approver_title || undefined;
+      signature_path = sig.signature_path?.trim() || undefined;
       if (!date) date = formatActionTimestamp(sig.signed_at);
     } else if (status === 'current' && memo.pending_assignee_id) {
       approver = approverLine(
@@ -305,8 +310,10 @@ export async function buildWorkflowTimelineForMemo(
       name: step.step_name,
       status,
       approver,
+      approver_title,
       date,
       note: sig?.delegation_note || undefined,
+      signature_path,
     });
   }
 
@@ -326,6 +333,8 @@ export async function buildWorkflowTimelineForMemo(
         lastSig.approver_name,
         viewingUserId
       );
+      footer.approver_title = lastSig.approver_title || undefined;
+      footer.signature_path = lastSig.signature_path?.trim() || undefined;
       footer.date = formatActionTimestamp(lastSig.signed_at);
       footer.note = lastSig.delegation_note || undefined;
     } else if (memo.approved_at) {

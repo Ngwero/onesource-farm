@@ -209,6 +209,16 @@ export function Sidebar() {
       [
         { label: 'Dashboard', href: '/dashboard/finance', icon: <LayoutDashboard size={18} /> },
         { label: 'Pending Finance', href: '/memos?status=pending_finance', icon: <FileText size={18} /> },
+        {
+          label: 'Awaiting payment',
+          href: '/memos?status=approved&payment_status=not_paid',
+          icon: <FileText size={18} />,
+        },
+        {
+          label: 'Paid memos',
+          href: '/memos?status=approved&payment_status=paid',
+          icon: <FileText size={18} />,
+        },
         { label: 'I approved', href: '/memos?status=approved', icon: <FileText size={18} /> },
         { label: 'Notifications', href: '/notifications', icon: <Bell size={18} /> },
         { label: 'My Signature', href: '/settings/signature', icon: <PenLine size={18} /> },

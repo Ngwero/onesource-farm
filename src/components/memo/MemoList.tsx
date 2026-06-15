@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { StatusBadge } from '../ui/StatusBadge';
+import { PaymentStatusBadge } from '@/components/memo/PaymentStatusBadge';
+import type { PaymentStatus } from '@/types';
 import { FileText, Eye, Pencil, Download } from 'lucide-react';
 import { downloadMemoPdf } from '@/lib/memo/downloadMemoPdf';
 
@@ -25,6 +27,7 @@ interface MemoListItem {
   created_at: string;
   updated_at?: string;
   submitted_at?: string;
+  payment_status?: PaymentStatus | null;
 }
 
 function formatListDate(value: string | null | undefined): string {
@@ -39,12 +42,14 @@ export function MemoList({
   currentUserId,
   emptyMessage = 'No memos found',
   sortByMemoDate = false,
+  showPaymentColumn = false,
 }: {
   memos: MemoListItem[];
   currentUserId?: string;
   emptyMessage?: string;
   /** When true, show memo date column (period filter / sort by memo date). */
   sortByMemoDate?: boolean;
+  showPaymentColumn?: boolean;
 }) {
   const [exportingId, setExportingId] = useState<string | null>(null);
 
@@ -71,6 +76,9 @@ export function MemoList({
     );
   }
 
+  const hasPaymentColumn =
+    showPaymentColumn || memos.some((memo) => Boolean(memo.payment_status));
+
   return (
     <div className="data-table">
       <table className="w-full">
@@ -81,6 +89,7 @@ export function MemoList({
             <th>Type</th>
             <th>Department</th>
             <th>Status</th>
+            {hasPaymentColumn ? <th>Payment</th> : null}
             <th>{sortByMemoDate ? 'Memo date' : 'Last activity'}</th>
             <th />
           </tr>
@@ -104,6 +113,11 @@ export function MemoList({
                   assigneeIsYou={memo.pending_assignee_is_you}
                 />
               </td>
+              {hasPaymentColumn ? (
+                <td>
+                  <PaymentStatusBadge status={memo.payment_status} />
+                </td>
+              ) : null}
               <td className="text-slate-500 text-xs whitespace-nowrap">
                 {sortByMemoDate
                   ? formatListDate(memo.memo_date)

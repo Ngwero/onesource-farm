@@ -43,6 +43,8 @@ export type ApprovalAction = 'approve' | 'return' | 'reject' | 'pending';
 
 export type ImportanceLevel = 'normal' | 'high' | 'exco';
 
+export type PaymentStatus = 'not_paid' | 'paid';
+
 export interface User {
   id: string;
   email: string;
@@ -113,6 +115,11 @@ export interface Memo {
   submitted_at?: string;
   approved_at?: string;
   archived_at?: string;
+  payment_status?: PaymentStatus | null;
+  payment_note?: string | null;
+  paid_at?: string | null;
+  paid_by?: string | null;
+  paid_by_user?: User;
   created_at: string;
   updated_at: string;
   memo_type?: MemoType;

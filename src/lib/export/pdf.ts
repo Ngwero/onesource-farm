@@ -6,9 +6,14 @@ import { readFileOptional } from '@/lib/storage';
 import {
   MEMO_VISION_STATEMENT,
   formatMemoDate,
+  formatSignerLine,
   getCompanyContactLines,
 } from '@/lib/memo/coverLetterDefaults';
 import { getMemoBodyRowsForExport, memoDocumentTitle } from '@/lib/memo/leaveTemplate';
+import {
+  resolveSignatureForBlock,
+  type SignatureRecordForDisplay,
+} from '@/lib/memo/signatureBlocks';
 import {
   workflowStepsForDocumentApprovals,
   type WorkflowTimelineStep,
@@ -83,7 +88,7 @@ function measureTextHeight(
 }
 
 function fixedChromeHeight(metaCount: number, scale: number, approvalRows: number): number {
-  const rowHeight = 22 * scale;
+  const rowHeight = 28 * scale;
   return (
     MARGIN +
     48 * scale +
@@ -169,7 +174,23 @@ export async function generateMemoPDF(
   const contactLines = getCompanyContactLines(branding);
   const companyName = (branding.company_name || 'RHINO PAYMENT SERVICES LIMITED').toUpperCase();
   const approvalSteps = workflowStepsForDocumentApprovals(workflowSteps);
-  const layout = pickLayout(memo, approvalSteps.length);
+  const approvalRowCount = approvalSteps.length + 1;
+  const layout = pickLayout(memo, approvalRowCount);
+
+  const signatures = (memo.signature_records || []) as SignatureRecordForDisplay[];
+  const preparedSig = resolveSignatureForBlock('prepared', signatures, memo);
+  const signatureBuffers = new Map<string, Buffer>();
+
+  async function cacheSignature(key: string, path?: string) {
+    if (!path || signatureBuffers.has(key)) return;
+    const buf = await readFileOptional(path);
+    if (buf) signatureBuffers.set(key, buf);
+  }
+
+  await cacheSignature('prepared', preparedSig?.signature_path);
+  for (let i = 0; i < approvalSteps.length; i++) {
+    await cacheSignature(`step-${i}`, approvalSteps[i].signature_path);
+  }
 
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -289,23 +310,64 @@ export async function generateMemoPDF(
     doc.text('APPROVALS', x, y + 2, { lineBreak: false });
     y += 12;
 
-    const rowH = 18 * layout.scale;
-    approvalSteps.forEach((step) => {
+    const rowH = 24 * layout.scale;
+    const sigColW = 52 * layout.scale;
+    const nameColX = x + contentWidth * 0.42;
+    const sigColX = x + contentWidth - sigColW - 4;
+
+    type PdfApprovalRow = {
+      role: string;
+      displayName?: string;
+      signatureKey?: string;
+    };
+
+    const preparedDisplayName = preparedSig
+      ? formatSignerLine(preparedSig.approver_name, preparedSig.approver_title)
+      : memo.creator?.full_name
+        ? formatSignerLine(memo.creator.full_name, memo.creator.title)
+        : undefined;
+
+    const pdfApprovalRows: PdfApprovalRow[] = [
+      {
+        role: 'PREPARED BY',
+        displayName: preparedDisplayName,
+        signatureKey: preparedSig?.signature_path ? 'prepared' : undefined,
+      },
+      ...approvalSteps.map((step, index) => ({
+        role: step.name.toUpperCase(),
+        displayName: step.approver,
+        signatureKey: step.signature_path ? `step-${index}` : undefined,
+      })),
+    ];
+
+    pdfApprovalRows.forEach((row) => {
       doc.roundedRect(x, y, contentWidth, rowH, 3).fillAndStroke('#ffffff', BORDER_LIGHT);
       doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(6);
-      doc.text(step.name.toUpperCase(), x + 6, y + 4, {
-        width: contentWidth * 0.45,
+      doc.text(row.role, x + 6, y + 4, {
+        width: contentWidth * 0.38,
         lineBreak: false,
       });
+
+      const nameLine = row.displayName || 'Pending';
       doc
-        .fillColor(step.approver ? '#0f172a' : SLATE)
-        .font(step.approver ? 'Helvetica-Bold' : 'Helvetica-Oblique')
+        .fillColor(row.displayName ? '#0f172a' : SLATE)
+        .font(row.displayName ? 'Helvetica-Bold' : 'Helvetica-Oblique')
         .fontSize(6);
-      doc.text(step.approver || 'Pending', x + contentWidth * 0.48, y + 4, {
-        width: contentWidth * 0.5,
+      doc.text(nameLine, nameColX, y + 4, {
+        width: sigColX - nameColX - 4,
         align: 'right',
         lineBreak: false,
       });
+
+      const sigImg = row.signatureKey ? signatureBuffers.get(row.signatureKey) : undefined;
+      if (sigImg) {
+        try {
+          doc.image(sigImg, sigColX, y + 4, { height: rowH - 8, width: sigColW });
+        } catch {
+          /* skip invalid image */
+        }
+      }
+
       y += rowH + 3;
     });
 

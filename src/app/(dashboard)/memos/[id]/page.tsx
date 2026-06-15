@@ -11,6 +11,7 @@ import { MemoDocumentExport } from '@/components/memo/MemoDocumentExport';
 import { WorkflowTimeline } from '@/components/memo/WorkflowTimeline';
 import { MemoActivity } from '@/components/memo/MemoActivity';
 import { MemoApprovalActions } from '@/components/memo/MemoApprovalActions';
+import { MemoPaymentStatus } from '@/components/memo/MemoPaymentStatus';
 import { ReturnedMemoBanner } from '@/components/memo/ReturnedMemoBanner';
 import { getLatestReturnFeedback } from '@/lib/memo/returnFeedback';
 import type { MemoActivityItem } from '@/lib/memo/memoActivityTypes';
@@ -465,6 +466,12 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
               needsSignatureReminder={needsSignatureReminder}
             />
           ) : null}
+
+          <MemoPaymentStatus
+            memo={memo}
+            user={user}
+            onUpdated={(updates) => setMemo((prev) => (prev ? { ...prev, ...updates } : prev))}
+          />
 
           <MemoActivity
             items={

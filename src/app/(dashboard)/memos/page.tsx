@@ -10,6 +10,7 @@ import { MemoListFilters } from '@/components/memo/MemoListFilters';
 import { formatPeriodLabel, parseMemoPeriodFilter } from '@/lib/memo/periodFilter';
 import { useAuth } from '@/context/AuthContext';
 import { useMemos } from '@/hooks/useMemos';
+import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
 
 const PAGE_TITLES: Record<string, string> = {
   draft: 'My Drafts',
@@ -24,6 +25,7 @@ function MemosContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const status = searchParams.get('status') || undefined;
+  const paymentStatus = searchParams.get('payment_status') || undefined;
   const view = searchParams.get('view') || undefined;
   const memoType = searchParams.get('memo_type') || undefined;
   const q = searchParams.get('q') || undefined;
@@ -37,13 +39,14 @@ function MemosContent() {
   const filters = useMemo(() => {
     const f: Record<string, string> = {};
     if (status) f.status = status;
+    if (paymentStatus) f.payment_status = paymentStatus;
     if (view) f.view = view;
     if (memoType) f.memo_type = memoType;
     if (q && q.trim().length >= 2) f.q = q.trim();
     if (year) f.year = year;
     if (month) f.month = month;
     return Object.keys(f).length ? f : undefined;
-  }, [status, view, memoType, q, year, month]);
+  }, [status, paymentStatus, view, memoType, q, year, month]);
   const { memos, loading } = useMemos(filters);
 
   const query = searchParams.toString();
@@ -62,30 +65,39 @@ function MemosContent() {
 
   const periodActive = Boolean(period);
 
+  const isChristinePaymentView =
+    Boolean(user && isInterdeptFinanceReviewer(user) && status === 'approved' && paymentStatus);
+
   const title = q && q.trim().length >= 2
     ? 'Search results'
     : period
       ? `Memos — ${formatPeriodLabel(period)}`
-    : status
-      ? status === 'approved' && isApproverRole
-        ? PAGE_TITLES.approved_approver
-        : PAGE_TITLES[status] || status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-      : view === 'active'
-        ? 'Memos in progress'
-        : 'My Memos';
+      : paymentStatus === 'not_paid'
+        ? 'Approved — awaiting payment'
+        : paymentStatus === 'paid'
+          ? 'Approved — paid'
+          : status
+            ? status === 'approved' && isApproverRole
+              ? PAGE_TITLES.approved_approver
+              : PAGE_TITLES[status] || status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+            : view === 'active'
+              ? 'Memos in progress'
+              : 'My Memos';
 
   const subtitle =
     q && q.trim().length >= 2
       ? `Showing memos matching “${q.trim()}” in your visible list.`
       : period
         ? `Sorted by memo date (newest first) for ${formatPeriodLabel(period)}.`
-      : status === 'draft'
-        ? 'Drafts are private until you submit them for approval.'
-        : status === 'approved' && isApproverRole
-          ? 'Memos you have approved at your step (including those still moving through the workflow).'
-          : status === 'approved'
-            ? 'Fully approved memos and memos that have received at least one approval.'
-            : 'Memos you created or that were shared with you.';
+        : paymentStatus === 'not_paid' || paymentStatus === 'paid'
+          ? 'Update payment status on each memo once funds have been processed.'
+          : status === 'draft'
+            ? 'Drafts are private until you submit them for approval.'
+            : status === 'approved' && isApproverRole
+              ? 'Memos you have approved at your step (including those still moving through the workflow).'
+              : status === 'approved'
+                ? 'Fully approved memos and memos that have received at least one approval.'
+                : 'Memos you created or that were shared with you.';
 
   const searchActive = Boolean(q && q.trim().length >= 2);
 
@@ -107,6 +119,7 @@ function MemosContent() {
           <MemoList
             memos={memos as Parameters<typeof MemoList>[0]['memos']}
             currentUserId={user?.id}
+            showPaymentColumn={isChristinePaymentView || status === 'approved'}
             emptyMessage={
               searchActive
                 ? `No memos found for “${q?.trim()}”. Try reference, subject, or creator name.`
