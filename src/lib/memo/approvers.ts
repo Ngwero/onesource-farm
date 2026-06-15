@@ -1,8 +1,8 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import {
-  CEO_APPROVER_EMAIL,
   DESIGNATED_DEPT_HEAD_EMAILS,
 } from '@/lib/memo/designatedUsers';
+import { resolveCeoApproverEmail } from '@/lib/workflow/ceoWorkflowSteps';
 import { resolveFinanceReviewerEmail } from '@/lib/workflow/financeWorkflowSteps';
 import { BUSINESS_HEAD_EMAIL } from '@/lib/workflow/marketingWorkflowSteps';
 import { IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL } from '@/lib/workflow/itCheckers';
@@ -75,7 +75,7 @@ export async function findApproversForStep(
   const type = memoTypeSlug as MemoTypeSlug | undefined;
 
   if (roleSlug === 'ceo') {
-    return approverIdsForEmail(supabase, CEO_APPROVER_EMAIL);
+    return approverIdsForEmail(supabase, resolveCeoApproverEmail(creatorEmail));
   }
 
   if (roleSlug === 'business_head') {

@@ -4,6 +4,16 @@ import { generateMemoPDF } from '@/lib/export/pdf';
 import { requireAuth, authErrorResponse } from '@/lib/auth/session';
 import { assertCanViewMemo } from '@/lib/auth/memoAccess';
 import { repairStaleSignatureRecordsForMemo } from '@/lib/signature/sync';
+import { buildWorkflowTimelineForMemo } from '@/lib/memo/workflowTimeline';
+
+const MEMO_EXPORT_SELECT = `
+  *,
+  memo_types(name, slug),
+  memo_statuses(name, slug),
+  departments(name, code),
+  creator:users!creator_id(id, full_name, email, title, signature_path),
+  signature_records(*, approver:users!approver_id(signature_path))
+`;
 
 export async function GET(
   request: NextRequest,
@@ -16,22 +26,19 @@ export async function GET(
 
     const supabase = createServiceClient();
 
+    await repairStaleSignatureRecordsForMemo(id);
+
     const { data: memo } = await supabase
       .from('memos')
-      .select('*, creator:users!creator_id(id, full_name, email, title, signature_path)')
+      .select(MEMO_EXPORT_SELECT)
       .eq('id', id)
       .single();
 
     if (!memo) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     const { data: branding } = await supabase.from('branding_settings').select('*').limit(1).single();
-    await repairStaleSignatureRecordsForMemo(id);
 
-    const { data: signatures } = await supabase
-      .from('signature_records')
-      .select('*, approver:users!approver_id(signature_path)')
-      .eq('memo_id', id)
-      .order('signed_at');
+    const workflowTimeline = await buildWorkflowTimelineForMemo(memo, user.id);
 
     const brandingSettings = branding || {
       company_name: 'Rhino Payment Services Limited',
@@ -42,7 +49,7 @@ export async function GET(
       page_number_style: 'Page {current} of {total}',
     };
 
-    const buffer = await generateMemoPDF(memo, brandingSettings, signatures || []);
+    const buffer = await generateMemoPDF(memo, brandingSettings, workflowTimeline);
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         'Content-Type': 'application/pdf',

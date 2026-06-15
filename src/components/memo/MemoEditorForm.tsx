@@ -17,6 +17,7 @@ import {
   validateLeaveFields,
 } from '@/lib/memo/leaveTemplate';
 import { isFinanceRequestCreator } from '@/lib/workflow/financeWorkflowSteps';
+import { isCeoMemoCreator } from '@/lib/memo/designatedUsers';
 import type { MemoReturnFeedback } from '@/lib/memo/returnFeedback';
 import type { MemoStatusSlug, MemoTypeSlug } from '@/types';
 
@@ -258,6 +259,9 @@ export function MemoEditorForm({
 
   const workflowHint = useMemo(() => {
     if (!typeSlug) return undefined;
+    if (isCeoMemoCreator(user)) {
+      return 'Route: You → Douglas (Chairman)';
+    }
     if (typeSlug === 'finance_request' && isFinanceRequestCreator(user)) {
       return 'Route: You → Amara (CFO) → CEO';
     }

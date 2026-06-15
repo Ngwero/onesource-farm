@@ -1863,6 +1863,174 @@ body {
   white-space: pre-wrap;
 }
 
+.memo-leave {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.memo-leave-summary {
+  padding: 1.15rem 1.25rem;
+  background: linear-gradient(135deg, rgb(0 29 110 / 0.06) 0%, rgb(0 29 110 / 0.02) 100%);
+  border: 1px solid rgb(0 29 110 / 0.12);
+  border-radius: 0.75rem;
+}
+
+.memo-leave-summary__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.memo-leave-summary__badge {
+  display: inline-flex;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #001d6e;
+  background: #fff;
+  border: 1px solid rgb(0 29 110 / 0.15);
+  border-radius: 999px;
+}
+
+.memo-leave-summary__duration {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.memo-leave-summary__dates {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.memo-leave-summary__arrow {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.memo-leave-date {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 0.85rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
+
+.memo-leave-date__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.memo-leave-date__value {
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.memo-leave-detail {
+  padding: 1rem 1.1rem;
+  background: #fff;
+  border: 1px solid #e8edf5;
+  border-radius: 0.625rem;
+  border-left: 3px solid #001d6e;
+}
+
+.memo-leave-detail__label {
+  margin: 0 0 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #001d6e;
+}
+
+.memo-leave-detail__text {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: #334155;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 520px) {
+  .memo-leave-summary__dates {
+    grid-template-columns: 1fr;
+  }
+
+  .memo-leave-summary__arrow {
+    display: none;
+  }
+}
+
+.memo-doc-workflow-approvals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.memo-doc-workflow-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+  gap: 0.75rem 1rem;
+  align-items: baseline;
+  padding: 0.7rem 0.9rem;
+  background: #fff;
+  border: 1px solid #e8edf5;
+  border-radius: 0.5rem;
+}
+
+.memo-doc-workflow-row--done {
+  border-left: 3px solid #001d6e;
+}
+
+.memo-doc-workflow-row__role {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #001d6e;
+}
+
+.memo-doc-workflow-row__name {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0f172a;
+  text-align: right;
+}
+
+.memo-doc-workflow-row__name--pending {
+  font-weight: 500;
+  font-style: italic;
+  color: #94a3b8;
+}
+
+@media (max-width: 520px) {
+  .memo-doc-workflow-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .memo-doc-workflow-row__name {
+    text-align: left;
+  }
+}
+
 .memo-doc-approvals {
   margin-bottom: 1rem;
 }

@@ -70,7 +70,8 @@ export function isLeaveFinancialMeta(text?: string | null): boolean {
   const raw = text?.trim();
   if (!raw?.startsWith('{')) return false;
   try {
-    return (JSON.parse(raw) as { _leave_v?: number })._leave_v === 1;
+    const parsed = JSON.parse(raw) as { _leave_v?: number; _leave_y?: number };
+    return parsed._leave_v === 1 || parsed._leave_y === 1;
   } catch {
     return false;
   }

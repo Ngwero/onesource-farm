@@ -27,6 +27,7 @@
     "assign:hr": "tsx scripts/assign-hr-route.ts",
     "assign:marketing": "tsx scripts/assign-marketing-route.ts",
     "assign:org": "tsx scripts/assign-org-routes.ts",
+    "assign:ceo-chairman": "tsx scripts/assign-ceo-chairman.ts",
     "check:email": "tsx scripts/check-welcome-email.ts",
     "send:launch": "tsx scripts/send-launch-announcement.ts",
     "routes:workflows": "tsx scripts/print-workflow-routes.ts",

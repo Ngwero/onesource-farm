@@ -9,6 +9,7 @@ import {
   shouldUseRoleScopedMemoList,
 } from '@/lib/memo/orgVisibility';
 import { requireAuth, authErrorResponse } from '@/lib/auth/session';
+import { isDesignatedChairman } from '@/lib/memo/designatedUsers';
 import { memoFromLineForUser } from '@/lib/memo/personLine';
 import { fetchMemoIdsForApprovedTab } from '@/lib/memo/approvedMemos';
 import { defaultStatusForRole } from '@/lib/auth/memoAccess';
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth();
     const role = (user.role?.slug || 'staff') as RoleSlug;
+    const chairmanViewer = isDesignatedChairman(user);
     const supabase = createServiceClient();
     const { searchParams } = new URL(request.url);
     let status = searchParams.get('status');
@@ -66,7 +68,11 @@ export async function GET(request: NextRequest) {
     );
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100);
 
-    if (!status && role !== 'admin' && !searchTerm && !period) {
+    if (chairmanViewer && status === 'deleted') {
+      return NextResponse.json({ memos: [], financial_summary: null });
+    }
+
+    if (!status && role !== 'admin' && !chairmanViewer && !searchTerm && !period) {
       const defaultStatus = defaultStatusForRole(role);
       if (defaultStatus && !searchParams.get('memo_type')) {
         status = defaultStatus;
@@ -117,6 +123,13 @@ export async function GET(request: NextRequest) {
       if (finType?.id) {
         query = query.or(`memo_type_id.neq.${finType.id},creator_id.neq.${user.id}`);
       }
+    } else if (role === 'business_head') {
+      const { data: marketingType } = await supabase
+        .from('memo_types')
+        .select('id')
+        .eq('slug', 'marketing_request')
+        .single();
+      if (marketingType?.id) query = query.eq('memo_type_id', marketingType.id);
     } else if (sharedOnly) {
       const { data: sharedRows } = await supabase
         .from('shared_memo_access')
@@ -148,13 +161,6 @@ export async function GET(request: NextRequest) {
         } else {
           query = query.eq('department_id', user.department_id);
         }
-      } else if (role === 'business_head') {
-        const { data: marketingType } = await supabase
-          .from('memo_types')
-          .select('id')
-          .eq('slug', 'marketing_request')
-          .single();
-        if (marketingType?.id) query = query.eq('memo_type_id', marketingType.id);
       } else if (role === 'it_checker_first' || role === 'it_checker_second') {
         const { data: itType } = await supabase
           .from('memo_types')
@@ -163,7 +169,7 @@ export async function GET(request: NextRequest) {
           .single();
         if (itType) query = query.eq('memo_type_id', itType.id);
       }
-    } else if (role !== 'admin') {
+    } else if (role !== 'admin' && !chairmanViewer) {
       const statusIds = await getPrivateMemoStatusIds(supabase);
       query = applyDepartmentMemoListFilter(
         query,
@@ -171,6 +177,16 @@ export async function GET(request: NextRequest) {
         user.department_id,
         statusIds
       );
+    }
+
+    if (chairmanViewer) {
+      const statusIds = await getPrivateMemoStatusIds(supabase);
+      if (statusIds.deletedId) {
+        query = query.neq('status_id', statusIds.deletedId);
+      }
+      if (!status && statusIds.draftId) {
+        query = query.or(`creator_id.eq.${user.id},status_id.neq.${statusIds.draftId}`);
+      }
     }
 
     if (status === 'approved') {

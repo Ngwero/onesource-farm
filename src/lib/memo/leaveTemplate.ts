@@ -1,4 +1,3 @@
-import { formatMemoDate } from '@/lib/memo/coverLetterDefaults';
 import type { Memo } from '@/types';
 
 export const LEAVE_TYPES = [
@@ -38,16 +37,32 @@ type LeaveMeta = {
   type: string;
 };
 
-export function isLeaveMemo(memo: { memo_type?: { slug?: string } | null }): boolean {
-  return memo.memo_type?.slug === 'leave_request';
+export type MemoTypeRel = {
+  memo_type?: { slug?: string } | null;
+  memo_types?: { slug?: string } | { slug?: string }[] | null;
+};
+
+export function memoTypeSlugFromMemo(memo: MemoTypeRel): string | undefined {
+  if (memo.memo_type?.slug) return memo.memo_type.slug;
+  const rel = memo.memo_types;
+  if (!rel) return undefined;
+  if (Array.isArray(rel)) return rel[0]?.slug;
+  return rel.slug;
+}
+
+export function isLeaveMemo(memo: MemoTypeRel): boolean {
+  return memoTypeSlugFromMemo(memo) === 'leave_request';
 }
 
 function parseLeaveMeta(financialImplication?: string | null): LeaveMeta | null {
   const raw = financialImplication?.trim();
   if (!raw?.startsWith('{')) return null;
   try {
-    const meta = JSON.parse(raw) as Partial<LeaveMeta>;
-    if (meta._leave_v !== 1) return null;
+    const meta = JSON.parse(raw) as Partial<LeaveMeta & { _leave_y?: number }>;
+    const version = meta._leave_v ?? meta._leave_y;
+    const hasDates = Boolean(meta.start || meta.end);
+    if (version !== 1 && !hasDates) return null;
+    if (!hasDates) return null;
     return {
       _leave_v: 1,
       start: meta.start || '',
@@ -57,6 +72,11 @@ function parseLeaveMeta(financialImplication?: string | null): LeaveMeta | null 
   } catch {
     return null;
   }
+}
+
+function leaveTypeFromBackground(background?: string | null): string {
+  const match = (background || '').match(/^Type of leave:\s*(.+?)(?:\n|$)/im);
+  return match?.[1]?.trim() || '';
 }
 
 function reasonFromBackground(background?: string | null, leaveType?: string): string {
@@ -76,11 +96,34 @@ function backgroundFromLeave(leaveType: string, reason: string): string {
   return typeLine || reasonText;
 }
 
+export function formatLeaveDate(date: string): string {
+  if (!date) return '—';
+  const parsed = new Date(`${date}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+export function leaveDurationDays(start: string, end: string): number | null {
+  if (!start || !end) return null;
+  const s = new Date(`${start}T12:00:00`);
+  const e = new Date(`${end}T12:00:00`);
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || e < s) return null;
+  return Math.round((e.getTime() - s.getTime()) / 86_400_000) + 1;
+}
+
 export function formatLeavePeriod(start: string, end: string): string {
   if (!start && !end) return '';
-  const startLabel = start ? formatMemoDate(start) : '—';
-  const endLabel = end ? formatMemoDate(end) : '—';
-  return `${startLabel} to ${endLabel}`;
+  const startLabel = start ? formatLeaveDate(start) : '—';
+  const endLabel = end ? formatLeaveDate(end) : '—';
+  const days = leaveDurationDays(start, end);
+  const range = `${startLabel} to ${endLabel}`;
+  if (!days) return range;
+  return `${range} (${days} calendar day${days === 1 ? '' : 's'})`;
 }
 
 export function parseLeaveFromMemo(
@@ -100,7 +143,8 @@ export function parseLeaveFromMemo(
 
   return {
     ...EMPTY_LEAVE_FIELDS,
-    reason: memo.background || '',
+    leave_type: leaveTypeFromBackground(memo.background) || 'Annual leave',
+    reason: reasonFromBackground(memo.background, leaveTypeFromBackground(memo.background)),
     duties_not_delegated: memo.recommendation || '',
     handover_contact: memo.justification || '',
   };
@@ -130,10 +174,14 @@ export function getLeaveDisplaySections(
   memo: Pick<
     Memo,
     'background' | 'financial_implication' | 'justification' | 'recommendation' | 'memo_type'
-  >
+  > & MemoTypeRel
 ): LeaveDisplaySection[] {
   const fields = parseLeaveFromMemo(memo);
   const sections: LeaveDisplaySection[] = [];
+
+  if (fields.leave_type) {
+    sections.push({ label: 'Type of leave', content: fields.leave_type });
+  }
 
   if (fields.leave_start || fields.leave_end) {
     sections.push({
@@ -142,12 +190,9 @@ export function getLeaveDisplaySections(
     });
   }
 
-  if (fields.leave_type) {
-    sections.push({ label: 'Type of leave', content: fields.leave_type });
-  }
-
-  if (fields.reason.trim()) {
-    sections.push({ label: 'Reason', content: fields.reason.trim() });
+  const reason = fields.reason.trim();
+  if (reason && reason.toLowerCase() !== fields.leave_type.trim().toLowerCase()) {
+    sections.push({ label: 'Reason', content: reason });
   }
 
   if (fields.duties_not_delegated.trim()) {
@@ -165,6 +210,28 @@ export function getLeaveDisplaySections(
   }
 
   return sections;
+}
+
+/** Structured leave fields for the dedicated preview layout. */
+export function getLeavePreviewModel(
+  memo: Pick<
+    Memo,
+    'background' | 'financial_implication' | 'justification' | 'recommendation' | 'memo_type'
+  > & MemoTypeRel
+) {
+  const fields = parseLeaveFromMemo(memo);
+  const reason = fields.reason.trim();
+  const showReason =
+    Boolean(reason) && reason.toLowerCase() !== fields.leave_type.trim().toLowerCase();
+
+  return {
+    fields,
+    durationDays: leaveDurationDays(fields.leave_start, fields.leave_end),
+    showReason,
+    detailSections: getLeaveDisplaySections(memo).filter(
+      (s) => s.label !== 'Type of leave' && s.label !== 'Leave period'
+    ),
+  };
 }
 
 export function getMemoBodyRowsForExport(
@@ -191,7 +258,9 @@ export function getMemoBodyRowsForExport(
   ).filter((row): row is [string, string] => Boolean(row[1]?.trim()));
 }
 
-export function memoDocumentTitle(memo: { memo_type?: { slug?: string } | null }): string {
+export function memoDocumentTitle(
+  memo: { memo_type?: { slug?: string } | null } & MemoTypeRel
+): string {
   return isLeaveMemo(memo) ? 'Leave Application' : 'Internal Memo';
 }
 

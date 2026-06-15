@@ -24,7 +24,7 @@ import { RukaPayLogo } from '@/components/brand/RukaPayLogo';
 import { canCreateMemo } from '@/lib/auth/rbac';
 import { isDesignatedItFirstChecker } from '@/lib/workflow/itCheckers';
 import { isBusinessHead } from '@/lib/memo/marketingRouting';
-import { isDesignatedCfo } from '@/lib/memo/designatedUsers';
+import { isDesignatedCfo, isDesignatedChairman } from '@/lib/memo/designatedUsers';
 import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
 import type { User } from '@/types';
 import type { RoleSlug } from '@/types';
@@ -85,6 +85,7 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
       href: '/memos?status=pending_business_head&memo_type=marketing_request',
       icon: <FileText size={18} />,
     },
+    { label: 'I approved', href: '/memos?status=approved', icon: <FileText size={18} /> },
     { label: 'Marketing memos', href: '/memos?memo_type=marketing_request', icon: <FileText size={18} /> },
     { label: 'Notifications', href: '/notifications', icon: <Bell size={18} /> },
     { label: 'My Signature', href: '/settings/signature', icon: <PenLine size={18} /> },
@@ -216,6 +217,19 @@ export function Sidebar() {
       roleSlug,
       user
     );
+  }
+
+  if (roleSlug === 'ceo' && user && isDesignatedChairman(user)) {
+    const allMemos: NavItem = {
+      label: 'All memos',
+      href: '/memos',
+      icon: <FileText size={18} />,
+    };
+    if (!navItems.some((i) => i.href === allMemos.href)) {
+      const pendingIdx = navItems.findIndex((i) => i.href.includes('pending_ceo'));
+      const insertAt = pendingIdx >= 0 ? pendingIdx + 1 : 1;
+      navItems = [...navItems.slice(0, insertAt), allMemos, ...navItems.slice(insertAt)];
+    }
   }
 
   if (user && isDesignatedCfo(user) && (roleSlug === 'finance_reviewer' || roleSlug === 'exco_member')) {

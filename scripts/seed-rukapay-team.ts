@@ -64,6 +64,7 @@ const TEAM_EMAILS = [
   'norman.nowamani@rukapay.co.ug',
   'portia.nayebare@rukapay.co.ug',
   'rowena.turinawe@rukapay.co.ug',
+  'douglasrk@rukapay.co.ug',
 ];
 
 /** System admin — full access; assign departments and roles for everyone else. */
@@ -83,6 +84,12 @@ const IT_SECOND_CHECKER_EMAIL = 'jim.ntare@rukapay.co.ug';
 
 /** Business Development staff (Silas). */
 const BD_STAFF_EMAIL = 'mutorine.silas@rukapay.co.ug';
+
+/** CEO — creates memos routed to the Chairman; approves all other memos at CEO step. */
+const CEO_EMAIL = 'rowena.turinawe@rukapay.co.ug';
+
+/** Chairman — approves memos created by the CEO (Rowena). */
+const CHAIRMAN_EMAIL = 'douglasrk@rukapay.co.ug';
 
 function fullNameFromEmail(email: string): string {
   const local = email.split('@')[0] || '';
@@ -118,6 +125,7 @@ async function seed() {
   const financeRoleId = roles?.find((r) => r.slug === 'finance_reviewer')?.id;
   const itCheckerFirstRoleId = roles?.find((r) => r.slug === 'it_checker_first')?.id;
   const itCheckerSecondRoleId = roles?.find((r) => r.slug === 'it_checker_second')?.id;
+  const ceoRoleId = roles?.find((r) => r.slug === 'ceo')?.id;
 
   const { data: financeDept } = await supabase
     .from('departments')
@@ -128,6 +136,7 @@ async function seed() {
   const { data: itDept } = await supabase.from('departments').select('id').eq('code', 'IT').single();
   const { data: hrDept } = await supabase.from('departments').select('id').eq('code', 'HR').single();
   const { data: bdDept } = await supabase.from('departments').select('id').eq('code', 'BD').single();
+  const { data: ceoDept } = await supabase.from('departments').select('id').eq('code', 'CEO').single();
 
   if (!staffRoleId || !adminRoleId) {
     console.error('Run supabase/seed.sql first (roles missing).');
@@ -145,10 +154,14 @@ async function seed() {
     const isItCheckerFirst = !isAdmin && email === IT_FIRST_CHECKER_EMAIL;
     const isItCheckerSecond = !isAdmin && email === IT_SECOND_CHECKER_EMAIL;
     const isBdStaff = email === BD_STAFF_EMAIL;
+    const isCeo = email === CEO_EMAIL;
+    const isChairman = email === CHAIRMAN_EMAIL;
     const isFinanceReviewer = isFinanceMemoApprover || isFinanceMemoCreator;
     const role_id = isAdmin
       ? adminRoleId
-      : isHrStaff && deptHeadRoleId
+      : (isCeo || isChairman) && ceoRoleId
+        ? ceoRoleId
+        : isHrStaff && deptHeadRoleId
         ? deptHeadRoleId
         : isFinanceMemoApprover && financeRoleId
           ? financeRoleId
@@ -159,7 +172,9 @@ async function seed() {
               : staffRoleId;
     const department_id = isAdmin && itDept?.id
       ? itDept.id
-      : (isFinanceMemoCreator || isFinanceMemoApprover) && financeDept?.id
+      : (isCeo || isChairman) && ceoDept?.id
+        ? ceoDept.id
+        : (isFinanceMemoCreator || isFinanceMemoApprover) && financeDept?.id
         ? financeDept.id
         : isHrStaff && hrDept?.id
           ? hrDept.id
@@ -215,7 +230,11 @@ async function seed() {
       full_name,
       title: isAdmin
         ? 'System Administrator & IT Checker (1st)'
-        : isFinanceReviewer
+        : isCeo
+          ? 'Chief Executive Officer'
+          : isChairman
+            ? 'Chairman'
+            : isFinanceReviewer
           ? 'Finance & HR Reviewer'
           : isHrStaff
             ? 'HR — Dept Head'
@@ -247,7 +266,11 @@ async function seed() {
 
     const roleLabel = isAdmin
       ? 'admin + memos'
-      : isFinanceReviewer
+      : isCeo
+        ? 'CEO (creates memos → Chairman)'
+        : isChairman
+          ? 'Chairman (approves CEO memos)'
+          : isFinanceReviewer
         ? 'finance reviewer (general memos + finance queue)'
         : isItCheckerFirst
           ? 'IT checker 1st'

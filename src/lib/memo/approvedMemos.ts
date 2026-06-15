@@ -3,6 +3,7 @@ import type { RoleSlug } from '@/types';
 
 const APPROVER_ROLES: RoleSlug[] = [
   'department_head',
+  'business_head',
   'it_checker_first',
   'it_checker_second',
   'finance_reviewer',

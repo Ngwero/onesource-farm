@@ -4,6 +4,8 @@
 
 import {
   CEO_APPROVER_EMAIL,
+  CEO_MEMO_CREATOR_EMAIL,
+  CHAIRMAN_APPROVER_EMAIL,
   DESIGNATED_DEPT_HEAD_EMAILS,
   IT_DEPT_HEAD_EMAILS,
 } from '../../src/lib/memo/designatedUsers';
@@ -72,6 +74,13 @@ export const WORKFLOW_ROUTES: WorkflowRouteRow[] = [
       `CEO (${CEO_APPROVER_EMAIL})`,
     ],
   },
+  {
+    memoType: 'CEO memos',
+    targetDepartment: 'CEO Office',
+    whoCanCreate: `CEO (${CEO_MEMO_CREATOR_EMAIL})`,
+    financeStep: '—',
+    route: [`Chairman (${CHAIRMAN_APPROVER_EMAIL})`],
+  },
 ];
 
 export function printWorkflowRoutes(): void {
@@ -95,5 +104,6 @@ export function printWorkflowRoutes(): void {
     console.log(`  ${code}: ${emails.join(', ')}`);
   }
   console.log(`Marketing workflow (marketing_request): Business head ${BUSINESS_HEAD_EMAIL}`);
+  console.log(`CEO memos: ${CEO_MEMO_CREATOR_EMAIL} → Chairman ${CHAIRMAN_APPROVER_EMAIL}`);
   console.log('='.repeat(72) + '\n');
 }

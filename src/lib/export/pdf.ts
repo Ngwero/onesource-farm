@@ -1,16 +1,18 @@
 import PDFDocument from 'pdfkit';
 import path from 'path';
 import fs from 'fs/promises';
-import type { Memo, BrandingSettings, SignatureRecord } from '@/types';
+import type { Memo, BrandingSettings } from '@/types';
 import { readFileOptional } from '@/lib/storage';
 import {
   MEMO_VISION_STATEMENT,
   formatMemoDate,
-  formatSignerLine,
   getCompanyContactLines,
 } from '@/lib/memo/coverLetterDefaults';
 import { getMemoBodyRowsForExport, memoDocumentTitle } from '@/lib/memo/leaveTemplate';
-import { resolveSignatureForBlock } from '@/lib/memo/signatureBlocks';
+import {
+  workflowStepsForDocumentApprovals,
+  type WorkflowTimelineStep,
+} from '@/lib/memo/workflowTimeline';
 import {
   drawMemoEcopyWatermark,
   MEMO_ECOPY_WATERMARK_SUB,
@@ -80,7 +82,8 @@ function measureTextHeight(
   return doc.heightOfString(text, { width, lineGap: 1 });
 }
 
-function fixedChromeHeight(metaCount: number, scale: number): number {
+function fixedChromeHeight(metaCount: number, scale: number, approvalRows: number): number {
+  const rowHeight = 22 * scale;
   return (
     MARGIN +
     48 * scale +
@@ -91,13 +94,13 @@ function fixedChromeHeight(metaCount: number, scale: number): number {
     Math.ceil(metaCount / 2) * 26 * scale +
     6 * scale +
     12 * scale +
-    48 * scale +
+    Math.max(approvalRows, 1) * rowHeight +
     14 * scale +
     FOOTER_ZONE
   );
 }
 
-function buildLayout(memo: Memo, scale: number): MemoPdfLayout {
+function buildLayout(memo: Memo, scale: number, approvalRows: number): MemoPdfLayout {
   const contentWidth = PAGE.width - MARGIN * 2;
   const metaRows = buildMetaRows(memo);
   const bodyFontSize = Math.max(6, 7.5 * scale);
@@ -118,7 +121,7 @@ function buildLayout(memo: Memo, scale: number): MemoPdfLayout {
     0
   );
 
-  const availableBody = PAGE.height - fixedChromeHeight(metaRows.length, scale);
+  const availableBody = PAGE.height - fixedChromeHeight(metaRows.length, scale, approvalRows);
   const shrink =
     naturalBodyTotal > availableBody && naturalBodyTotal > 0
       ? availableBody / naturalBodyTotal
@@ -142,41 +145,31 @@ function buildLayout(memo: Memo, scale: number): MemoPdfLayout {
   };
 }
 
-function pickLayout(memo: Memo): MemoPdfLayout {
+function pickLayout(memo: Memo, approvalRows: number): MemoPdfLayout {
   const metaCount = buildMetaRows(memo).length;
   for (const scale of SCALE_CANDIDATES) {
-    const layout = buildLayout(memo, scale);
+    const layout = buildLayout(memo, scale, approvalRows);
     const bodyTotal = layout.bodySections.reduce(
       (sum, section) => sum + section.blockHeight + 4,
       0
     );
-    if (fixedChromeHeight(metaCount, scale) + bodyTotal <= PAGE.height + 1) {
+    if (fixedChromeHeight(metaCount, scale, approvalRows) + bodyTotal <= PAGE.height + 1) {
       return layout;
     }
   }
-  return buildLayout(memo, SCALE_CANDIDATES[SCALE_CANDIDATES.length - 1]);
+  return buildLayout(memo, SCALE_CANDIDATES[SCALE_CANDIDATES.length - 1], approvalRows);
 }
 
 export async function generateMemoPDF(
   memo: Memo,
   branding: BrandingSettings,
-  signatures: SignatureRecord[]
+  workflowSteps: WorkflowTimelineStep[] = []
 ): Promise<Buffer> {
   const logoBuffer = await resolveLogoBuffer(branding.logo_path);
   const contactLines = getCompanyContactLines(branding);
   const companyName = (branding.company_name || 'RHINO PAYMENT SERVICES LIMITED').toUpperCase();
-  const layout = pickLayout(memo);
-
-  const enhancedSigs = new Map<string, Buffer>();
-  const blocksToRender = ['prepared', 'checked', 'reviewed', 'approved'] as const;
-  await Promise.all(
-    blocksToRender.map(async (type) => {
-      const sig = resolveSignatureForBlock(type, signatures, memo);
-      if (!sig?.signature_path) return;
-      const buf = await readFileOptional(sig.signature_path);
-      if (buf) enhancedSigs.set(type, buf);
-    })
-  );
+  const approvalSteps = workflowStepsForDocumentApprovals(workflowSteps);
+  const layout = pickLayout(memo, approvalSteps.length);
 
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -296,49 +289,27 @@ export async function generateMemoPDF(
     doc.text('APPROVALS', x, y + 2, { lineBreak: false });
     y += 12;
 
-    const sigBlocks = [
-      { label: 'Prepared', type: 'prepared' as const },
-      { label: 'Checked', type: 'checked' as const },
-      { label: 'Reviewed', type: 'reviewed' as const },
-      { label: 'Approved', type: 'approved' as const },
-    ];
-    const cardW = (contentWidth - 12) / 4;
-    const cardH = 48 * layout.scale;
-
-    sigBlocks.forEach(({ label, type }, i) => {
-      const sig = resolveSignatureForBlock(type, signatures, memo);
-      const sigImg = sig?.signature_path ? enhancedSigs.get(type) : undefined;
-      const cx = x + i * (cardW + 4);
-
-      doc
-        .roundedRect(cx, y, cardW, cardH, 3)
-        .fillAndStroke(sig ? '#ffffff' : LIGHT_BG, sig ? NAVY : BORDER_LIGHT);
+    const rowH = 18 * layout.scale;
+    approvalSteps.forEach((step) => {
+      doc.roundedRect(x, y, contentWidth, rowH, 3).fillAndStroke('#ffffff', BORDER_LIGHT);
       doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(6);
-      doc.text(label.toUpperCase(), cx + 4, y + 4, { width: cardW - 8, lineBreak: false });
-
-      if (sigImg) {
-        try {
-          doc.image(sigImg, cx + 4, y + 12, { height: 14, width: cardW - 8 });
-        } catch {
-          /* skip */
-        }
-      }
-
-      const nameLine = sig
-        ? formatSignerLine(sig.approver_name, sig.approver_title)
-        : 'Pending';
-      doc
-        .fillColor(sig ? '#0f172a' : SLATE)
-        .font(sig ? 'Helvetica-Bold' : 'Helvetica-Oblique')
-        .fontSize(6);
-      doc.text(nameLine, cx + 4, y + cardH - 11, {
-        width: cardW - 8,
-        height: 9,
-        lineGap: 0,
+      doc.text(step.name.toUpperCase(), x + 6, y + 4, {
+        width: contentWidth * 0.45,
+        lineBreak: false,
       });
+      doc
+        .fillColor(step.approver ? '#0f172a' : SLATE)
+        .font(step.approver ? 'Helvetica-Bold' : 'Helvetica-Oblique')
+        .fontSize(6);
+      doc.text(step.approver || 'Pending', x + contentWidth * 0.48, y + 4, {
+        width: contentWidth * 0.5,
+        align: 'right',
+        lineBreak: false,
+      });
+      y += rowH + 3;
     });
 
-    y += cardH + 8;
+    y += 5;
 
     doc.fillColor(SLATE).font('Helvetica').fontSize(6);
     doc.text(MEMO_VISION_STATEMENT, x, y, {

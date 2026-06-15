@@ -4,6 +4,7 @@ import { findApproversForStep } from '@/lib/memo/approvers';
 import { formatNameWithDepartmentCode } from '@/lib/memo/personLine';
 import { resolveWorkflow } from '@/lib/workflow/resolve';
 import { workflowForFinanceCreator } from '@/lib/workflow/financeWorkflowSteps';
+import { workflowForCeoCreator } from '@/lib/workflow/ceoWorkflowSteps';
 import { PENDING_STATUS_TO_ROLE, sortedWorkflowSteps, type WorkflowStep } from '@/lib/workflow/engine';
 import { formatActionTimestamp } from '@/lib/memo/actionTimestamps';
 import type { ImportanceLevel, MemoTypeSlug, SignatureRecord } from '@/types';
@@ -191,11 +192,15 @@ export async function buildWorkflowTimelineForMemo(
   const creatorRel = memo.creator;
   const creatorEmail = Array.isArray(creatorRel) ? creatorRel[0]?.email : creatorRel?.email;
 
-  const workflow = workflowForFinanceCreator(
-    await resolveWorkflow(memo.memo_type_id, memoTypeSlug, {
-      requiresFinance: memo.requires_finance ?? undefined,
-      importanceLevel: memo.importance_level ?? undefined,
-    }),
+  const workflow = workflowForCeoCreator(
+    workflowForFinanceCreator(
+      await resolveWorkflow(memo.memo_type_id, memoTypeSlug, {
+        requiresFinance: memo.requires_finance ?? undefined,
+        importanceLevel: memo.importance_level ?? undefined,
+      }),
+      memoTypeSlug,
+      creatorEmail
+    ),
     memoTypeSlug,
     creatorEmail
   );
@@ -340,4 +345,13 @@ export async function buildWorkflowTimelineForMemo(
   }
 
   return [...preamble, ...approvalSteps, footer];
+}
+
+const DOCUMENT_APPROVAL_SKIP = new Set(['Created', 'Submitted', 'Approved']);
+
+/** Workflow steps shown on the memo document approvals section (roles + names only). */
+export function workflowStepsForDocumentApprovals(
+  steps: WorkflowTimelineStep[]
+): WorkflowTimelineStep[] {
+  return steps.filter((step) => !DOCUMENT_APPROVAL_SKIP.has(step.name));
 }

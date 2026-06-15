@@ -12,10 +12,14 @@ import {
   isInterdeptFinanceReviewer,
 } from '@/lib/memo/financeMemoRouting';
 import {
-  emailsMatch,
-  isDesignatedCeo,
+  designatedChairmanCanApprove,
+  chairmanCanViewMemo,
+  designatedCeoCanApprove,
+} from '@/lib/memo/ceoMemoRouting';
+import {
   isDesignatedDeptHead,
   isDesignatedItDeptHead,
+  isDesignatedChairman,
 } from '@/lib/memo/designatedUsers';
 import {
   businessHeadCanApproveMemo,
@@ -180,10 +184,15 @@ export function canViewMemo(user: User, memo: Memo, sharedWith?: string[]): bool
   if (!role) return false;
 
   if (role === 'admin') return true;
+
+  const statusSlug = memo.status?.slug || '';
+  if (isDesignatedChairman(user)) {
+    return chairmanCanViewMemo(user, memo);
+  }
+
   if (memo.creator_id === user.id) return true;
   if (sharedWith?.includes(user.id)) return true;
 
-  const statusSlug = memo.status?.slug || '';
   if (statusSlug === 'draft' || statusSlug === 'deleted') {
     return false;
   }
@@ -304,6 +313,14 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
     return true;
   }
 
+  if (designatedChairmanCanApprove(user, memo)) {
+    return true;
+  }
+
+  if (designatedCeoCanApprove(user, memo)) {
+    return true;
+  }
+
   if (role === 'staff') {
     return false;
   }
@@ -360,7 +377,7 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
   }
 
   if (role === 'ceo') {
-    return statusSlug === 'pending_ceo' && isDesignatedCeo(user);
+    return designatedChairmanCanApprove(user, memo) || designatedCeoCanApprove(user, memo);
   }
 
   if (role === 'finance_reviewer') {

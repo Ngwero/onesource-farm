@@ -7,8 +7,14 @@ import {
 } from '@/lib/workflow/marketingWorkflowSteps';
 import { IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL } from '@/lib/workflow/itCheckers';
 
-/** Final approver (CEO). */
+/** Final approver (CEO) for all memos except those authored by the CEO. */
 export const CEO_APPROVER_EMAIL = 'rowena.turinawe@rukapay.co.ug';
+
+/** CEO memos are authored by Rowena and approved by the Chairman. */
+export const CEO_MEMO_CREATOR_EMAIL = CEO_APPROVER_EMAIL;
+
+/** Chairman — final approver for memos created by the CEO. */
+export const CHAIRMAN_APPROVER_EMAIL = 'douglasrk@rukapay.co.ug';
 
 /** Finance department head (Amara). Reviews Finance Request memos from Christine. */
 export const CFO_EMAIL = 'amara.oto@rukapay.co.ug';
@@ -38,6 +44,18 @@ export function isDesignatedCfo(user: Pick<User, 'email'> | null | undefined): b
 
 export function isDesignatedCeo(user: Pick<User, 'email'> | null | undefined): boolean {
   return emailsMatch(user?.email, CEO_APPROVER_EMAIL);
+}
+
+export function isCeoMemoCreator(
+  user: { email?: string | null } | null | undefined
+): boolean {
+  return emailsMatch(user?.email ?? undefined, CEO_MEMO_CREATOR_EMAIL);
+}
+
+export function isDesignatedChairman(
+  user: Pick<User, 'email'> | null | undefined
+): boolean {
+  return emailsMatch(user?.email, CHAIRMAN_APPROVER_EMAIL);
 }
 
 export function isDesignatedItDeptHead(user: Pick<User, 'email'> | null | undefined): boolean {

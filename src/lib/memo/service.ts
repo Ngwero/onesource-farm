@@ -17,7 +17,10 @@ import {
 } from '@/lib/memo/approvalSideEffects';
 import { findApproversForStep } from '@/lib/memo/approvers';
 import { nowIso, recordApprovalAction } from '@/lib/memo/actionTimestamps';
-import { resolveFinanceRequestSubmitStep } from '@/lib/workflow/financeWorkflowSteps';
+import {
+  resolveSubmitStepForCreator,
+  workflowForCeoCreator,
+} from '@/lib/workflow/ceoWorkflowSteps';
 import { generateReferenceNumber } from './reference';
 import { joinSlug } from '@/lib/auth/memoAccess';
 import type { CreateMemoInput, ApprovalInput, MemoTypeSlug } from '@/types';
@@ -155,13 +158,17 @@ export async function submitMemo(
     throw new Error('Memo type is missing. Save the memo and try again.');
   }
 
-  const workflow = await resolveWorkflow(memo.memo_type_id, memoTypeSlug, {
-    requiresFinance: memo.requires_finance,
-    importanceLevel: memo.importance_level,
-  });
-
   const creator = memo.creator as { full_name?: string; email?: string } | null;
-  const entryStep = resolveFinanceRequestSubmitStep(workflow, creator?.email);
+  const workflow = workflowForCeoCreator(
+    await resolveWorkflow(memo.memo_type_id, memoTypeSlug, {
+      requiresFinance: memo.requires_finance,
+      importanceLevel: memo.importance_level,
+    }),
+    memoTypeSlug,
+    creator?.email
+  );
+
+  const entryStep = resolveSubmitStepForCreator(workflow, creator?.email);
 
   let routeStep = entryStep;
   let resubmitKind: SubmitSideEffectsPayload['resubmitKind'] = 'initial';
@@ -443,10 +450,14 @@ export async function processApproval(
     memo.memo_statuses as { slug: string } | { slug: string }[] | null
   );
 
-  const workflow = await resolveWorkflow(memo.memo_type_id, memoTypeSlug, {
-    requiresFinance: memo.requires_finance,
-    importanceLevel: memo.importance_level,
-  });
+  const workflow = workflowForCeoCreator(
+    await resolveWorkflow(memo.memo_type_id, memoTypeSlug, {
+      requiresFinance: memo.requires_finance,
+      importanceLevel: memo.importance_level,
+    }),
+    memoTypeSlug,
+    creatorEmail
+  );
 
   if (isExcoWorkflow(workflow) || currentStatusSlug === 'pending_exco') {
     return processExcoApproval(supabase, memo, approver, input);

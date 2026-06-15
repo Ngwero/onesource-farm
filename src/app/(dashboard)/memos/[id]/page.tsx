@@ -31,7 +31,7 @@ import {
   SIGNATURE_REQUIRED_FOR_APPROVAL_MESSAGE,
 } from '@/lib/auth/rbac';
 import type { RoleSlug } from '@/types';
-import type { Memo, SignatureRecord, BrandingSettings, MemoStatusSlug } from '@/types';
+import type { Memo, BrandingSettings, MemoStatusSlug } from '@/types';
 import { buildWorkflowSteps } from '@/lib/memo/workflowDisplay';
 import type { WorkflowTimelineStep } from '@/lib/memo/workflowTimeline';
 type CommentRow = {
@@ -341,8 +341,6 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
   const canShare =
     isCreator ||
     (roleSlug && (hasPermission(roleSlug, '*') || hasPermission(roleSlug, 'memo:share')));
-  const signatures =
-    (memo as { signature_records?: SignatureRecord[] }).signature_records || [];
   const attachments =
     (memo as {
       memo_attachments?: {
@@ -441,7 +439,11 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
           <MemoDocumentExport memoId={id} referenceNumber={memo.reference_number} />
           <div className="memo-doc-view">
             <p className="memo-doc-view__label">Memo preview</p>
-            <MemoTemplate memo={memo} branding={branding || undefined} signatures={signatures} />
+            <MemoTemplate
+              memo={memo}
+              branding={branding || undefined}
+              workflowSteps={workflowSteps}
+            />
           </div>
 
           <MemoAttachmentList attachments={attachments} />
