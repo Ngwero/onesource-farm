@@ -3,9 +3,11 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { normalizeUserProfile } from '@/lib/auth/profile';
+import { SESSION_INACTIVITY_MS, SESSION_INACTIVITY_SECONDS } from '@/lib/auth/inactivity';
 import type { User } from '@/types';
 
 const DEV_SESSION_COOKIE = 'rukapay_dev_session';
+const LAST_ACTIVITY_COOKIE = 'rukapay_last_activity';
 const DEV_SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
 export class AuthError extends Error {
@@ -51,6 +53,73 @@ function verifyDevToken(token: string): string | null {
   return userId;
 }
 
+function signActivityPayload(timestamp: number): string {
+  const payload = String(timestamp);
+  const sig = createHmac('sha256', sessionSecret()).update(payload).digest('hex');
+  return `${payload}:${sig}`;
+}
+
+function verifyActivityToken(token: string): number | null {
+  const parts = token.split(':');
+  if (parts.length !== 2) return null;
+  const [payload, sig] = parts;
+  const timestamp = Number(payload);
+  if (!Number.isFinite(timestamp)) return null;
+  const expected = createHmac('sha256', sessionSecret()).update(payload).digest('hex');
+  try {
+    if (
+      sig.length !== expected.length ||
+      !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
+    ) {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+  if (Date.now() - timestamp > SESSION_INACTIVITY_MS) return null;
+  return timestamp;
+}
+
+type SessionActivityState = 'valid' | 'expired' | 'missing';
+
+async function getSessionActivityState(): Promise<SessionActivityState> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(LAST_ACTIVITY_COOKIE)?.value;
+  if (!token) return 'missing';
+  return verifyActivityToken(token) === null ? 'expired' : 'valid';
+}
+
+const activityCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/',
+  maxAge: SESSION_INACTIVITY_SECONDS,
+};
+
+function attachSessionActivityCookie(response: NextResponse): void {
+  response.cookies.set(
+    LAST_ACTIVITY_COOKIE,
+    signActivityPayload(Date.now()),
+    activityCookieOptions
+  );
+}
+
+async function touchSessionActivityCookie(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(
+    LAST_ACTIVITY_COOKIE,
+    signActivityPayload(Date.now()),
+    activityCookieOptions
+  );
+}
+
+async function clearAllSessionCookies(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(DEV_SESSION_COOKIE);
+  cookieStore.delete(LAST_ACTIVITY_COOKIE);
+}
+
 const sessionCookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
@@ -62,10 +131,12 @@ const sessionCookieOptions = {
 /** Signed app session cookie for API routes (set on login and /api/auth/me). */
 export function attachAppSessionCookie(response: NextResponse, userId: string): void {
   response.cookies.set(DEV_SESSION_COOKIE, signDevPayload(userId), sessionCookieOptions);
+  attachSessionActivityCookie(response);
 }
 
 export function clearAppSessionCookie(response: NextResponse): void {
   response.cookies.delete(DEV_SESSION_COOKIE);
+  response.cookies.delete(LAST_ACTIVITY_COOKIE);
 }
 
 export async function setDevSessionCookie(userId: string): Promise<void> {
@@ -74,8 +145,12 @@ export async function setDevSessionCookie(userId: string): Promise<void> {
 }
 
 export async function clearDevSessionCookie(): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.delete(DEV_SESSION_COOKIE);
+  await clearAllSessionCookies();
+}
+
+/** Refresh the inactivity window (authenticated API / touch route). */
+export async function touchSessionActivity(): Promise<void> {
+  await touchSessionActivityCookie();
 }
 
 async function loadProfile(userId: string): Promise<User | null> {
@@ -107,15 +182,21 @@ async function getUserIdFromDevCookie(): Promise<string | null> {
 /** Resolve authenticated user from app session cookie or Supabase session. */
 export async function getAuthUser(): Promise<User | null> {
   const devUserId = await getUserIdFromDevCookie();
-  if (devUserId) {
-    const profile = await loadProfile(devUserId);
-    if (profile) return profile;
+  const supabaseUserId = devUserId ? null : await getUserIdFromSupabaseSession();
+  const userId = devUserId ?? supabaseUserId;
+  if (!userId) return null;
+
+  const activity = await getSessionActivityState();
+  if (activity === 'expired') {
+    await clearAllSessionCookies();
+    return null;
   }
 
-  const supabaseUserId = await getUserIdFromSupabaseSession();
-  if (supabaseUserId) return loadProfile(supabaseUserId);
+  const profile = await loadProfile(userId);
+  if (!profile) return null;
 
-  return null;
+  await touchSessionActivityCookie();
+  return profile;
 }
 
 /** Require authenticated active user (allows must_set_password for set-password flow). */

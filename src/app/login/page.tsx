@@ -34,6 +34,9 @@ function LoginForm() {
     if (searchParams.get('reset') === '1') {
       setSuccess('If an account exists for that email, we sent a password reset link. Check inbox and spam.');
     }
+    if (searchParams.get('reason') === 'timeout') {
+      setError('Your session expired after 20 minutes of inactivity. Please sign in again.');
+    }
     const urlError = searchParams.get('error');
     if (urlError) {
       setError(decodeURIComponent(urlError));

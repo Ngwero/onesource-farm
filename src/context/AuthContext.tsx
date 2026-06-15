@@ -6,6 +6,7 @@ import { resolveDashboardRoute } from '@/lib/auth/rbac';
 import { mergeUserProfile, normalizeUserProfile } from '@/lib/auth/profile';
 import { apiFetch } from '@/lib/api/client';
 import { createClient } from '@/lib/supabase/client';
+import { CLIENT_LAST_ACTIVITY_KEY } from '@/lib/auth/inactivity';
 
 interface AuthContextType {
   user: User | null;
@@ -51,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.status === 401) {
         localStorage.removeItem(STORAGE_KEY);
         sessionStorage.removeItem(PENDING_KEY);
+        sessionStorage.removeItem(CLIENT_LAST_ACTIVITY_KEY);
         setUser(null);
       }
     } catch {
@@ -132,6 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const mustSetPassword = Boolean(data.must_set_password);
       profile.must_set_password = mustSetPassword;
       persistUser(profile);
+      sessionStorage.setItem(CLIENT_LAST_ACTIVITY_KEY, String(Date.now()));
       return mustSetPassword;
     },
     [persistUser]
@@ -147,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     localStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(PENDING_KEY);
+    sessionStorage.removeItem(CLIENT_LAST_ACTIVITY_KEY);
     setUser(null);
   }, []);
 
