@@ -16,6 +16,8 @@ import { ReturnedMemoBanner } from '@/components/memo/ReturnedMemoBanner';
 import { getLatestReturnFeedback } from '@/lib/memo/returnFeedback';
 import type { MemoActivityItem } from '@/lib/memo/memoActivityTypes';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { PaymentStatusBadge } from '@/components/memo/PaymentStatusBadge';
+import { canViewMemoPaymentStatus } from '@/lib/memo/paymentStatus';
 import { PageHeader } from '@/components/ui/PageHeader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -367,6 +369,13 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
       }[];
     }).memo_attachments || [];
 
+  const showPaymentTag = canViewMemoPaymentStatus({
+    payment_status: memo.payment_status,
+    memo_types: (memo as { memo_types?: { slug: string } | { slug: string }[] }).memo_types,
+    memo_statuses: (memo as { memo_statuses?: { slug: string } | { slug: string }[] })
+      .memo_statuses,
+  });
+
   const workflowSteps: WorkflowTimelineStep[] =
     (memo as { workflow_timeline?: WorkflowTimelineStep[] }).workflow_timeline ??
     buildWorkflowSteps(statusSlug, {
@@ -380,16 +389,21 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
         titleMono
         subtitle={memo.subject}
         meta={
-          <StatusBadge
-            status={statusSlug}
-            assigneeName={
-              (memo as { pending_assignee_name?: string | null }).pending_assignee_name
-            }
-            assigneeId={(memo as { pending_assignee_id?: string | null }).pending_assignee_id}
-            assigneeIsYou={
-              (memo as { pending_assignee_is_you?: boolean }).pending_assignee_is_you
-            }
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge
+              status={statusSlug}
+              assigneeName={
+                (memo as { pending_assignee_name?: string | null }).pending_assignee_name
+              }
+              assigneeId={(memo as { pending_assignee_id?: string | null }).pending_assignee_id}
+              assigneeIsYou={
+                (memo as { pending_assignee_is_you?: boolean }).pending_assignee_is_you
+              }
+            />
+            {showPaymentTag ? (
+              <PaymentStatusBadge status={memo.payment_status ?? 'not_paid'} />
+            ) : null}
+          </div>
         }
       />
 

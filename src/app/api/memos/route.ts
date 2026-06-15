@@ -28,7 +28,7 @@ import { memoDateRangeForPeriod, parseMemoPeriodFilter } from '@/lib/memo/period
 import { attachPendingAssigneeNames } from '@/lib/memo/pendingAssignee';
 import { hasPaymentTrackingColumns } from '@/lib/memo/paymentStatus';
 
-const MEMO_LIST_SELECT = `
+const MEMO_LIST_SELECT_BASE = `
   id,
   reference_number,
   subject,
@@ -49,6 +49,13 @@ const MEMO_LIST_SELECT = `
   departments(name, code),
   creator:users!creator_id(full_name, email)
 `;
+
+async function memoListSelect(supabase: ReturnType<typeof createServiceClient>) {
+  if (await hasPaymentTrackingColumns(supabase)) {
+    return `${MEMO_LIST_SELECT_BASE.trim()},\n  payment_status`;
+  }
+  return MEMO_LIST_SELECT_BASE.trim();
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -86,7 +93,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    let query = supabase.from('memos').select(MEMO_LIST_SELECT).limit(limit);
+    const listSelect = await memoListSelect(supabase);
+    let query = supabase.from('memos').select(listSelect).limit(limit);
 
     if (period) {
       const { start, endExclusive } = memoDateRangeForPeriod(period);
@@ -308,7 +316,11 @@ export async function GET(request: NextRequest) {
     if (error) throw error;
 
     const usdToUgx = await fetchUsdToUgxRate(supabase);
-    const withAssignees = await attachPendingAssigneeNames(supabase, data || [], user.id);
+    const withAssignees = await attachPendingAssigneeNames(
+      supabase,
+      (data ?? []) as unknown as Parameters<typeof attachPendingAssigneeNames>[1],
+      user.id
+    );
     const memos = withAssignees;
     const financial_summary = summarizeMemoFinancials(memos, usdToUgx);
 

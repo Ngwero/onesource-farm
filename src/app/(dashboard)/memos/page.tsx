@@ -10,7 +10,6 @@ import { MemoListFilters } from '@/components/memo/MemoListFilters';
 import { formatPeriodLabel, parseMemoPeriodFilter } from '@/lib/memo/periodFilter';
 import { useAuth } from '@/context/AuthContext';
 import { useMemos } from '@/hooks/useMemos';
-import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
 
 const PAGE_TITLES: Record<string, string> = {
   draft: 'My Drafts',
@@ -64,9 +63,6 @@ function MemosContent() {
   ].includes(user?.role?.slug || '');
 
   const periodActive = Boolean(period);
-
-  const isChristinePaymentView =
-    Boolean(user && isInterdeptFinanceReviewer(user) && status === 'approved' && paymentStatus);
 
   const title = q && q.trim().length >= 2
     ? 'Search results'
@@ -123,7 +119,6 @@ function MemosContent() {
           <MemoList
             memos={memos as Parameters<typeof MemoList>[0]['memos']}
             currentUserId={user?.id}
-            showPaymentColumn={isChristinePaymentView || status === 'approved'}
             emptyMessage={
               searchActive
                 ? `No memos found for “${q?.trim()}”. Try reference, subject, or creator name.`
