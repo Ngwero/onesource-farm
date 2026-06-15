@@ -428,7 +428,7 @@ export async function processApproval(
       approver_name: approver.full_name,
       approver_title: approver.title,
       signature_path: approver.signature_path,
-      block_type: resolveApprovalBlockType(approver, memo),
+      block_type: resolveApprovalBlockType(memo),
       signed_at: stampedAt,
       delegated_from_id: delegation?.original_approver_id,
       delegation_note: delegationNote,
@@ -740,25 +740,16 @@ async function getActiveDelegation(approverId: string) {
   };
 }
 
-function resolveApprovalBlockType(
-  approver: {
-    email?: string;
-    roles: { slug: string } | { slug: string }[];
-  },
-  memo: {
-    memo_types?: { slug: string } | { slug: string }[];
-    memo_statuses?: { slug: string } | { slug: string }[];
-  }
-): 'prepared' | 'checked' | 'reviewed' | 'approved' {
-  const roleSlug = joinSlug(approver.roles as { slug: string } | { slug: string }[] | null) || '';
-  const statusSlug = joinSlug(memo.memo_statuses as { slug: string } | { slug: string }[] | null);
+function resolveApprovalBlockType(memo: {
+  memo_statuses?: { slug: string } | { slug: string }[];
+}): 'prepared' | 'checked' | 'reviewed' | 'approved' {
+  const statusSlug = joinSlug(
+    memo.memo_statuses as { slug: string } | { slug: string }[] | null
+  );
+  const stepRole = statusSlug ? PENDING_STATUS_TO_ROLE[statusSlug] : undefined;
+  if (stepRole) return mapRoleToBlockType(stepRole);
 
-  if (roleSlug === 'admin' && statusSlug) {
-    const stepRole = PENDING_STATUS_TO_ROLE[statusSlug];
-    if (stepRole) return mapRoleToBlockType(stepRole);
-  }
-
-  return mapRoleToBlockType(roleSlug);
+  return 'approved';
 }
 
 function mapRoleToBlockType(roleSlug: string): 'prepared' | 'checked' | 'reviewed' | 'approved' {

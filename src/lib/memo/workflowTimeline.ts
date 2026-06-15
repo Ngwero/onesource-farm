@@ -127,13 +127,31 @@ function indexByPendingRole(
 
 function assignSignaturesToSteps(
   steps: WorkflowStep[],
-  signatures: SignatureRecord[]
+  signatures: SignatureRecord[],
+  expectedApproverIdByStep: (string | null)[]
 ): Map<number, SignatureRecord> {
   const result = new Map<number, SignatureRecord>();
+  const used = new Set<string>();
+
+  for (let i = 0; i < steps.length; i++) {
+    const expectedId = expectedApproverIdByStep[i];
+    if (!expectedId) continue;
+    const sig = signatures.find(
+      (s) =>
+        s.block_type !== 'prepared' &&
+        s.approver_id === expectedId &&
+        !used.has(s.id)
+    );
+    if (sig) {
+      used.add(sig.id);
+      result.set(i, sig);
+    }
+  }
+
   const pools: Record<string, SignatureRecord[]> = {};
 
   for (const sig of signatures) {
-    if (sig.block_type === 'prepared') continue;
+    if (sig.block_type === 'prepared' || used.has(sig.id)) continue;
     const key = sig.block_type;
     if (!pools[key]) pools[key] = [];
     pools[key].push(sig);
@@ -145,9 +163,8 @@ function assignSignaturesToSteps(
     );
   }
 
-  const used = new Set<string>();
-
   for (let i = 0; i < steps.length; i++) {
+    if (result.has(i)) continue;
     const block = blockTypeForRole(steps[i].role_slug);
     const pool = pools[block] || [];
     const sig = pool.find((s) => !used.has(s.id));
@@ -196,23 +213,6 @@ export async function buildWorkflowTimelineForMemo(
 
   const steps = sortedWorkflowSteps(workflow);
   const signatures = memo.signature_records || [];
-  const sigByStep = assignSignaturesToSteps(steps, signatures);
-  const pendingIdx = indexByPendingRole(steps, statusSlug);
-
-  const { data: approvalActions } = await supabase
-    .from('approvals')
-    .select('step_order, action, signed_at')
-    .eq('memo_id', memo.id)
-    .in('action', ['return', 'reject'])
-    .order('signed_at', { ascending: false });
-
-  const latestReturn = approvalActions?.find((row) => row.action === 'return');
-  const latestReject = approvalActions?.find((row) => row.action === 'reject');
-  const approved = statusSlug === 'approved';
-  const rejected = statusSlug === 'rejected';
-  const returned = statusSlug === 'returned';
-  const draft = statusSlug === 'draft';
-  const withdrawn = statusSlug === 'withdrawn';
 
   const expectedApproverIdByStep = await Promise.all(
     steps.map(async (step) => {
@@ -227,6 +227,26 @@ export async function buildWorkflowTimelineForMemo(
     })
   );
 
+  const sigByStep = assignSignaturesToSteps(steps, signatures, expectedApproverIdByStep);
+  const pendingIdx = indexByPendingRole(steps, statusSlug);
+
+  const { data: approvalActions } = await supabase
+    .from('approvals')
+    .select('step_order, action, signed_at, approver_id, signature_path')
+    .eq('memo_id', memo.id)
+    .in('action', ['return', 'reject', 'approve'])
+    .order('signed_at', { ascending: false });
+
+  const approveActions = approvalActions?.filter((row) => row.action === 'approve') ?? [];
+
+  const latestReturn = approvalActions?.find((row) => row.action === 'return');
+  const latestReject = approvalActions?.find((row) => row.action === 'reject');
+  const approved = statusSlug === 'approved';
+  const rejected = statusSlug === 'rejected';
+  const returned = statusSlug === 'returned';
+  const draft = statusSlug === 'draft';
+  const withdrawn = statusSlug === 'withdrawn';
+
   const userIds = new Set<string>();
   for (const id of expectedApproverIdByStep) {
     if (id) userIds.add(id);
@@ -234,6 +254,9 @@ export async function buildWorkflowTimelineForMemo(
   if (memo.pending_assignee_id) userIds.add(memo.pending_assignee_id);
   for (const sig of signatures) {
     if (sig.approver_id) userIds.add(sig.approver_id);
+  }
+  for (const action of approveActions) {
+    if (action.approver_id) userIds.add(action.approver_id);
   }
 
   const userLabels = await loadUserDeptLabels(supabase, [...userIds]);
@@ -294,6 +317,27 @@ export async function buildWorkflowTimelineForMemo(
       approver_title = sig.approver_title || undefined;
       signature_path = sig.signature_path?.trim() || undefined;
       if (!date) date = formatActionTimestamp(sig.signed_at);
+    } else if ((status === 'completed' || approved) && !sig) {
+      const approval = approveActions.find((row) => row.step_order === step.step_order);
+      const fallbackSig = signatures.find(
+        (s) =>
+          s.block_type !== 'prepared' &&
+          s.approver_id === (approval?.approver_id ?? expectedApproverIdByStep[i])
+      );
+      const approverId = fallbackSig?.approver_id ?? approval?.approver_id ?? null;
+      const approverName = fallbackSig?.approver_name ?? null;
+
+      if (approverId || approverName) {
+        approver = approverLine(userLabels, approverId, approverName, viewingUserId);
+        approver_title = fallbackSig?.approver_title || undefined;
+        signature_path =
+          fallbackSig?.signature_path?.trim() ||
+          approval?.signature_path?.trim() ||
+          undefined;
+        if (!date) {
+          date = formatActionTimestamp(fallbackSig?.signed_at ?? approval?.signed_at);
+        }
+      }
     } else if (status === 'current' && memo.pending_assignee_id) {
       approver = approverLine(
         userLabels,
