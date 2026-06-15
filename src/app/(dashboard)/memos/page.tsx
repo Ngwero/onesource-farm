@@ -46,7 +46,7 @@ function MemosContent() {
     if (month) f.month = month;
     return Object.keys(f).length ? f : undefined;
   }, [status, paymentStatus, view, memoType, q, year, month]);
-  const { memos, loading } = useMemos(filters);
+  const { memos, loading, paymentTrackingEnabled } = useMemos(filters);
 
   const query = searchParams.toString();
   const fullPath = query ? `${pathname}?${query}` : pathname;
@@ -119,6 +119,7 @@ function MemosContent() {
           <MemoList
             memos={memos as Parameters<typeof MemoList>[0]['memos']}
             currentUserId={user?.id}
+            paymentTrackingEnabled={paymentTrackingEnabled}
             emptyMessage={
               searchActive
                 ? `No memos found for “${q?.trim()}”. Try reference, subject, or creator name.`

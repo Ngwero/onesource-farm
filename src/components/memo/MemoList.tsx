@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { StatusBadge } from '../ui/StatusBadge';
 import { PaymentStatusBadge } from '@/components/memo/PaymentStatusBadge';
-import { memoTypeTracksPayment } from '@/lib/memo/paymentStatus';
+import { canViewMemoPaymentStatus } from '@/lib/memo/paymentStatus';
 import type { PaymentStatus } from '@/types';
 import { FileText, Eye, Pencil, Download } from 'lucide-react';
 import { downloadMemoPdf } from '@/lib/memo/downloadMemoPdf';
@@ -31,17 +31,12 @@ interface MemoListItem {
   payment_status?: PaymentStatus | null;
 }
 
-function memoTypeSlug(memo: MemoListItem): string | undefined {
-  return memo.memo_types?.slug;
-}
-
-function paymentTrackingActive(memos: MemoListItem[]): boolean {
-  return memos.some((memo) => 'payment_status' in memo);
-}
-
-function memoShowsPayment(memo: MemoListItem, trackingActive: boolean): boolean {
-  if (!trackingActive || memo.memo_statuses?.slug !== 'approved') return false;
-  return memoTypeTracksPayment(memoTypeSlug(memo));
+function memoShowsPayment(memo: MemoListItem): boolean {
+  return canViewMemoPaymentStatus({
+    payment_status: memo.payment_status,
+    memo_types: memo.memo_types,
+    memo_statuses: memo.memo_statuses,
+  });
 }
 
 function formatListDate(value: string | null | undefined): string {
@@ -56,12 +51,15 @@ export function MemoList({
   currentUserId,
   emptyMessage = 'No memos found',
   sortByMemoDate = false,
+  paymentTrackingEnabled = true,
 }: {
   memos: MemoListItem[];
   currentUserId?: string;
   emptyMessage?: string;
   /** When true, show memo date column (period filter / sort by memo date). */
   sortByMemoDate?: boolean;
+  /** When false, hide payment tags (payment migration not applied). */
+  paymentTrackingEnabled?: boolean;
   /** @deprecated Payment tags show inline next to status when applicable. */
   showPaymentColumn?: boolean;
 }) {
@@ -90,7 +88,7 @@ export function MemoList({
     );
   }
 
-  const trackingActive = paymentTrackingActive(memos);
+  const showPaymentTags = paymentTrackingEnabled && memos.some(memoShowsPayment);
 
   return (
     <div className="data-table">
@@ -102,6 +100,7 @@ export function MemoList({
             <th>Type</th>
             <th>Department</th>
             <th>Status</th>
+            {showPaymentTags ? <th>Payment</th> : null}
             <th>{sortByMemoDate ? 'Memo date' : 'Last activity'}</th>
             <th />
           </tr>
@@ -118,18 +117,22 @@ export function MemoList({
               <td className="text-slate-600">{memo.memo_types?.name}</td>
               <td className="text-slate-600">{memo.departments?.name}</td>
               <td>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <StatusBadge
-                    status={memo.memo_statuses?.slug}
-                    assigneeName={memo.pending_assignee_name}
-                    assigneeId={memo.pending_assignee_id}
-                    assigneeIsYou={memo.pending_assignee_is_you}
-                  />
-                  {memoShowsPayment(memo, trackingActive) ? (
-                    <PaymentStatusBadge status={memo.payment_status ?? 'not_paid'} />
-                  ) : null}
-                </div>
+                <StatusBadge
+                  status={memo.memo_statuses?.slug}
+                  assigneeName={memo.pending_assignee_name}
+                  assigneeId={memo.pending_assignee_id}
+                  assigneeIsYou={memo.pending_assignee_is_you}
+                />
               </td>
+              {showPaymentTags ? (
+                <td>
+                  {memoShowsPayment(memo) ? (
+                    <PaymentStatusBadge status={memo.payment_status ?? 'not_paid'} />
+                  ) : (
+                    <span className="text-slate-400">—</span>
+                  )}
+                </td>
+              ) : null}
               <td className="text-slate-500 text-xs whitespace-nowrap">
                 {sortByMemoDate
                   ? formatListDate(memo.memo_date)

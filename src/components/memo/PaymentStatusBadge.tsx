@@ -10,7 +10,7 @@ const PAYMENT_STATUS_CLASS: Record<PaymentStatus, string> = {
 export function PaymentStatusBadge({ status }: { status?: PaymentStatus | null }) {
   if (!status) return null;
 
-  const label = status === 'paid' ? 'Paid' : 'Not yet paid';
+  const label = status === 'paid' ? 'Paid' : 'Not paid';
 
   return (
     <span className={`payment-badge ${PAYMENT_STATUS_CLASS[status]}`}>{label}</span>

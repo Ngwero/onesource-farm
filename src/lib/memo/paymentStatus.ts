@@ -42,10 +42,13 @@ let paymentColumnsReady: boolean | null = null;
 export async function hasPaymentTrackingColumns(
   supabase: SupabaseClient
 ): Promise<boolean> {
-  if (paymentColumnsReady !== null) return paymentColumnsReady;
+  if (paymentColumnsReady === true) return true;
   const { error } = await supabase.from('memos').select('payment_status').limit(1);
-  paymentColumnsReady = !error;
-  return paymentColumnsReady;
+  if (!error) {
+    paymentColumnsReady = true;
+    return true;
+  }
+  return false;
 }
 
 export function memoTypeSlugFromMemo(memo: {

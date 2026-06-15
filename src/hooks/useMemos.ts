@@ -9,6 +9,7 @@ export function useMemos(filters?: Record<string, string>) {
   const { user, loading: authLoading } = useAuth();
   const [memos, setMemos] = useState<unknown[]>([]);
   const [financialSummary, setFinancialSummary] = useState<MemoFinancialSummary | null>(null);
+  const [paymentTrackingEnabled, setPaymentTrackingEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +26,7 @@ export function useMemos(filters?: Record<string, string>) {
       if (!res.ok) throw new Error(data.error);
       setMemos(data.memos || []);
       setFinancialSummary(data.financial_summary || null);
+      setPaymentTrackingEnabled(data.payment_tracking_enabled !== false);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
@@ -42,5 +44,12 @@ export function useMemos(filters?: Record<string, string>) {
     void fetchMemos();
   }, [authLoading, user?.id, fetchMemos]);
 
-  return { memos, financialSummary, loading: loading || authLoading, error, refetch: fetchMemos };
+  return {
+    memos,
+    financialSummary,
+    paymentTrackingEnabled,
+    loading: loading || authLoading,
+    error,
+    refetch: fetchMemos,
+  };
 }

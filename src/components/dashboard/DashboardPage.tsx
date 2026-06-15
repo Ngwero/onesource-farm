@@ -21,6 +21,7 @@ interface DashboardPageProps {
   loading: boolean;
   memos: Parameters<typeof MemoList>[0]['memos'];
   emptyMessage?: string;
+  paymentTrackingEnabled?: boolean;
   action?: {
     href: string;
     label: string;
@@ -38,6 +39,7 @@ export function DashboardPage({
   loading,
   memos,
   emptyMessage,
+  paymentTrackingEnabled = true,
   action,
 }: DashboardPageProps) {
   const { user } = useAuth();
@@ -127,7 +129,12 @@ export function DashboardPage({
             <p>Loading memos…</p>
           </div>
         ) : (
-          <MemoList memos={memos} currentUserId={user?.id} emptyMessage={emptyMessage} />
+          <MemoList
+            memos={memos}
+            currentUserId={user?.id}
+            emptyMessage={emptyMessage}
+            paymentTrackingEnabled={paymentTrackingEnabled}
+          />
         )}
       </section>
     </div>

@@ -26,7 +26,12 @@ import {
 import { memoSearchOrFilter, sanitizeMemoSearchQuery } from '@/lib/memo/search';
 import { memoDateRangeForPeriod, parseMemoPeriodFilter } from '@/lib/memo/periodFilter';
 import { attachPendingAssigneeNames } from '@/lib/memo/pendingAssignee';
-import { hasPaymentTrackingColumns } from '@/lib/memo/paymentStatus';
+import {
+  hasPaymentTrackingColumns,
+  memoTypeTracksPayment,
+  memoTypeSlugFromMemo,
+  memoStatusSlugFromMemo,
+} from '@/lib/memo/paymentStatus';
 
 const MEMO_LIST_SELECT_BASE = `
   id,
@@ -321,11 +326,25 @@ export async function GET(request: NextRequest) {
       (data ?? []) as unknown as Parameters<typeof attachPendingAssigneeNames>[1],
       user.id
     );
-    const memos = withAssignees;
+
+    const paymentTrackingEnabled = await hasPaymentTrackingColumns(supabase);
+    const memos = withAssignees.map((memo) => {
+      if (!paymentTrackingEnabled) return memo;
+      const statusSlug = memoStatusSlugFromMemo(memo);
+      const typeSlug = memoTypeSlugFromMemo(memo);
+      if (
+        statusSlug === 'approved' &&
+        memoTypeTracksPayment(typeSlug) &&
+        !(memo as { payment_status?: string | null }).payment_status
+      ) {
+        return { ...memo, payment_status: 'not_paid' as const };
+      }
+      return memo;
+    });
     const financial_summary = summarizeMemoFinancials(memos, usdToUgx);
 
     return NextResponse.json(
-      { memos, financial_summary },
+      { memos, financial_summary, payment_tracking_enabled: paymentTrackingEnabled },
       { headers: { 'Cache-Control': 'private, no-store' } }
     );
   } catch (err) {
