@@ -35,7 +35,7 @@ export async function updateMemoPaymentStatus(
   const { data: memo, error } = await supabase
     .from('memos')
     .select(
-      'id, payment_status, payment_note, paid_at, paid_by, memo_types(slug), memo_statuses(slug), paid_by_user:users!paid_by(full_name)'
+      'id, payment_status, payment_note, paid_at, paid_by, memo_types(slug), memo_statuses(slug)'
     )
     .eq('id', memoId)
     .single();
@@ -74,7 +74,7 @@ export async function updateMemoPaymentStatus(
     })
     .eq('id', memoId)
     .select(
-      'id, payment_status, payment_note, paid_at, paid_by, memo_types(slug), memo_statuses(slug), paid_by_user:users!paid_by(full_name)'
+      'id, payment_status, payment_note, paid_at, paid_by, memo_types(slug), memo_statuses(slug)'
     )
     .single();
 

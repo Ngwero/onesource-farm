@@ -20,7 +20,6 @@ const MEMO_DETAIL_SELECT = `
   memo_statuses(name, slug),
   departments(name, code),
   creator:users!creator_id(id, full_name, email, title, signature_path),
-  paid_by_user:users!paid_by(full_name),
   memo_attachments(*),
   approvals(*, approver:users!approver_id(full_name, title)),
   signature_records(*, approver:users!approver_id(signature_path)),

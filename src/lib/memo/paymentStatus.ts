@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
 import { FINANCE_STEP_MEMO_TYPE_SLUGS } from '@/lib/memo/financeQueueList';
 import type { Memo, User } from '@/types';
@@ -33,6 +34,18 @@ export function approvedMemoPaymentFields(memoTypeSlug?: string | null): {
 export function paymentStatusLabel(status?: PaymentStatus | null): string {
   if (status === 'paid') return 'Paid';
   return 'Not yet paid';
+}
+
+let paymentColumnsReady: boolean | null = null;
+
+/** True once migration 020 has been applied (payment_status column exists). */
+export async function hasPaymentTrackingColumns(
+  supabase: SupabaseClient
+): Promise<boolean> {
+  if (paymentColumnsReady !== null) return paymentColumnsReady;
+  const { error } = await supabase.from('memos').select('payment_status').limit(1);
+  paymentColumnsReady = !error;
+  return paymentColumnsReady;
 }
 
 export function memoTypeSlugFromMemo(memo: {

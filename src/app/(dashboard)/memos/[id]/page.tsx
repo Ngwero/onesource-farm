@@ -59,6 +59,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
   const [shareEmail, setShareEmail] = useState('');
   const [sharing, setSharing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [comment, setComment] = useState('');
   const [postingComment, setPostingComment] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -92,7 +93,10 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
 
   useEffect(() => {
     loadMemo()
-      .catch(() => setMemo(null))
+      .catch((err) => {
+        setMemo(null);
+        setLoadError(err instanceof Error ? err.message : 'Failed to load memo');
+      })
       .finally(() => setLoading(false));
   }, [loadMemo]);
 
@@ -289,7 +293,17 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   if (loading) return <div className="text-center py-12">Loading memo...</div>;
-  if (!memo) return <div className="text-center py-12 text-red-500">Memo not found</div>;
+  if (!memo) {
+    return (
+      <div className="text-center py-12 space-y-2">
+        <p className="text-red-500 font-medium">Memo not found</p>
+        {loadError ? <p className="text-sm text-slate-500 max-w-md mx-auto">{loadError}</p> : null}
+        <Link href="/memos?view=mine" className="inline-block text-sm text-brand-600 hover:underline">
+          Back to my memos
+        </Link>
+      </div>
+    );
+  }
 
   const statusSlug =
     joinSlug((memo as { memo_statuses?: { slug: string } | { slug: string }[] }).memo_statuses) ||

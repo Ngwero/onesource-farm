@@ -26,6 +26,7 @@ import {
 import { memoSearchOrFilter, sanitizeMemoSearchQuery } from '@/lib/memo/search';
 import { memoDateRangeForPeriod, parseMemoPeriodFilter } from '@/lib/memo/periodFilter';
 import { attachPendingAssigneeNames } from '@/lib/memo/pendingAssignee';
+import { hasPaymentTrackingColumns } from '@/lib/memo/paymentStatus';
 
 const MEMO_LIST_SELECT = `
   id,
@@ -224,10 +225,12 @@ export async function GET(request: NextRequest) {
         query = query
           .in('memo_type_id', typeIds)
           .eq('status_id', approvedStatus.id);
-        if (paymentStatusFilter === 'not_paid') {
-          query = query.or('payment_status.eq.not_paid,payment_status.is.null');
-        } else {
-          query = query.eq('payment_status', paymentStatusFilter);
+        if (paymentStatusFilter && (await hasPaymentTrackingColumns(supabase))) {
+          if (paymentStatusFilter === 'not_paid') {
+            query = query.or('payment_status.eq.not_paid,payment_status.is.null');
+          } else {
+            query = query.eq('payment_status', paymentStatusFilter);
+          }
         }
       } else {
         const approvedMemoIds = await fetchMemoIdsForApprovedTab(
