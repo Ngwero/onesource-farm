@@ -10,6 +10,7 @@ import { MemoListFilters } from '@/components/memo/MemoListFilters';
 import { formatPeriodLabel, parseMemoPeriodFilter } from '@/lib/memo/periodFilter';
 import { useAuth } from '@/context/AuthContext';
 import { useMemos } from '@/hooks/useMemos';
+import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
 
 const PAGE_TITLES: Record<string, string> = {
   draft: 'My Drafts',
@@ -78,9 +79,13 @@ function MemosContent() {
               : PAGE_TITLES[status] || status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
             : view === 'mine'
               ? 'My memos'
-              : view === 'active'
+              : view === 'involving'
+                ? 'Memos involving me'
+                : view === 'active'
                 ? 'Memos in progress'
-                : 'My Memos';
+                : user && isInterdeptFinanceReviewer(user)
+                  ? 'Memos involving me'
+                  : 'My Memos';
 
   const subtitle =
     q && q.trim().length >= 2
@@ -89,6 +94,8 @@ function MemosContent() {
         ? `Sorted by memo date (newest first) for ${formatPeriodLabel(period)}.`
         : view === 'mine'
           ? 'Every memo you have created, in any status.'
+          : view === 'involving' || (user && isInterdeptFinanceReviewer(user) && !status && !view)
+          ? 'Memos you created, approved, were shared with you, or are waiting for your finance review.'
           : paymentStatus === 'not_paid' || paymentStatus === 'paid'
           ? 'Update payment status on each memo once funds have been processed.'
           : status === 'draft'

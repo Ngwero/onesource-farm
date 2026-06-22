@@ -5,6 +5,8 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api/client';
 import type { MemoFinancialSummary } from '@/lib/memo/financial';
 
+export const MEMO_PAYMENT_UPDATED_EVENT = 'memo-payment-updated';
+
 export function useMemos(filters?: Record<string, string>) {
   const { user, loading: authLoading } = useAuth();
   const [memos, setMemos] = useState<unknown[]>([]);
@@ -28,8 +30,10 @@ export function useMemos(filters?: Record<string, string>) {
       setFinancialSummary(data.financial_summary || null);
       setPaymentTrackingEnabled(data.payment_tracking_enabled !== false);
       setError(null);
+      return data;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
+      return null;
     } finally {
       setLoading(false);
     }
@@ -43,6 +47,29 @@ export function useMemos(filters?: Record<string, string>) {
     }
     void fetchMemos();
   }, [authLoading, user?.id, fetchMemos]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const refresh = () => {
+      void fetchMemos();
+    };
+
+    const refreshOnVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchMemos();
+      }
+    };
+
+    window.addEventListener('focus', refreshOnVisible);
+    document.addEventListener('visibilitychange', refreshOnVisible);
+    window.addEventListener(MEMO_PAYMENT_UPDATED_EVENT, refresh);
+    return () => {
+      window.removeEventListener('focus', refreshOnVisible);
+      document.removeEventListener('visibilitychange', refreshOnVisible);
+      window.removeEventListener(MEMO_PAYMENT_UPDATED_EVENT, refresh);
+    };
+  }, [user?.id, fetchMemos]);
 
   return {
     memos,

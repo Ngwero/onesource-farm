@@ -88,7 +88,7 @@ export function MemoList({
     );
   }
 
-  const showPaymentTags = paymentTrackingEnabled && memos.some(memoShowsPayment);
+  const showPaymentTags = paymentTrackingEnabled;
 
   return (
     <div className="data-table">

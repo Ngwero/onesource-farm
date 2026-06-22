@@ -11,6 +11,7 @@ import {
   rowToMemoForAccess,
   type MemoAccessRow,
 } from '@/lib/auth/memoRbacShape';
+import { userIsInvolvedInMemo } from '@/lib/memo/memosInvolvingUser';
 import type { Memo, MemoStatusSlug, RoleSlug, User } from '@/types';
 
 export { joinSlug, rowToMemoForAccess, type MemoAccessRow } from '@/lib/auth/memoRbacShape';
@@ -39,7 +40,18 @@ export async function assertCanViewMemo(user: User, memoId: string): Promise<Mem
   const sharedWith = await getSharedUserIds(memoId);
   const memo = rowToMemoForAccess(row as unknown as MemoAccessRow);
   if (!canViewMemo(user, memo, sharedWith)) {
-    throw new Error('Forbidden');
+    const involved = await userIsInvolvedInMemo(
+      supabase,
+      user,
+      memoId,
+      row as unknown as MemoAccessRow
+    );
+    const statusSlug = joinSlug(
+      (row as { memo_statuses?: { slug: string } | { slug: string }[] }).memo_statuses
+    );
+    if (!involved || statusSlug === 'draft' || statusSlug === 'deleted') {
+      throw new Error('Forbidden');
+    }
   }
   return row as unknown as MemoAccessRow;
 }

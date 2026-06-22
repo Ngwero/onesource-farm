@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Banknote, CheckCircle2, Clock } from 'lucide-react';
 import { apiFetch } from '@/lib/api/client';
 import {
@@ -10,6 +10,7 @@ import {
 } from '@/lib/memo/paymentStatus';
 import { PaymentStatusBadge } from '@/components/memo/PaymentStatusBadge';
 import type { Memo, PaymentStatus, User } from '@/types';
+import { MEMO_PAYMENT_UPDATED_EVENT } from '@/hooks/useMemos';
 
 type MemoPaymentStatusProps = {
   memo: Memo;
@@ -39,6 +40,14 @@ export function MemoPaymentStatus({ memo, user, onUpdated }: MemoPaymentStatusPr
   const [paidByName, setPaidByName] = useState(memo.paid_by_user?.full_name ?? null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPaymentStatus(memo.payment_status ?? null);
+    setPaymentNote(memo.payment_note || '');
+    setPaidAt(memo.paid_at ?? null);
+    setPaidByName(memo.paid_by_user?.full_name ?? null);
+  }, [memo.payment_status, memo.payment_note, memo.paid_at, memo.paid_by_user?.full_name]);
 
   const memoForAccess = {
     payment_status: paymentStatus,
@@ -57,6 +66,7 @@ export function MemoPaymentStatus({ memo, user, onUpdated }: MemoPaymentStatusPr
     if (!canEdit) return;
     setSaving(true);
     setError(null);
+    setSavedMessage(null);
     try {
       const res = await apiFetch(`/api/memos/${memo.id}/payment`, {
         method: 'PATCH',
@@ -82,6 +92,12 @@ export function MemoPaymentStatus({ memo, user, onUpdated }: MemoPaymentStatusPr
         paid_at: updated.paid_at,
         paid_by: updated.paid_by,
       });
+      setSavedMessage(
+        nextStatus === 'paid' ? 'Marked as paid.' : 'Saved as not yet paid.'
+      );
+      window.dispatchEvent(
+        new CustomEvent(MEMO_PAYMENT_UPDATED_EVENT, { detail: { memoId: memo.id } })
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Update failed');
     } finally {
@@ -177,6 +193,11 @@ export function MemoPaymentStatus({ memo, user, onUpdated }: MemoPaymentStatusPr
           </button>
 
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {savedMessage ? (
+            <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+              {savedMessage}
+            </p>
+          ) : null}
 
           <p className="text-xs text-slate-500">
             Current status: {paymentStatusLabel(displayStatus)}

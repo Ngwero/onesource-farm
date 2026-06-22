@@ -211,8 +211,7 @@ export function Sidebar() {
         { label: 'Dashboard', href: '/dashboard/finance', icon: <LayoutDashboard size={18} /> },
         { label: 'My Memos', href: '/memos?view=mine', icon: <FileEdit size={18} /> },
         { label: 'Pending Finance', href: '/memos?status=pending_finance', icon: <FileText size={18} /> },
-        {
-          label: 'Awaiting payment',
+        { label: 'Awaiting payment',
           href: '/memos?status=approved&payment_status=not_paid',
           icon: <FileText size={18} />,
         },
@@ -222,7 +221,7 @@ export function Sidebar() {
           icon: <FileText size={18} />,
         },
         { label: 'I approved', href: '/memos?status=approved', icon: <FileText size={18} /> },
-        { label: 'All memos', href: '/memos', icon: <Building2 size={18} /> },
+        { label: 'Involving me', href: '/memos', icon: <Building2 size={18} /> },
         { label: 'Notifications', href: '/notifications', icon: <Bell size={18} /> },
         { label: 'My Signature', href: '/settings/signature', icon: <PenLine size={18} /> },
         { label: 'Delegation', href: '/settings/delegation', icon: <UserCog size={18} /> },

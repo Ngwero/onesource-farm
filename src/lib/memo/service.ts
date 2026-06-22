@@ -22,7 +22,7 @@ import {
   workflowForCeoCreator,
 } from '@/lib/workflow/ceoWorkflowSteps';
 import { generateReferenceNumber } from './reference';
-import { approvedMemoPaymentFields } from '@/lib/memo/paymentStatus';
+import { approvedMemoPaymentFieldsIfReady } from '@/lib/memo/paymentStatus';
 import { joinSlug } from '@/lib/auth/memoAccess';
 import type { CreateMemoInput, ApprovalInput, MemoTypeSlug } from '@/types';
 
@@ -478,13 +478,14 @@ export async function processApproval(
       .single();
 
     const approvedAt = nowIso();
+    const paymentFields = await approvedMemoPaymentFieldsIfReady(supabase, memoTypeSlug);
     await supabase
       .from('memos')
       .update({
         status_id: approvedStatus!.id,
         approved_at: approvedAt,
         updated_at: approvedAt,
-        ...approvedMemoPaymentFields(memoTypeSlug),
+        ...paymentFields,
       })
       .eq('id', memoId);
 
@@ -584,13 +585,14 @@ async function processExcoApproval(
     ) as MemoTypeSlug | undefined;
 
     const approvedAt = nowIso();
+    const paymentFields = await approvedMemoPaymentFieldsIfReady(supabase, excoMemoTypeSlug);
     await supabase
       .from('memos')
       .update({
         status_id: approvedStatus!.id,
         approved_at: approvedAt,
         updated_at: approvedAt,
-        ...approvedMemoPaymentFields(excoMemoTypeSlug),
+        ...paymentFields,
       })
       .eq('id', memoId);
 
@@ -655,13 +657,14 @@ async function processExcoApproval(
     ) as MemoTypeSlug | undefined;
 
     const approvedAt = nowIso();
+    const paymentFields = await approvedMemoPaymentFieldsIfReady(supabase, excoMemoTypeSlug);
     await supabase
       .from('memos')
       .update({
         status_id: approvedStatus!.id,
         approved_at: approvedAt,
         updated_at: approvedAt,
-        ...approvedMemoPaymentFields(excoMemoTypeSlug),
+        ...paymentFields,
       })
       .eq('id', memoId);
 

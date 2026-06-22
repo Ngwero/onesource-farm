@@ -31,6 +31,18 @@ export function approvedMemoPaymentFields(memoTypeSlug?: string | null): {
   };
 }
 
+export async function approvedMemoPaymentFieldsIfReady(
+  supabase: SupabaseClient,
+  memoTypeSlug?: string | null
+): Promise<ReturnType<typeof approvedMemoPaymentFields>> {
+  if (!(await hasPaymentTrackingColumns(supabase))) return {};
+  return approvedMemoPaymentFields(memoTypeSlug);
+}
+
+export function paymentMigrationRequiredError(): string {
+  return 'Payment tracking is not enabled on the database yet. Ask an admin to run migration 020_memo_payment_status.sql.';
+}
+
 export function paymentStatusLabel(status?: PaymentStatus | null): string {
   if (status === 'paid') return 'Paid';
   return 'Not yet paid';

@@ -9,7 +9,7 @@ export default function DepartmentHeadDashboard() {
   const { user } = useAuth();
   const isBusinessHead = user?.role?.slug === 'business_head';
 
-  const { memos, loading } = useMemos(
+  const { memos, loading, paymentTrackingEnabled } = useMemos(
     isBusinessHead ? { memo_type: 'marketing_request' } : undefined
   );
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
@@ -55,6 +55,7 @@ export default function DepartmentHeadDashboard() {
       stats={stats}
       loading={loading || loadingApproved}
       memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
+      paymentTrackingEnabled={paymentTrackingEnabled}
       memosTitle={isBusinessHead ? 'Marketing memos' : 'Department memos'}
     />
   );

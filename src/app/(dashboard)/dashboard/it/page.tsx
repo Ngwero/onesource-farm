@@ -17,7 +17,7 @@ export default function ItCheckerDashboard() {
   const pendingStatus = (role && PENDING_BY_ROLE[role]) || 'pending_it_checker_first';
   const isFirst = role === 'it_checker_first';
 
-  const { memos, loading } = useMemos({ status: pendingStatus });
+  const { memos, loading, paymentTrackingEnabled } = useMemos({ status: pendingStatus });
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
   const all = memos as Array<{ memo_statuses?: { slug: string } }>;
 
@@ -55,6 +55,7 @@ export default function ItCheckerDashboard() {
       stats={stats}
       loading={loading || loadingApproved}
       memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
+      paymentTrackingEnabled={paymentTrackingEnabled}
       memosTitle="IT memos awaiting your check"
       emptyMessage="No IT memos pending your review"
     />

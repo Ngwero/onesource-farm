@@ -26,6 +26,7 @@ import {
 import { memoSearchOrFilter, sanitizeMemoSearchQuery } from '@/lib/memo/search';
 import { memoDateRangeForPeriod, parseMemoPeriodFilter } from '@/lib/memo/periodFilter';
 import { attachPendingAssigneeNames } from '@/lib/memo/pendingAssignee';
+import { fetchMemoIdsInvolvingUser } from '@/lib/memo/memosInvolvingUser';
 import {
   hasPaymentTrackingColumns,
   memoTypeTracksPayment,
@@ -114,8 +115,23 @@ export async function GET(request: NextRequest) {
 
     const sharedOnly = searchParams.get('shared') === '1';
     const mineView = view === 'mine';
+    const involvingView = view === 'involving';
+    const christineFinanceReviewer = isInterdeptFinanceReviewer(user);
     const christineFinanceQueue = usesChristineFinanceQueue(user, status);
     const amaraFinanceQueue = usesAmaraFinanceRequestQueue(user, status);
+    const christineInvolvingScope =
+      christineFinanceReviewer &&
+      !mineView &&
+      !sharedOnly &&
+      !amaraFinanceQueue &&
+      !christineFinanceQueue &&
+      !christinePaymentQueue &&
+      !department &&
+      !memoType &&
+      !creator &&
+      (involvingView ||
+        (!status && !period) ||
+        (Boolean(searchTerm) && !status));
     const roleScopedList =
       !mineView &&
       shouldUseRoleScopedMemoList({
@@ -128,6 +144,20 @@ export async function GET(request: NextRequest) {
     if (mineView) {
       const statusIds = await getPrivateMemoStatusIds(supabase);
       query = query.eq('creator_id', user.id);
+      if (statusIds.deletedId) {
+        query = query.neq('status_id', statusIds.deletedId);
+      }
+    } else if (christineInvolvingScope) {
+      const ids = await fetchMemoIdsInvolvingUser(supabase, user);
+      if (ids.length === 0) {
+        return NextResponse.json({
+          memos: [],
+          financial_summary: null,
+          payment_tracking_enabled: await hasPaymentTrackingColumns(supabase),
+        });
+      }
+      query = query.in('id', ids);
+      const statusIds = await getPrivateMemoStatusIds(supabase);
       if (statusIds.deletedId) {
         query = query.neq('status_id', statusIds.deletedId);
       }
@@ -152,6 +182,8 @@ export async function GET(request: NextRequest) {
       if (finType?.id) {
         query = query.or(`memo_type_id.neq.${finType.id},creator_id.neq.${user.id}`);
       }
+    } else if (christinePaymentQueue) {
+      // Payment lists — full finance-step scope applied below (no department filter).
     } else if (role === 'business_head') {
       const { data: marketingType } = await supabase
         .from('memo_types')

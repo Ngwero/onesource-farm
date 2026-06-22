@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, authErrorResponse } from '@/lib/auth/session';
 import { assertCanViewMemo } from '@/lib/auth/memoAccess';
 import { updateMemoPaymentStatus } from '@/lib/memo/updatePaymentStatus';
+import { paymentMigrationRequiredError } from '@/lib/memo/paymentStatus';
 import type { PaymentStatus } from '@/lib/memo/paymentStatus';
 
 export async function PATCH(
@@ -27,6 +28,9 @@ export async function PATCH(
     return NextResponse.json({ memo });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Update failed';
+    if (message === paymentMigrationRequiredError()) {
+      return NextResponse.json({ error: message }, { status: 503 });
+    }
     if (message === 'Forbidden') {
       return NextResponse.json({ error: message }, { status: 403 });
     }

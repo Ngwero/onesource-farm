@@ -13,6 +13,9 @@ export default function FinanceDashboard() {
   const cfoFinanceChecker = isDesignatedCfo(user);
 
   const { memos: pendingFinance, loading } = useMemos({ status: 'pending_finance' });
+  const { memos: involvingMemos, loading: loadingInvolving, paymentTrackingEnabled } = useMemos({
+    view: 'involving',
+  });
   const { memos: myMemos, loading: loadingMine } = useMemos({ view: 'mine' });
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
   const { memos: awaitingPayment, loading: loadingUnpaid } = useMemos({
@@ -111,7 +114,7 @@ export default function FinanceDashboard() {
         ]
       : undefined;
 
-  const dashboardMemos = financeReviewer ? myMemos : pendingFinance;
+  const dashboardMemos = financeReviewer ? involvingMemos : pendingFinance;
 
   return (
     <DashboardPage
@@ -126,18 +129,19 @@ export default function FinanceDashboard() {
         cfoFinanceChecker
           ? 'You review Finance Request memos from Christine, then they go to the CEO for final approval.'
           : financeReviewer
-            ? 'Use My memos for everything you created. Pending Finance is only memos waiting for your review.'
+            ? 'Use My memos for everything you created. Involving me lists every memo you created, approved, or are waiting on at finance.'
             : undefined
       }
       stats={stats}
       quickLinks={quickLinks}
       quickLinksTitle={quickLinks ? 'Shortcuts' : undefined}
-      loading={loading || loadingMine || loadingApproved || loadingUnpaid || loadingPaid}
+      loading={loading || loadingMine || loadingInvolving || loadingApproved || loadingUnpaid || loadingPaid}
       memos={dashboardMemos as Parameters<typeof DashboardPage>[0]['memos']}
-      memosTitle={financeReviewer ? 'My memos' : 'Memos awaiting finance review'}
+      paymentTrackingEnabled={paymentTrackingEnabled}
+      memosTitle={financeReviewer ? 'Memos involving me' : 'Memos awaiting finance review'}
       emptyMessage={
         financeReviewer
-          ? 'No memos yet — create one from the sidebar'
+          ? 'No memos involving you yet — create one or wait for items routed to finance'
           : 'No memos pending finance review'
       }
     />

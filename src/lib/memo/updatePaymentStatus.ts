@@ -1,9 +1,12 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { logAudit } from '@/lib/audit/logger';
 import {
+  approvedMemoPaymentFieldsIfReady,
   canUpdateMemoPaymentStatus,
+  hasPaymentTrackingColumns,
   memoTypeSlugFromMemo,
   memoTypeTracksPayment,
+  paymentMigrationRequiredError,
   type PaymentStatus,
 } from '@/lib/memo/paymentStatus';
 import type { User } from '@/types';
@@ -31,6 +34,10 @@ export async function updateMemoPaymentStatus(
   input: { payment_status: PaymentStatus; payment_note?: string | null }
 ): Promise<MemoPaymentRow> {
   const supabase = createServiceClient();
+
+  if (!(await hasPaymentTrackingColumns(supabase))) {
+    throw new Error(paymentMigrationRequiredError());
+  }
 
   const { data: memo, error } = await supabase
     .from('memos')
