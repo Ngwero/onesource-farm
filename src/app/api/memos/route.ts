@@ -27,6 +27,7 @@ import { memoSearchOrFilter, sanitizeMemoSearchQuery } from '@/lib/memo/search';
 import { memoDateRangeForPeriod, parseMemoPeriodFilter } from '@/lib/memo/periodFilter';
 import { attachPendingAssigneeNames } from '@/lib/memo/pendingAssignee';
 import { fetchMemoIdsInvolvingUser } from '@/lib/memo/memosInvolvingUser';
+import { attachCanEditToMemos } from '@/lib/memo/memoEditAccess';
 import {
   hasPaymentTrackingColumns,
   memoTypeTracksPayment,
@@ -360,7 +361,7 @@ export async function GET(request: NextRequest) {
     );
 
     const paymentTrackingEnabled = await hasPaymentTrackingColumns(supabase);
-    const memos = withAssignees.map((memo) => {
+    const withPayment = withAssignees.map((memo) => {
       if (!paymentTrackingEnabled) return memo;
       const statusSlug = memoStatusSlugFromMemo(memo);
       const typeSlug = memoTypeSlugFromMemo(memo);
@@ -373,6 +374,7 @@ export async function GET(request: NextRequest) {
       }
       return memo;
     });
+    const memos = await attachCanEditToMemos(supabase, user, withPayment);
     const financial_summary = summarizeMemoFinancials(memos, usdToUgx);
 
     return NextResponse.json(

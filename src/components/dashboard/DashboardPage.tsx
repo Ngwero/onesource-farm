@@ -131,7 +131,6 @@ export function DashboardPage({
         ) : (
           <MemoList
             memos={memos}
-            currentUserId={user?.id}
             emptyMessage={emptyMessage}
             paymentTrackingEnabled={paymentTrackingEnabled}
           />

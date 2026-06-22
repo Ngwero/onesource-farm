@@ -9,7 +9,6 @@ import type { PaymentStatus } from '@/types';
 import { FileText, Eye, Pencil, Download } from 'lucide-react';
 import { downloadMemoPdf } from '@/lib/memo/downloadMemoPdf';
 
-const EDITABLE_STATUSES = ['draft', 'returned', 'rejected'];
 const PDF_EXPORT_STATUSES = new Set(['draft', 'deleted']);
 
 interface MemoListItem {
@@ -29,6 +28,7 @@ interface MemoListItem {
   updated_at?: string;
   submitted_at?: string;
   payment_status?: PaymentStatus | null;
+  can_edit?: boolean;
 }
 
 function memoShowsPayment(memo: MemoListItem): boolean {
@@ -48,13 +48,11 @@ function formatListDate(value: string | null | undefined): string {
 
 export function MemoList({
   memos,
-  currentUserId,
   emptyMessage = 'No memos found',
   sortByMemoDate = false,
   paymentTrackingEnabled = true,
 }: {
   memos: MemoListItem[];
-  currentUserId?: string;
   emptyMessage?: string;
   /** When true, show memo date column (period filter / sort by memo date). */
   sortByMemoDate?: boolean;
@@ -140,14 +138,12 @@ export function MemoList({
               </td>
               <td>
                 <div className="flex items-center justify-end gap-3">
-                  {currentUserId &&
-                    memo.creator_id === currentUserId &&
-                    EDITABLE_STATUSES.includes(memo.memo_statuses?.slug || '') && (
+                  {memo.can_edit ? (
                       <Link href={`/memos/${memo.id}/edit`} className="table-action">
                         <Pencil size={15} />
                         Edit
                       </Link>
-                    )}
+                    ) : null}
                   {!PDF_EXPORT_STATUSES.has(memo.memo_statuses?.slug || '') ? (
                     <button
                       type="button"

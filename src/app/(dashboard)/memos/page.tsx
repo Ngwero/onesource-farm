@@ -125,7 +125,6 @@ function MemosContent() {
         <>
           <MemoList
             memos={memos as Parameters<typeof MemoList>[0]['memos']}
-            currentUserId={user?.id}
             paymentTrackingEnabled={paymentTrackingEnabled}
             emptyMessage={
               searchActive

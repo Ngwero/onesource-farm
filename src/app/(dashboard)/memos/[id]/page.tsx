@@ -190,7 +190,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
     if (currentStatus === 'rejected') {
       return `${prefix}It will re-enter approval from the first step.`;
     }
-    return `${prefix}Submit this memo for approval? You will not be able to edit it until it is returned.`;
+    return `${prefix}Submit this memo for approval? You can still edit it until the first approver acts.`;
   }
 
   async function handleSubmitDraft(asAdmin = false) {
