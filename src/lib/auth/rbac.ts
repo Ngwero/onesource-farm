@@ -321,6 +321,10 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
     return true;
   }
 
+  if (businessHeadCanApproveMemo(user, memo)) {
+    return true;
+  }
+
   if (role === 'staff') {
     return false;
   }

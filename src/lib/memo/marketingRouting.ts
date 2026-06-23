@@ -47,8 +47,8 @@ export function marketingDeptHeadCanViewMemo(user: User, memo: Memo): boolean {
   return marketingWorkflowCanViewMemo(user, memo);
 }
 
-export function marketingDeptHeadCanApproveMemo(_user: User, _memo: Memo): boolean {
-  return false;
+export function marketingDeptHeadCanApproveMemo(user: User, memo: Memo): boolean {
+  return businessHeadCanApproveMemo(user, memo);
 }
 
 export function businessHeadCanApproveMemo(user: User, memo: Memo): boolean {

@@ -12,6 +12,7 @@ import {
   type MemoAccessRow,
 } from '@/lib/auth/memoRbacShape';
 import { userIsInvolvedInMemo } from '@/lib/memo/memosInvolvingUser';
+import { isBusinessHead } from '@/lib/memo/marketingRouting';
 import type { Memo, MemoStatusSlug, RoleSlug, User } from '@/types';
 
 export { joinSlug, rowToMemoForAccess, type MemoAccessRow } from '@/lib/auth/memoRbacShape';
@@ -94,6 +95,15 @@ const ROLE_DEFAULT_STATUS: Partial<Record<RoleSlug, MemoStatusSlug>> = {
 
 export function defaultStatusForRole(role: RoleSlug): MemoStatusSlug | undefined {
   return ROLE_DEFAULT_STATUS[role];
+}
+
+/** Default memo list status — business head may use department_head role in the DB. */
+export function defaultStatusForUser(user: Pick<User, 'role' | 'email'>): MemoStatusSlug | undefined {
+  if (isBusinessHead(user as User)) {
+    return 'pending_business_head';
+  }
+  const role = user.role?.slug as RoleSlug | undefined;
+  return role ? defaultStatusForRole(role) : undefined;
 }
 
 export function canManageUsers(user: User): boolean {

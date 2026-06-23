@@ -12,7 +12,8 @@ import { requireAuth, authErrorResponse } from '@/lib/auth/session';
 import { isDesignatedChairman } from '@/lib/memo/designatedUsers';
 import { memoFromLineForUser } from '@/lib/memo/personLine';
 import { fetchMemoIdsForApprovedTab } from '@/lib/memo/approvedMemos';
-import { defaultStatusForRole } from '@/lib/auth/memoAccess';
+import { defaultStatusForUser } from '@/lib/auth/memoAccess';
+import { isBusinessHead } from '@/lib/memo/marketingRouting';
 import { canCreateMemo, hasPermission } from '@/lib/auth/rbac';
 import type { RoleSlug } from '@/types';
 import { isItDepartmentHead } from '@/lib/memo/itRouting';
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!status && role !== 'admin' && !chairmanViewer && !searchTerm && !period) {
-      const defaultStatus = defaultStatusForRole(role);
+      const defaultStatus = defaultStatusForUser(user);
       if (defaultStatus && !searchParams.get('memo_type')) {
         status = defaultStatus;
       }
@@ -185,7 +186,11 @@ export async function GET(request: NextRequest) {
       }
     } else if (christinePaymentQueue) {
       // Payment lists — full finance-step scope applied below (no department filter).
-    } else if (role === 'business_head') {
+    } else if (
+      role === 'business_head' ||
+      (isBusinessHead(user) &&
+        (status === 'pending_business_head' || memoType === 'marketing_request'))
+    ) {
       const { data: marketingType } = await supabase
         .from('memo_types')
         .select('id')
@@ -204,7 +209,12 @@ export async function GET(request: NextRequest) {
       query = query.in('id', sharedIds);
     } else if (roleScopedList) {
       if (role === 'department_head' && user.department_id) {
-        if (isItDepartmentHead(user)) {
+        if (
+          isBusinessHead(user) &&
+          (status === 'pending_business_head' || memoType === 'marketing_request')
+        ) {
+          // Marketing queue — memos are often from MKT, not the business head's BD department.
+        } else if (isItDepartmentHead(user)) {
           const [{ data: itType }, { data: pendingDeptHead }] = await Promise.all([
             supabase.from('memo_types').select('id').eq('slug', 'it_request').single(),
             supabase
