@@ -34,21 +34,21 @@ export default function AdminDepartmentsPage() {
     <div>
       <h1 className="text-2xl font-bold text-slate-800 mb-6">Departments</h1>
 
-      <form onSubmit={handleCreate} className="card p-4 mb-6 flex gap-4 items-end">
-        <div className="flex-1">
+      <form onSubmit={handleCreate} className="card p-4 mb-6 flex flex-col sm:flex-row gap-4 sm:items-end">
+        <div className="flex-1 min-w-0">
           <label className="block text-sm font-medium mb-1">Department Name</label>
           <input value={name} onChange={(e) => setName(e.target.value)} className="input-field" required />
         </div>
-        <div className="w-32">
+        <div className="w-full sm:w-32">
           <label className="block text-sm font-medium mb-1">Code</label>
           <input value={code} onChange={(e) => setCode(e.target.value)} className="input-field" required maxLength={5} />
         </div>
-        <button type="submit" className="btn-primary flex items-center gap-2">
+        <button type="submit" className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto">
           <Plus size={16} /> Add
         </button>
       </form>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {departments.map((d) => (
           <div key={d.id} className="card p-4">
             <p className="font-semibold">{d.name}</p>

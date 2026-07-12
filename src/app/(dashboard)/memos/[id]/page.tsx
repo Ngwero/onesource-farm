@@ -463,8 +463,8 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
-        <div className="lg:col-span-2 space-y-5 order-2 lg:order-1">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 xl:gap-6">
+        <div className="xl:col-span-2 space-y-5 order-2 xl:order-1">
           <MemoDocumentExport memoId={id} referenceNumber={memo.reference_number} />
           <div className="memo-doc-view">
             <p className="memo-doc-view__label">Memo preview</p>
@@ -478,7 +478,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
           <MemoAttachmentList attachments={attachments} />
         </div>
 
-        <div className="space-y-4 order-1 lg:order-2">
+        <div className="space-y-4 order-1 xl:order-2">
           <WorkflowTimeline steps={workflowSteps} />
 
           {canApprove ? (
@@ -578,15 +578,15 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
               {shares.length > 0 && (
                 <ul className="space-y-2 mb-3 text-sm">
                   {shares.map((s) => (
-                    <li key={s.id} className="flex items-center justify-between">
-                      <span>
+                    <li key={s.id} className="flex items-center justify-between gap-2 min-w-0">
+                      <span className="min-w-0 truncate">
                         {s.user?.full_name}{' '}
                         <span className="text-slate-400">({s.user?.email})</span>
                       </span>
                       <button
                         type="button"
                         onClick={() => removeShare(s.shared_with)}
-                        className="text-slate-400 hover:text-red-600"
+                        className="text-slate-400 hover:text-red-600 shrink-0"
                         aria-label="Remove share"
                       >
                         <UserMinus size={16} />

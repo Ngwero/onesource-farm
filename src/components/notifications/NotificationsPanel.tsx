@@ -56,7 +56,7 @@ export function NotificationsPanel() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 dropdown-panel z-50 p-0 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-[min(20rem,calc(100vw-1.5rem))] dropdown-panel z-50 p-0 overflow-hidden">
           <div className="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
             <span className="font-semibold text-sm text-slate-800">Notifications</span>
             <Link href="/notifications" className="text-xs text-brand-600 hover:underline">

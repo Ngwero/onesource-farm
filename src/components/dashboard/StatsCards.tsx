@@ -25,7 +25,7 @@ const VARIANT_CLASS: Record<StatVariant, string> = {
 
 export function StatsCards({ stats }: { stats: DashboardStat[] }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 mb-8">
+    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 mb-8">
       {stats.map((stat) => {
         const className = `stat-card ${VARIANT_CLASS[stat.variant || 'default']}${stat.href ? ' stat-card--link' : ''}`;
         const inner = (

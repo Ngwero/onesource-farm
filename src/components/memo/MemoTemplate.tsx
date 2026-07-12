@@ -6,7 +6,6 @@ import {
   formatMemoDate,
   getCompanyContactLines,
 } from '@/lib/memo/coverLetterDefaults';
-import { formatCurrency, getMemoFinancialAmount } from '@/lib/memo/financial';
 import { isLeaveMemo } from '@/lib/memo/leaveTemplate';
 import { LeaveMemoBody, type LeaveMemoBodyProps } from '@/components/memo/LeaveMemoBody';
 import { MemoWorkflowApprovals } from '@/components/memo/MemoWorkflowApprovals';
@@ -40,8 +39,6 @@ export function MemoTemplate({ memo, branding, workflowSteps = [] }: MemoTemplat
     { label: 'Date', value: formatMemoDate(memo.memo_date) },
     { label: 'Subject', value: memo.subject, wide: true },
   ].filter((f) => f.value);
-
-  const financialAmount = getMemoFinancialAmount(memo.financial_implication);
 
   return (
     <article className="memo-doc">
@@ -99,14 +96,7 @@ export function MemoTemplate({ memo, branding, workflowSteps = [] }: MemoTemplat
               if (!content) return null;
               return (
                 <section key={key} className="memo-doc-block">
-                  <h2 className="memo-doc-block-title">
-                    {label}
-                    {key === 'financial_implication' && financialAmount ? (
-                      <span className="memo-doc-financial-badge">
-                        {formatCurrency(financialAmount)}
-                      </span>
-                    ) : null}
-                  </h2>
+                  <h2 className="memo-doc-block-title">{label}</h2>
                   <p className="memo-doc-block-text">{content}</p>
                 </section>
               );

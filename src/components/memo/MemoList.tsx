@@ -95,11 +95,11 @@ export function MemoList({
           <tr>
             <th>Reference</th>
             <th>Subject</th>
-            <th>Type</th>
-            <th>Department</th>
+            <th className="hidden lg:table-cell">Type</th>
+            <th className="hidden xl:table-cell">Department</th>
             <th>Status</th>
-            {showPaymentTags ? <th>Payment</th> : null}
-            <th>{sortByMemoDate ? 'Memo date' : 'Last activity'}</th>
+            {showPaymentTags ? <th className="hidden md:table-cell">Payment</th> : null}
+            <th className="hidden sm:table-cell">{sortByMemoDate ? 'Memo date' : 'Last activity'}</th>
             <th />
           </tr>
         </thead>
@@ -109,11 +109,11 @@ export function MemoList({
               <td className="font-mono text-brand-600 text-xs font-semibold">
                 {memo.reference_number}
               </td>
-              <td className="max-w-xs truncate font-medium text-slate-800">
+              <td className="max-w-[10rem] sm:max-w-xs truncate font-medium text-slate-800">
                 {memo.subject || '—'}
               </td>
-              <td className="text-slate-600">{memo.memo_types?.name}</td>
-              <td className="text-slate-600">{memo.departments?.name}</td>
+              <td className="text-slate-600 hidden lg:table-cell">{memo.memo_types?.name}</td>
+              <td className="text-slate-600 hidden xl:table-cell">{memo.departments?.name}</td>
               <td>
                 <StatusBadge
                   status={memo.memo_statuses?.slug}
@@ -123,7 +123,7 @@ export function MemoList({
                 />
               </td>
               {showPaymentTags ? (
-                <td>
+                <td className="hidden md:table-cell">
                   {memoShowsPayment(memo) ? (
                     <PaymentStatusBadge status={memo.payment_status ?? 'not_paid'} />
                   ) : (
@@ -131,17 +131,17 @@ export function MemoList({
                   )}
                 </td>
               ) : null}
-              <td className="text-slate-500 text-xs whitespace-nowrap">
+              <td className="text-slate-500 text-xs whitespace-nowrap hidden sm:table-cell">
                 {sortByMemoDate
                   ? formatListDate(memo.memo_date)
                   : formatListDate(memo.updated_at || memo.submitted_at || memo.created_at)}
               </td>
               <td>
-                <div className="flex items-center justify-end gap-3">
+                <div className="flex items-center justify-end gap-2 sm:gap-3">
                   {memo.can_edit ? (
                       <Link href={`/memos/${memo.id}/edit`} className="table-action">
                         <Pencil size={15} />
-                        Edit
+                        <span className="hidden sm:inline">Edit</span>
                       </Link>
                     ) : null}
                   {!PDF_EXPORT_STATUSES.has(memo.memo_statuses?.slug || '') ? (
@@ -152,12 +152,14 @@ export function MemoList({
                       className="table-action"
                     >
                       <Download size={15} />
-                      {exportingId === memo.id ? 'PDF…' : 'PDF'}
+                      <span className="hidden sm:inline">
+                        {exportingId === memo.id ? 'PDF…' : 'PDF'}
+                      </span>
                     </button>
                   ) : null}
                   <Link href={`/memos/${memo.id}`} className="table-action">
                     <Eye size={15} />
-                    View
+                    <span className="hidden sm:inline">View</span>
                   </Link>
                 </div>
               </td>

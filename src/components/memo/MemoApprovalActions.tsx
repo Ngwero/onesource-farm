@@ -79,32 +79,37 @@ function ActionButtons({
       <button
         type="button"
         onClick={() => onSelect('approve')}
+        aria-label="Approve"
         className={`btn-primary flex items-center justify-center gap-2 min-h-[44px] ${
           compact ? 'text-sm px-2' : 'w-full'
         }`}
       >
         <CheckCircle size={compact ? 18 : 16} />
-        {compact ? 'Approve' : 'Approve'}
+        <span className={compact ? 'hidden min-[380px]:inline' : undefined}>Approve</span>
       </button>
       <button
         type="button"
         onClick={() => onSelect('return')}
+        aria-label="Return for correction"
         className={`btn-secondary flex items-center justify-center gap-2 min-h-[44px] ${
           compact ? 'text-sm px-2' : 'w-full'
         }`}
       >
         <RotateCcw size={compact ? 18 : 16} />
-        {compact ? 'Return' : 'Return for Correction'}
+        <span className={compact ? 'hidden min-[380px]:inline' : undefined}>
+          {compact ? 'Return' : 'Return for Correction'}
+        </span>
       </button>
       <button
         type="button"
         onClick={() => onSelect('reject')}
+        aria-label="Reject"
         className={`btn-danger flex items-center justify-center gap-2 min-h-[44px] ${
           compact ? 'text-sm px-2' : 'w-full'
         }`}
       >
         <XCircle size={compact ? 18 : 16} />
-        Reject
+        <span className={compact ? 'hidden min-[380px]:inline' : undefined}>Reject</span>
       </button>
     </div>
   );
@@ -132,7 +137,7 @@ export function MemoApprovalActions({
 
   return (
     <>
-      <div className="hidden lg:block card p-4">
+      <div className="hidden xl:block card p-4">
         <h3 className="font-semibold mb-3">Approval Actions</h3>
         {needsSignatureReminder ? (
           <SignatureRequiredNotice variant="approve" compact />
@@ -152,7 +157,7 @@ export function MemoApprovalActions({
         )}
       </div>
 
-      <div className="lg:hidden memo-approval-bar" aria-label="Approval actions">
+      <div className="xl:hidden memo-approval-bar" aria-label="Approval actions">
         {showApproval ? (
           <>
             <button

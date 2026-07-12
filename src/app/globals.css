@@ -71,17 +71,76 @@ body {
 .app-topbar__inner {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  min-height: 3.25rem;
+}
+
+@media (min-width: 640px) {
+  .app-topbar__inner {
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    min-height: 3.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .app-topbar__inner {
+    padding: 0.75rem 1.5rem;
+  }
+}
+
+.app-topbar__actions {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 1rem;
-  padding: 0.75rem 1.5rem;
-  min-height: 3.5rem;
+  gap: 0.5rem;
+  margin-left: auto;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .app-topbar__actions {
+    gap: 0.75rem;
+  }
+}
+
+.app-nav-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: #fff;
+  border: 1px solid rgb(0 29 110 / 0.12);
+  color: var(--color-brand-700);
+  box-shadow: 0 1px 2px rgb(0 29 110 / 0.06);
+  flex-shrink: 0;
+}
+
+.app-nav-toggle:hover {
+  border-color: rgb(0 29 110 / 0.25);
+}
+
+@media (min-width: 1280px) {
+  .app-nav-toggle {
+    display: none;
+  }
 }
 
 .app-topbar__hint {
-  margin-right: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-right: 0.5rem;
   font-size: 0.8125rem;
   color: #64748b;
   display: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (min-width: 768px) {
@@ -374,6 +433,12 @@ body {
   }
 }
 
+@media (min-width: 1024px) {
+  .dashboard-hero-inner {
+    padding: 2.25rem 2.25rem;
+  }
+}
+
 .dashboard-hero-title {
   font-size: 1.625rem;
   font-weight: 700;
@@ -553,7 +618,8 @@ body {
   background: var(--color-surface-elevated);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-subtle);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: var(--shadow-soft);
 }
 
@@ -567,16 +633,28 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: #64748b;
-  padding: 0.9rem 1.15rem;
+  padding: 0.7rem 0.85rem;
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
 }
 
 .data-table td {
-  padding: 1rem 1.15rem;
-  font-size: 0.875rem;
+  padding: 0.75rem 0.85rem;
+  font-size: 0.8125rem;
   border-top: 1px solid #f1f5f9;
   vertical-align: middle;
+}
+
+@media (min-width: 1280px) {
+  .data-table th {
+    padding: 0.9rem 1.15rem;
+  }
+
+  .data-table td {
+    padding: 1rem 1.15rem;
+    font-size: 0.875rem;
+  }
 }
 
 .data-table tbody tr {
@@ -655,12 +733,36 @@ body {
 /* ——— Filter tabs ——— */
 .filter-tabs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.35rem;
   padding: 0.25rem;
   background: #e8eef7;
   border-radius: 0.75rem;
   border: 1px solid rgb(0 29 110 / 0.08);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .filter-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .page-header__title {
+    font-size: 1.5rem;
+  }
+
+  .app-main {
+    max-width: 100%;
+  }
 }
 
 .filter-tab {
@@ -670,6 +772,8 @@ body {
   color: #64748b;
   border-radius: 0.5rem;
   transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .filter-tab:hover {
@@ -806,7 +910,60 @@ body {
   background: linear-gradient(185deg, #000814 0%, #001242 38%, #001a5c 100%);
   border-right: 1px solid rgb(107 143 217 / 0.12);
   position: relative;
-  z-index: 30;
+  z-index: 50;
+}
+
+.app-nav-overlay {
+  display: none;
+}
+
+@media (max-width: 1279px) {
+  .app-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    height: 100dvh;
+    min-height: 100dvh;
+    transform: translateX(-105%);
+    transition: transform 0.22s ease;
+    box-shadow: none;
+  }
+
+  .app-sidebar--open {
+    transform: translateX(0);
+    box-shadow: 8px 0 32px rgb(0 0 0 / 0.35);
+  }
+
+  .app-nav-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    background: rgb(0 8 20 / 0.45);
+    border: none;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .app-nav-overlay--open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (min-width: 1280px) {
+  .app-sidebar {
+    position: relative;
+    transform: none !important;
+    width: 15rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .app-sidebar {
+    width: var(--sidebar-width);
+  }
 }
 
 .app-sidebar__brand {
@@ -1146,14 +1303,30 @@ body {
 }
 
 .memo-search--compact {
-  max-width: 14rem;
-  min-width: 10rem;
+  max-width: 12rem;
+  min-width: 0;
+  flex: 1 1 7rem;
   flex-shrink: 1;
 }
 
-@media (min-width: 1024px) {
+@media (max-width: 479px) {
+  .memo-search--compact {
+    flex: 1 1 auto;
+    max-width: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .memo-search--compact {
+    max-width: 14rem;
+    flex: 0 1 14rem;
+  }
+}
+
+@media (min-width: 1280px) {
   .memo-search--compact {
     max-width: 18rem;
+    flex: 0 1 18rem;
   }
 }
 
@@ -1319,10 +1492,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem 3.5rem;
+  padding: 1.25rem 1rem;
   background: linear-gradient(165deg, #000814 0%, #001242 40%, #001d6e 75%, #000a28 100%);
   position: relative;
   overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .login-scene {
+    padding: 2.5rem 3.5rem;
+  }
 }
 
 .login-orb {
@@ -1364,7 +1543,7 @@ body {
   z-index: 1;
   width: 100%;
   max-width: 440px;
-  padding: 3.25rem 3.75rem 3rem;
+  padding: 2rem 1.25rem 1.75rem;
   border-radius: 1.5rem;
   background: rgb(0 29 110 / 0.15);
   backdrop-filter: blur(40px);
@@ -1373,6 +1552,12 @@ body {
   box-shadow:
     0 24px 64px rgb(0 0 0 / 0.45),
     inset 0 1px 0 rgb(168 191 245 / 0.12);
+}
+
+@media (min-width: 640px) {
+  .login-glass {
+    padding: 3.25rem 3.75rem 3rem;
+  }
 }
 
 .login-logo-mark {
@@ -1878,20 +2063,6 @@ body {
   color: #001d6e;
 }
 
-.memo-doc-financial-badge {
-  display: block;
-  margin-top: 0.35rem;
-  padding: 0.2rem 0.45rem;
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: none;
-  letter-spacing: 0;
-  color: #001d6e;
-  background: rgb(0 29 110 / 0.08);
-  border-radius: 0.25rem;
-  width: fit-content;
-}
-
 .memo-doc-block-text {
   margin: 0;
   font-size: 0.8125rem;
@@ -2223,7 +2394,7 @@ body {
   padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .memo-detail-page--approver {
     padding-bottom: 0;
   }

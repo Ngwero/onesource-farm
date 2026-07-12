@@ -185,7 +185,12 @@ function isNavActive(pathname: string, fullPath: string, href: string): boolean 
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  open?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ open = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user, logout } = useAuth();
@@ -277,9 +282,9 @@ export function Sidebar() {
     roleSlug.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
-    <aside className="app-sidebar">
+    <aside className={`app-sidebar${open ? ' app-sidebar--open' : ''}`}>
       <div className="app-sidebar__brand">
-        <RukaPayLogo width={188} variant="full" priority centered />
+        <RukaPayLogo width={168} variant="full" priority centered />
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 text-center mt-3">
           e-Memo
         </p>
@@ -299,6 +304,7 @@ export function Sidebar() {
               href={item.href}
               data-tour-id={navTourId(item.href, item.label)}
               className={`app-sidebar__link${active ? ' app-sidebar__link--active' : ''}`}
+              onClick={onClose}
             >
               <span className={active ? 'text-white' : 'text-white/55'}>{item.icon}</span>
               {item.label}
@@ -311,7 +317,10 @@ export function Sidebar() {
         <button
           type="button"
           data-tour-id="tour-sign-out"
-          onClick={() => void logout()}
+          onClick={() => {
+            onClose?.();
+            void logout();
+          }}
           className="app-sidebar__link w-full"
         >
           <LogOut size={18} />

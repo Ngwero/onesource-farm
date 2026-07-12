@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { createMemo } from '@/lib/memo/service';
-import { summarizeMemoFinancials } from '@/lib/memo/financial';
-import { fetchUsdToUgxRate } from '@/lib/memo/exchangeRate';
 import {
   applyDepartmentMemoListFilter,
   getPrivateMemoStatusIds,
@@ -363,7 +361,6 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
     if (error) throw error;
 
-    const usdToUgx = await fetchUsdToUgxRate(supabase);
     const withAssignees = await attachPendingAssigneeNames(
       supabase,
       (data ?? []) as unknown as Parameters<typeof attachPendingAssigneeNames>[1],
@@ -385,10 +382,9 @@ export async function GET(request: NextRequest) {
       return memo;
     });
     const memos = await attachCanEditToMemos(supabase, user, withPayment);
-    const financial_summary = summarizeMemoFinancials(memos, usdToUgx);
 
     return NextResponse.json(
-      { memos, financial_summary, payment_tracking_enabled: paymentTrackingEnabled },
+      { memos, financial_summary: null, payment_tracking_enabled: paymentTrackingEnabled },
       { headers: { 'Cache-Control': 'private, no-store' } }
     );
   } catch (err) {

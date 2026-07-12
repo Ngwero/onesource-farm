@@ -74,7 +74,7 @@ export default function AdminAuditPage() {
       {loading ? (
         <p className="text-slate-400">Loading audit log...</p>
       ) : (
-        <div className="card overflow-hidden max-h-[32rem] overflow-y-auto">
+        <div className="card overflow-x-auto max-h-[32rem] overflow-y-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 sticky top-0">
               <tr>

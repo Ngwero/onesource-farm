@@ -119,9 +119,9 @@ export function DraftAttachments({
           {attachments.map((a) => (
             <li
               key={a.id}
-              className="flex items-center justify-between text-sm bg-white rounded-lg px-3 py-2 border border-slate-100"
+              className="flex items-center justify-between gap-3 text-sm bg-white rounded-lg px-3 py-2 border border-slate-100"
             >
-              <span className="truncate max-w-[200px]">{a.file_name}</span>
+              <span className="truncate min-w-0 flex-1">{a.file_name}</span>
               <div className="flex items-center gap-2 shrink-0">
                 <a
                   href={`/api/files/${a.file_path}`}

@@ -360,7 +360,7 @@ export default function AdminUsersPage() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} className="card p-6 mb-6 grid grid-cols-2 gap-4">
+        <form onSubmit={handleCreate} className="card p-4 sm:p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
@@ -434,18 +434,18 @@ export default function AdminUsersPage() {
               ))}
             </select>
           </div>
-          <div className="col-span-2 text-xs text-slate-500">
+          <div className="col-span-1 sm:col-span-2 text-xs text-slate-500">
             New users sign in with {ONBOARDING_PASSWORD_HINT}, then set their own password.
           </div>
-          <div className="col-span-2">
-            <button type="submit" className="btn-primary">
+          <div className="col-span-1 sm:col-span-2">
+            <button type="submit" className="btn-primary w-full sm:w-auto">
               Create User
             </button>
           </div>
         </form>
       )}
 
-      <div className="card overflow-hidden">
+      <div className="card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b">
             <tr>

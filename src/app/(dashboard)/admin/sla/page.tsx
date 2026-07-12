@@ -136,7 +136,7 @@ export default function AdminSlaPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 card overflow-hidden">
+        <div className="xl:col-span-2 card overflow-x-auto">
           {loading ? (
             <p className="p-6 text-slate-400">Loading...</p>
           ) : tracking.length === 0 ? (

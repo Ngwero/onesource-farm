@@ -59,7 +59,7 @@ export function DashboardPage({
     <div className="space-y-0">
       <header className="dashboard-hero mb-8">
         <div className="dashboard-hero-inner">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 md:gap-6">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <span className="dashboard-badge">{roleName}</span>
