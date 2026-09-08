@@ -1,10 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
+  designatedCfoFinanceRequestCanApprove,
+  designatedCfoFinanceRequestCanView,
   designatedFinanceStepReviewerCanApprove,
   designatedFinanceStepReviewerCanView,
-  isInterdeptFinanceReviewer,
+  isSharedFinanceApprover,
 } from '@/lib/memo/financeMemoRouting';
 import { financeStepMemoTypeIds } from '@/lib/memo/financeQueueList';
+import { getPrivateMemoStatusIds } from '@/lib/memo/orgVisibility';
 import { rowToMemoForAccess, type MemoAccessRow } from '@/lib/auth/memoRbacShape';
 import type { User } from '@/types';
 
@@ -14,7 +17,7 @@ type MemoRowForInvolvement = Pick<MemoAccessRow, 'id' | 'creator_id'> & {
   creator?: { email?: string | null } | { email?: string | null }[] | null;
 };
 
-/** Memos the user created, approved, was shared on, or is the current finance reviewer for. */
+/** Memos the user created, approved, was shared on, or can act on as finance reviewer. */
 export async function fetchMemoIdsInvolvingUser(
   supabase: SupabaseClient,
   user: User
@@ -45,32 +48,32 @@ export async function fetchMemoIdsInvolvingUser(
   for (const row of shared || []) ids.add(row.memo_id as string);
   for (const row of slaRows || []) ids.add(row.memo_id as string);
 
-  if (isInterdeptFinanceReviewer(user)) {
-    const financeQueueIds = await fetchFinanceReviewerQueueMemoIds(supabase, user);
-    for (const id of financeQueueIds) ids.add(id);
+  if (isSharedFinanceApprover(user)) {
+    const financeIds = await fetchFinanceReviewerVisibleMemoIds(supabase, user);
+    for (const id of financeIds) ids.add(id);
   }
 
   return [...ids];
 }
 
-async function fetchFinanceReviewerQueueMemoIds(
+/** All finance-step memos (except own Finance Requests / drafts / deleted). */
+async function fetchFinanceReviewerVisibleMemoIds(
   supabase: SupabaseClient,
   user: User
 ): Promise<string[]> {
-  const [typeIds, { data: finType }, { data: pendingFinance }] = await Promise.all([
+  const [typeIds, { data: finType }, statusIds] = await Promise.all([
     financeStepMemoTypeIds(supabase),
     supabase.from('memo_types').select('id').eq('slug', 'finance_request').maybeSingle(),
-    supabase.from('memo_statuses').select('id').eq('slug', 'pending_finance').maybeSingle(),
+    getPrivateMemoStatusIds(supabase),
   ]);
 
-  if (typeIds.length === 0 || !pendingFinance?.id) return [];
+  if (typeIds.length === 0) return [];
 
-  const { data } = await supabase
-    .from('memos')
-    .select('id, creator_id, memo_type_id')
-    .in('memo_type_id', typeIds)
-    .eq('status_id', pendingFinance.id);
+  let query = supabase.from('memos').select('id, creator_id, memo_type_id').in('memo_type_id', typeIds);
+  if (statusIds.draftId) query = query.neq('status_id', statusIds.draftId);
+  if (statusIds.deletedId) query = query.neq('status_id', statusIds.deletedId);
 
+  const { data } = await query;
   const result: string[] = [];
   for (const row of data || []) {
     if (finType?.id && row.memo_type_id === finType.id && row.creator_id === user.id) {
@@ -123,10 +126,12 @@ export async function userIsInvolvedInMemo(
   if ((signature.data || []).length > 0) return true;
   if ((sla.data || []).length > 0) return true;
 
-  if (isInterdeptFinanceReviewer(user) && row) {
+  if (isSharedFinanceApprover(user) && row) {
     const memo = rowToMemoForAccess(row as unknown as MemoAccessRow);
     if (designatedFinanceStepReviewerCanApprove(user, memo)) return true;
     if (designatedFinanceStepReviewerCanView(user, memo)) return true;
+    if (designatedCfoFinanceRequestCanApprove(user, memo)) return true;
+    if (designatedCfoFinanceRequestCanView(user, memo)) return true;
   }
 
   return false;

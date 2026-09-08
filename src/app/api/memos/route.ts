@@ -15,12 +15,14 @@ import { isBusinessHead } from '@/lib/memo/marketingRouting';
 import { canCreateMemo, hasPermission } from '@/lib/auth/rbac';
 import type { RoleSlug } from '@/types';
 import { isItDepartmentHead } from '@/lib/memo/itRouting';
-import { isInterdeptFinanceReviewer } from '@/lib/memo/financeMemoRouting';
 import {
-  amaraFinanceRequestCreatorId,
+  isInterdeptFinanceReviewer,
+  isSharedFinanceApprover,
+} from '@/lib/memo/financeMemoRouting';
+import {
+  financeQueueExcludeOwnFinanceRequestFilter,
   financeStepMemoTypeIds,
-  usesAmaraFinanceRequestQueue,
-  usesChristineFinanceQueue,
+  usesSharedFinanceQueue,
 } from '@/lib/memo/financeQueueList';
 import { memoSearchOrFilter, sanitizeMemoSearchQuery } from '@/lib/memo/search';
 import { memoDateRangeForPeriod, parseMemoPeriodFilter } from '@/lib/memo/periodFilter';
@@ -116,15 +118,13 @@ export async function GET(request: NextRequest) {
     const sharedOnly = searchParams.get('shared') === '1';
     const mineView = view === 'mine';
     const involvingView = view === 'involving';
-    const christineFinanceReviewer = isInterdeptFinanceReviewer(user);
-    const christineFinanceQueue = usesChristineFinanceQueue(user, status);
-    const amaraFinanceQueue = usesAmaraFinanceRequestQueue(user, status);
-    const christineInvolvingScope =
-      christineFinanceReviewer &&
+    const sharedFinanceApprover = isSharedFinanceApprover(user);
+    const sharedFinanceQueue = usesSharedFinanceQueue(user, status);
+    const financeInvolvingScope =
+      sharedFinanceApprover &&
       !mineView &&
       !sharedOnly &&
-      !amaraFinanceQueue &&
-      !christineFinanceQueue &&
+      !sharedFinanceQueue &&
       !christinePaymentQueue &&
       !department &&
       !memoType &&
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
         status,
         view,
         sharedOnly,
-        financeStaffQueue: christineFinanceQueue || amaraFinanceQueue,
+        financeStaffQueue: sharedFinanceQueue,
       });
 
     if (mineView) {
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
       if (statusIds.deletedId) {
         query = query.neq('status_id', statusIds.deletedId);
       }
-    } else if (christineInvolvingScope) {
+    } else if (financeInvolvingScope) {
       const ids = await fetchMemoIdsInvolvingUser(supabase, user);
       if (ids.length === 0) {
         return NextResponse.json({
@@ -161,16 +161,7 @@ export async function GET(request: NextRequest) {
       if (statusIds.deletedId) {
         query = query.neq('status_id', statusIds.deletedId);
       }
-    } else if (amaraFinanceQueue) {
-      const [creatorId, { data: finType }] = await Promise.all([
-        amaraFinanceRequestCreatorId(supabase),
-        supabase.from('memo_types').select('id').eq('slug', 'finance_request').maybeSingle(),
-      ]);
-      if (!creatorId || !finType?.id) {
-        return NextResponse.json({ memos: [], financial_summary: null });
-      }
-      query = query.eq('memo_type_id', finType.id).eq('creator_id', creatorId);
-    } else if (christineFinanceQueue) {
+    } else if (sharedFinanceQueue) {
       const [typeIds, { data: finType }] = await Promise.all([
         financeStepMemoTypeIds(supabase),
         supabase.from('memo_types').select('id').eq('slug', 'finance_request').maybeSingle(),
@@ -179,8 +170,9 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ memos: [], financial_summary: null });
       }
       query = query.in('memo_type_id', typeIds);
-      if (finType?.id) {
-        query = query.or(`memo_type_id.neq.${finType.id},creator_id.neq.${user.id}`);
+      const excludeOwn = financeQueueExcludeOwnFinanceRequestFilter(finType?.id, user.id);
+      if (excludeOwn) {
+        query = query.or(excludeOwn);
       }
     } else if (christinePaymentQueue) {
       // Payment lists — full finance-step scope applied below (no department filter).

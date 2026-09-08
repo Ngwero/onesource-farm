@@ -1,4 +1,4 @@
-import { isDesignatedCfo } from '@/lib/memo/designatedUsers';
+import { CFO_EMAIL, isDesignatedCfo } from '@/lib/memo/designatedUsers';
 import { isFinanceRequestCreator } from '@/lib/workflow/financeWorkflowSteps';
 import { INTERDEPT_FINANCE_REVIEWER_EMAIL } from '@/lib/workflow/interdeptFinanceReviewer';
 import type { Memo, User } from '@/types';
@@ -23,6 +23,13 @@ export function isInterdeptFinanceReviewer(
   );
 }
 
+/** Christine or Amara — either may complete the finance step. */
+export function isSharedFinanceApprover(
+  user: Pick<User, 'email'> | null | undefined
+): boolean {
+  return isInterdeptFinanceReviewer(user) || isDesignatedCfo(user);
+}
+
 /** Memo types where Christine reviews the finance step. */
 export const INTERDEPT_FINANCE_MEMO_TYPE_SLUGS = [
   'hr_request',
@@ -43,24 +50,35 @@ function isFinanceStepMemo(memo: Memo): boolean {
   return Boolean(slug && FINANCE_STEP_MEMO_TYPES.has(slug));
 }
 
-/** Amara approves Finance Request memos authored by Christine. */
+const FINANCE_VIEW_STATUSES = [
+  'pending_finance',
+  'pending_ceo',
+  'approved',
+  'submitted',
+] as const;
+
+/**
+ * Amara (CFO) may approve any pending finance-step memo (covers for Christine),
+ * except memos she authored.
+ */
 export function designatedCfoFinanceRequestCanApprove(user: User, memo: MemoWithCreator): boolean {
   if (memo.status?.slug !== 'pending_finance') return false;
-  if (memo.memo_type?.slug !== 'finance_request') return false;
   if (!isDesignatedCfo(user)) return false;
-  return isFinanceRequestCreator({ email: creatorEmailForMemo(memo) });
+  if (!isFinanceStepMemo(memo)) return false;
+  if (memo.creator_id === user.id) return false;
+  return true;
 }
 
+/** Amara can view all finance-step memos (same breadth as Christine's queue). */
 export function designatedCfoFinanceRequestCanView(user: User, memo: MemoWithCreator): boolean {
   if (!isDesignatedCfo(user)) return false;
-  if (memo.memo_type?.slug !== 'finance_request') return false;
-  if (!isFinanceRequestCreator({ email: creatorEmailForMemo(memo) })) return false;
-  return ['pending_finance', 'pending_ceo', 'approved', 'submitted'].includes(
-    memo.status?.slug || ''
+  if (!isFinanceStepMemo(memo)) return false;
+  return FINANCE_VIEW_STATUSES.includes(
+    (memo.status?.slug || '') as (typeof FINANCE_VIEW_STATUSES)[number]
   );
 }
 
-/** Christine reviews inter-dept finance steps (not her own Finance Request memos). */
+/** Christine reviews finance steps (not her own Finance Request memos). */
 export function designatedFinanceStepReviewerCanApprove(user: User, memo: MemoWithCreator): boolean {
   if (memo.status?.slug !== 'pending_finance') return false;
   if (!isInterdeptFinanceReviewer(user)) return false;
@@ -73,7 +91,7 @@ export function designatedFinanceStepReviewerCanApprove(user: User, memo: MemoWi
 
 export function designatedFinanceStepReviewerCanView(user: User, memo: MemoWithCreator): boolean {
   if (!isInterdeptFinanceReviewer(user)) return false;
-  if (!['pending_finance', 'pending_ceo', 'approved', 'submitted'].includes(memo.status?.slug || '')) {
+  if (!FINANCE_VIEW_STATUSES.includes((memo.status?.slug || '') as (typeof FINANCE_VIEW_STATUSES)[number])) {
     return false;
   }
   if (!isFinanceStepMemo(memo)) return false;
@@ -82,3 +100,13 @@ export function designatedFinanceStepReviewerCanView(user: User, memo: MemoWithC
   }
   return true;
 }
+
+/** @deprecated Prefer isSharedFinanceApprover — kept for call sites checking CFO-only finance_request creators. */
+export function isChristineFinanceRequestForAmara(memo: MemoWithCreator): boolean {
+  return (
+    memo.memo_type?.slug === 'finance_request' &&
+    isFinanceRequestCreator({ email: creatorEmailForMemo(memo) })
+  );
+}
+
+export { CFO_EMAIL, INTERDEPT_FINANCE_REVIEWER_EMAIL };

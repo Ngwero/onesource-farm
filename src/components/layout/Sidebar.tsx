@@ -251,14 +251,19 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
 
   if (user && isDesignatedCfo(user) && (roleSlug === 'finance_reviewer' || roleSlug === 'exco_member')) {
     const financePending: NavItem = {
-      label: 'Christine — Finance memos',
-      href: '/memos?status=pending_finance&memo_type=finance_request',
+      label: 'Pending Finance',
+      href: '/memos?status=pending_finance',
       icon: <FileText size={18} />,
+    };
+    const allFinance: NavItem = {
+      label: 'All finance memos',
+      href: '/memos?view=involving',
+      icon: <Building2 size={18} />,
     };
     if (!navItems.some((i) => i.href === financePending.href)) {
       const dashIdx = navItems.findIndex((i) => i.href.startsWith('/dashboard'));
       const insertAt = dashIdx >= 0 ? dashIdx + 1 : 1;
-      navItems = [...navItems.slice(0, insertAt), financePending, ...navItems.slice(insertAt)];
+      navItems = [...navItems.slice(0, insertAt), financePending, allFinance, ...navItems.slice(insertAt)];
     }
   }
 

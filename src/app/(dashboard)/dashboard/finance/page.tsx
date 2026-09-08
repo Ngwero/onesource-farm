@@ -11,6 +11,7 @@ export default function FinanceDashboard() {
   const { user } = useAuth();
   const financeReviewer = isInterdeptFinanceReviewer(user);
   const cfoFinanceChecker = isDesignatedCfo(user);
+  const sharedFinanceDesk = financeReviewer || cfoFinanceChecker;
 
   const { memos: pendingFinance, loading } = useMemos({ status: 'pending_finance' });
   const { memos: involvingMemos, loading: loadingInvolving, paymentTrackingEnabled } = useMemos({
@@ -68,10 +69,11 @@ export default function FinanceDashboard() {
           href: '/memos?status=pending_finance',
         },
         {
-          label: 'In finance queue',
-          value: all.length,
+          label: 'All finance memos',
+          value: involvingMemos.length,
           variant: 'info' as const,
           icon: <FileStack size={16} />,
+          href: '/memos?view=involving',
         },
         {
           label: 'Reviewed by me',
@@ -85,10 +87,16 @@ export default function FinanceDashboard() {
   const quickLinks = cfoFinanceChecker
     ? [
         {
-          href: '/memos?status=pending_finance&memo_type=finance_request',
-          label: 'Christine — Finance memos',
-          description: 'Finance Request memos awaiting your review',
+          href: '/memos?status=pending_finance',
+          label: 'Pending finance',
+          description: 'All memos waiting for finance — you or Christine can approve',
           icon: <FileText size={20} />,
+        },
+        {
+          href: '/memos?view=involving',
+          label: 'All finance memos',
+          description: 'Every finance-step memo across the organisation',
+          icon: <FileStack size={20} />,
         },
       ]
     : financeReviewer
@@ -102,7 +110,7 @@ export default function FinanceDashboard() {
           {
             href: '/memos?status=pending_finance',
             label: 'Pending my review',
-            description: 'Inter-department memos waiting for finance sign-off',
+            description: 'Inter-department memos waiting for finance sign-off (Amara can also approve)',
             icon: <FileText size={20} />,
           },
           {
@@ -114,7 +122,7 @@ export default function FinanceDashboard() {
         ]
       : undefined;
 
-  const dashboardMemos = financeReviewer ? involvingMemos : pendingFinance;
+  const dashboardMemos = sharedFinanceDesk ? involvingMemos : pendingFinance;
 
   return (
     <DashboardPage
@@ -127,9 +135,9 @@ export default function FinanceDashboard() {
       }
       banner={
         cfoFinanceChecker
-          ? 'You review Finance Request memos from Christine, then they go to the CEO for final approval.'
+          ? 'You and Christine share the finance queue — either of you can approve pending memos. You also see all finance-step memos.'
           : financeReviewer
-            ? 'Use My memos for everything you created. Involving me lists every memo you created, approved, or are waiting on at finance.'
+            ? 'You and Amara share the finance queue — whoever reviews first can approve. Use My memos for everything you created.'
             : undefined
       }
       stats={stats}
@@ -138,10 +146,10 @@ export default function FinanceDashboard() {
       loading={loading || loadingMine || loadingInvolving || loadingApproved || loadingUnpaid || loadingPaid}
       memos={dashboardMemos as Parameters<typeof DashboardPage>[0]['memos']}
       paymentTrackingEnabled={paymentTrackingEnabled}
-      memosTitle={financeReviewer ? 'Memos involving me' : 'Memos awaiting finance review'}
+      memosTitle={sharedFinanceDesk ? 'Finance memos' : 'Memos awaiting finance review'}
       emptyMessage={
-        financeReviewer
-          ? 'No memos involving you yet — create one or wait for items routed to finance'
+        sharedFinanceDesk
+          ? 'No finance memos yet'
           : 'No memos pending finance review'
       }
     />

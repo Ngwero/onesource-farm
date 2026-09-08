@@ -4,7 +4,6 @@ import {
   INTERDEPT_FINANCE_MEMO_TYPE_SLUGS,
   isInterdeptFinanceReviewer,
 } from '@/lib/memo/financeMemoRouting';
-import { FINANCE_MEMO_CREATOR_EMAIL } from '@/lib/workflow/financeWorkflowSteps';
 import type { User } from '@/types';
 
 export const FINANCE_STEP_MEMO_TYPE_SLUGS = [
@@ -22,32 +21,37 @@ export async function financeStepMemoTypeIds(
   return (data || []).map((r) => r.id as string);
 }
 
-/** Christine: pending_finance queue across all memo types with a finance step. */
+/** Christine or Amara: pending_finance across all memo types with a finance step. */
+export function usesSharedFinanceQueue(user: User, status: string | null): boolean {
+  if (status !== 'pending_finance') return false;
+  if (isInterdeptFinanceReviewer(user)) {
+    return user.role?.slug === 'staff' || user.role?.slug === 'finance_reviewer';
+  }
+  if (isDesignatedCfo(user)) {
+    const role = user.role?.slug;
+    return role === 'finance_reviewer' || role === 'exco_member' || role === 'staff';
+  }
+  return false;
+}
+
+/** @deprecated Use usesSharedFinanceQueue */
 export function usesChristineFinanceQueue(
   user: User,
   status: string | null
 ): boolean {
-  return (
-    isInterdeptFinanceReviewer(user) &&
-    status === 'pending_finance' &&
-    (user.role?.slug === 'staff' || user.role?.slug === 'finance_reviewer')
-  );
+  return usesSharedFinanceQueue(user, status) && isInterdeptFinanceReviewer(user);
 }
 
-/** Amara (CFO / finance_reviewer): Christine's Finance Request memos at pending_finance. */
+/** @deprecated Use usesSharedFinanceQueue — Amara now shares Christine's full pending queue. */
 export function usesAmaraFinanceRequestQueue(user: User, status: string | null): boolean {
-  if (status !== 'pending_finance' || !isDesignatedCfo(user)) return false;
-  const role = user.role?.slug;
-  return role === 'finance_reviewer' || role === 'exco_member';
+  return usesSharedFinanceQueue(user, status) && isDesignatedCfo(user);
 }
 
-export async function amaraFinanceRequestCreatorId(
-  supabase: SupabaseClient
-): Promise<string | null> {
-  const { data } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', FINANCE_MEMO_CREATOR_EMAIL.toLowerCase())
-    .maybeSingle();
-  return (data?.id as string) ?? null;
+/** Exclude the viewer's own Finance Request memos from the shared pending queue. */
+export function financeQueueExcludeOwnFinanceRequestFilter(
+  financeRequestTypeId: string | undefined,
+  userId: string
+): string | null {
+  if (!financeRequestTypeId) return null;
+  return `memo_type_id.neq.${financeRequestTypeId},creator_id.neq.${userId}`;
 }

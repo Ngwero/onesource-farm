@@ -21,24 +21,27 @@ function joinSlug<T extends { slug?: string }>(
   return row.slug;
 }
 
-async function userLabelForId(
+async function userLabelsForIds(
   supabase: SupabaseClient,
-  userId: string
-): Promise<{ id: string; full_name: string } | null> {
+  userIds: string[]
+): Promise<{ id: string; full_name: string }[]> {
+  if (userIds.length === 0) return [];
   const { data } = await supabase
     .from('users')
-    .select('full_name')
-    .eq('id', userId)
-    .maybeSingle();
-  const full_name = data?.full_name?.trim();
-  if (!full_name) return null;
-  return { id: userId, full_name };
+    .select('id, full_name')
+    .in('id', userIds);
+  const byId = new Map(
+    (data || [])
+      .filter((u) => u.full_name?.trim())
+      .map((u) => [u.id as string, { id: u.id as string, full_name: (u.full_name as string).trim() }])
+  );
+  return userIds.map((id) => byId.get(id)).filter(Boolean) as { id: string; full_name: string }[];
 }
 
 async function resolveAssigneeFromWorkflow(
   supabase: SupabaseClient,
   memo: MemoRowForAssignee
-): Promise<{ id: string; full_name: string } | null> {
+): Promise<{ id: string; full_name: string; allIds: string[] } | null> {
   const statusSlug = joinSlug(memo.memo_statuses) as MemoStatusSlug | undefined;
   if (!statusSlug?.startsWith('pending_')) return null;
 
@@ -56,7 +59,16 @@ async function resolveAssigneeFromWorkflow(
     creatorEmail
   );
   if (approverIds.length === 0) return null;
-  return userLabelForId(supabase, approverIds[0]);
+
+  const labels = await userLabelsForIds(supabase, approverIds);
+  if (labels.length === 0) return null;
+
+  const full_name =
+    labels.length === 1
+      ? labels[0].full_name
+      : labels.map((l) => l.full_name.split(/\s+/)[0]).join(' / ');
+
+  return { id: labels[0].id, full_name, allIds: labels.map((l) => l.id) };
 }
 
 export type PendingAssigneeFields = {
@@ -88,7 +100,10 @@ export async function attachPendingAssigneeNames<T extends MemoRowForAssignee>(
     .in('memo_id', pendingIds)
     .eq('status', 'active');
 
-  const assigneeByMemo = new Map<string, { id: string; full_name: string }>();
+  const assigneeByMemo = new Map<
+    string,
+    { id: string; full_name: string; allIds?: string[] }
+  >();
 
   for (const row of slaRows || []) {
     const memoId = row.memo_id as string;
@@ -104,22 +119,33 @@ export async function attachPendingAssigneeNames<T extends MemoRowForAssignee>(
   }
 
   await Promise.all(
-    pending
-      .filter((m) => !assigneeByMemo.has(m.id))
-      .map(async (m) => {
-        const resolved = await resolveAssigneeFromWorkflow(supabase, m);
-        if (resolved) assigneeByMemo.set(m.id, resolved);
-      })
+    pending.map(async (m) => {
+      const existing = assigneeByMemo.get(m.id);
+      const resolved = await resolveAssigneeFromWorkflow(supabase, m);
+      if (!resolved) return;
+      if (!existing) {
+        assigneeByMemo.set(m.id, resolved);
+        return;
+      }
+      // Keep SLA primary name, but include all eligible approvers for "is you".
+      assigneeByMemo.set(m.id, {
+        ...existing,
+        allIds: [...new Set([...(existing.allIds ?? [existing.id]), ...resolved.allIds])],
+      });
+    })
   );
 
   return memos.map((m) => {
     const assignee = assigneeByMemo.get(m.id);
     const assigneeId = assignee?.id ?? null;
+    const allIds = assignee?.allIds ?? (assigneeId ? [assigneeId] : []);
     return {
       ...m,
       pending_assignee_id: assigneeId,
       pending_assignee_name: assignee?.full_name ?? null,
-      pending_assignee_is_you: Boolean(viewingUserId && assigneeId && assigneeId === viewingUserId),
+      pending_assignee_is_you: Boolean(
+        viewingUserId && allIds.length > 0 && allIds.includes(viewingUserId)
+      ),
     };
   });
 }

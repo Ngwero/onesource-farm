@@ -30,18 +30,33 @@ export function isFinanceRequestCreator(
   return emailsMatch(user?.email ?? undefined, FINANCE_MEMO_CREATOR_EMAIL);
 }
 
-/** Christine's finance requests go to Amara; all other finance steps stay with Christine. */
+/**
+ * Primary finance reviewer email (used for display/SLA primary).
+ * Christine's own Finance Requests go to Amara; otherwise Christine.
+ */
 export function resolveFinanceReviewerEmail(
   memoTypeSlug?: string,
   creatorEmail?: string | null
 ): string {
+  return resolveFinanceReviewerEmails(memoTypeSlug, creatorEmail)[0];
+}
+
+/**
+ * Who may complete the finance step.
+ * - Christine's Finance Request → Amara only (she cannot approve her own).
+ * - All other finance steps → Christine and Amara (either may approve).
+ */
+export function resolveFinanceReviewerEmails(
+  memoTypeSlug?: string,
+  creatorEmail?: string | null
+): string[] {
   if (
     memoTypeSlug === 'finance_request' &&
     emailsMatch(creatorEmail ?? undefined, FINANCE_MEMO_CREATOR_EMAIL)
   ) {
-    return FINANCE_DEPT_HEAD_EMAIL;
+    return [FINANCE_DEPT_HEAD_EMAIL];
   }
-  return INTERDEPT_FINANCE_REVIEWER_EMAIL;
+  return [INTERDEPT_FINANCE_REVIEWER_EMAIL, FINANCE_DEPT_HEAD_EMAIL];
 }
 
 export function workflowForFinanceCreator(

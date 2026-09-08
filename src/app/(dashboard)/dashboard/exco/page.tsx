@@ -38,9 +38,15 @@ export default function EXCODashboard() {
     user && isDesignatedCfo(user)
       ? [
           {
-            href: '/memos?status=pending_finance&memo_type=finance_request',
-            label: 'Christine — Finance memos',
-            description: 'Finance Request memos awaiting CFO review',
+            href: '/memos?status=pending_finance',
+            label: 'Pending finance',
+            description: 'Shared queue with Christine — either can approve',
+            icon: <FileText size={20} />,
+          },
+          {
+            href: '/memos?view=involving',
+            label: 'All finance memos',
+            description: 'Every finance-step memo across the organisation',
             icon: <FileText size={20} />,
           },
         ]

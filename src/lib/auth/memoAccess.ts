@@ -13,6 +13,7 @@ import {
 } from '@/lib/auth/memoRbacShape';
 import { userIsInvolvedInMemo } from '@/lib/memo/memosInvolvingUser';
 import { isBusinessHead } from '@/lib/memo/marketingRouting';
+import { isDesignatedCfo } from '@/lib/memo/designatedUsers';
 import type { Memo, MemoStatusSlug, RoleSlug, User } from '@/types';
 
 export { joinSlug, rowToMemoForAccess, type MemoAccessRow } from '@/lib/auth/memoRbacShape';
@@ -97,10 +98,13 @@ export function defaultStatusForRole(role: RoleSlug): MemoStatusSlug | undefined
   return ROLE_DEFAULT_STATUS[role];
 }
 
-/** Default memo list status — business head may use department_head role in the DB. */
+/** Default memo list status — designated approvers may use a different DB role. */
 export function defaultStatusForUser(user: Pick<User, 'role' | 'email'>): MemoStatusSlug | undefined {
   if (isBusinessHead(user as User)) {
     return 'pending_business_head';
+  }
+  if (isDesignatedCfo(user)) {
+    return 'pending_finance';
   }
   const role = user.role?.slug as RoleSlug | undefined;
   return role ? defaultStatusForRole(role) : undefined;

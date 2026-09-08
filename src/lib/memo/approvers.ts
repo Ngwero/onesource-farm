@@ -3,7 +3,7 @@ import {
   DESIGNATED_DEPT_HEAD_EMAILS,
 } from '@/lib/memo/designatedUsers';
 import { resolveCeoApproverEmail } from '@/lib/workflow/ceoWorkflowSteps';
-import { resolveFinanceReviewerEmail } from '@/lib/workflow/financeWorkflowSteps';
+import { resolveFinanceReviewerEmails } from '@/lib/workflow/financeWorkflowSteps';
 import { BUSINESS_HEAD_EMAIL } from '@/lib/workflow/marketingWorkflowSteps';
 import { IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL } from '@/lib/workflow/itCheckers';
 import type { MemoTypeSlug } from '@/types';
@@ -91,9 +91,9 @@ export async function findApproversForStep(
   }
 
   if (roleSlug === 'finance_reviewer') {
-    return approverIdsForEmail(
+    return approverIdsForEmails(
       supabase,
-      resolveFinanceReviewerEmail(memoTypeSlug, creatorEmail)
+      resolveFinanceReviewerEmails(memoTypeSlug, creatorEmail)
     );
   }
 
