@@ -11,6 +11,7 @@ import { memoAwaitingFirstApprover } from '@/lib/auth/rbac';
 import {
   EMPTY_LEAVE_FIELDS,
   LEAVE_TYPES,
+  leaveDurationDays,
   packLeaveToMemoFields,
   parseLeaveFromMemo,
   type LeaveTemplateFields,
@@ -237,6 +238,13 @@ export function MemoEditorForm({
   const selectedType = lookup?.memo_types.find((t) => t.id === form.memo_type_id);
   const typeSlug = selectedType?.slug as MemoTypeSlug | undefined;
   const isLeaveForm = typeSlug === 'leave_request';
+  const leaveWorkingDays = useMemo(
+    () =>
+      isLeaveForm
+        ? leaveDurationDays(leaveFields.leave_start, leaveFields.leave_end)
+        : null,
+    [isLeaveForm, leaveFields.leave_start, leaveFields.leave_end]
+  );
   const showFinance = typeSlug === 'it_request';
 
   useEffect(() => {
@@ -648,6 +656,13 @@ export function MemoEditorForm({
                 />
               </div>
             </div>
+            {leaveWorkingDays !== null ? (
+              <p className="text-sm text-slate-600 -mt-2">
+                Duration: <strong>{leaveWorkingDays}</strong> working day
+                {leaveWorkingDays === 1 ? '' : 's'}
+                <span className="text-slate-400"> (weekends excluded)</span>
+              </p>
+            ) : null}
 
             <div>
               <Label htmlFor="leave_type" required>

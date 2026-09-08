@@ -108,12 +108,21 @@ export function formatLeaveDate(date: string): string {
   });
 }
 
+/** Inclusive count of Mon–Fri days between start and end (YYYY-MM-DD). */
 export function leaveDurationDays(start: string, end: string): number | null {
   if (!start || !end) return null;
   const s = new Date(`${start}T12:00:00`);
   const e = new Date(`${end}T12:00:00`);
   if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || e < s) return null;
-  return Math.round((e.getTime() - s.getTime()) / 86_400_000) + 1;
+
+  let workingDays = 0;
+  const cursor = new Date(s);
+  while (cursor <= e) {
+    const day = cursor.getDay();
+    if (day !== 0 && day !== 6) workingDays += 1;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return workingDays;
 }
 
 export function formatLeavePeriod(start: string, end: string): string {
@@ -122,8 +131,8 @@ export function formatLeavePeriod(start: string, end: string): string {
   const endLabel = end ? formatLeaveDate(end) : '—';
   const days = leaveDurationDays(start, end);
   const range = `${startLabel} to ${endLabel}`;
-  if (!days) return range;
-  return `${range} (${days} calendar day${days === 1 ? '' : 's'})`;
+  if (days === null) return range;
+  return `${range} (${days} working day${days === 1 ? '' : 's'})`;
 }
 
 export function parseLeaveFromMemo(

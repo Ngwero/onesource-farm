@@ -33,9 +33,9 @@ export function LeaveMemoBody({ memo }: LeaveMemoBodyProps) {
       <section className="memo-leave-summary" aria-label="Leave summary">
         <div className="memo-leave-summary__head">
           <span className="memo-leave-summary__badge">{fields.leave_type || 'Leave'}</span>
-          {durationDays ? (
+          {durationDays !== null ? (
             <span className="memo-leave-summary__duration">
-              {durationDays} calendar day{durationDays === 1 ? '' : 's'}
+              {durationDays} working day{durationDays === 1 ? '' : 's'}
             </span>
           ) : null}
         </div>
