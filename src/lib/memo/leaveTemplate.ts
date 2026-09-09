@@ -229,14 +229,10 @@ export function getLeavePreviewModel(
   > & MemoTypeRel
 ) {
   const fields = parseLeaveFromMemo(memo);
-  const reason = fields.reason.trim();
-  const showReason =
-    Boolean(reason) && reason.toLowerCase() !== fields.leave_type.trim().toLowerCase();
 
   return {
     fields,
     durationDays: leaveDurationDays(fields.leave_start, fields.leave_end),
-    showReason,
     detailSections: getLeaveDisplaySections(memo).filter(
       (s) => s.label !== 'Type of leave' && s.label !== 'Leave period'
     ),

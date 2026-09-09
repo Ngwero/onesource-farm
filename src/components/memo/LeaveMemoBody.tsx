@@ -26,7 +26,7 @@ function LeaveDetailBlock({ label, content }: LeaveDisplaySection) {
 }
 
 export function LeaveMemoBody({ memo }: LeaveMemoBodyProps) {
-  const { fields, durationDays, showReason, detailSections } = getLeavePreviewModel(memo);
+  const { fields, durationDays, detailSections } = getLeavePreviewModel(memo);
 
   return (
     <div className="memo-leave">
@@ -58,10 +58,6 @@ export function LeaveMemoBody({ memo }: LeaveMemoBodyProps) {
           </div>
         </div>
       </section>
-
-      {showReason ? (
-        <LeaveDetailBlock label="Reason" content={fields.reason.trim()} />
-      ) : null}
 
       {detailSections.map((section) => (
         <LeaveDetailBlock key={section.label} label={section.label} content={section.content} />
