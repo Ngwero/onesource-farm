@@ -13,6 +13,9 @@ export default function DepartmentHeadDashboard() {
   const { memos, loading, paymentTrackingEnabled } = useMemos(
     userIsBusinessHead ? { memo_type: 'marketing_request' } : undefined
   );
+  const { memos: myMemos, loading: loadingMine } = useMemos(
+    userIsBusinessHead ? { view: 'mine' } : undefined
+  );
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
   const all = memos as Array<{ memo_statuses?: { slug: string } }>;
 
@@ -28,6 +31,17 @@ export default function DepartmentHeadDashboard() {
         ? '/memos?status=pending_business_head&memo_type=marketing_request'
         : '/memos?status=pending_department_head',
     },
+    ...(userIsBusinessHead
+      ? [
+          {
+            label: 'My memos',
+            value: myMemos.length,
+            variant: 'info' as const,
+            icon: <FileStack size={16} />,
+            href: '/memos?view=mine',
+          },
+        ]
+      : []),
     {
       label: userIsBusinessHead ? 'Marketing memos' : 'Department memos',
       value: all.length,
@@ -54,7 +68,7 @@ export default function DepartmentHeadDashboard() {
     <DashboardPage
       title={userIsBusinessHead ? 'Business Head Dashboard' : 'Department Head Dashboard'}
       stats={stats}
-      loading={loading || loadingApproved}
+      loading={loading || loadingApproved || loadingMine}
       memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
       paymentTrackingEnabled={paymentTrackingEnabled}
       memosTitle={userIsBusinessHead ? 'Marketing memos' : 'Department memos'}

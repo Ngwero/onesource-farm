@@ -177,9 +177,8 @@ export async function GET(request: NextRequest) {
     } else if (christinePaymentQueue) {
       // Payment lists — full finance-step scope applied below (no department filter).
     } else if (
-      role === 'business_head' ||
-      (isBusinessHead(user) &&
-        (status === 'pending_business_head' || memoType === 'marketing_request'))
+      (role === 'business_head' || isBusinessHead(user)) &&
+      (status === 'pending_business_head' || memoType === 'marketing_request')
     ) {
       const { data: marketingType } = await supabase
         .from('memo_types')

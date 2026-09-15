@@ -81,6 +81,9 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
   ],
   business_head: [
     { label: 'Dashboard', href: '/dashboard/department-head', icon: <LayoutDashboard size={18} /> },
+    { label: 'Create Memo', href: '/memos/create', icon: <PlusCircle size={18} /> },
+    { label: 'My Memos', href: '/memos?view=mine', icon: <FileEdit size={18} /> },
+    { label: 'My Drafts', href: '/memos?status=draft', icon: <FileEdit size={18} /> },
     {
       label: 'Pending business sign-off',
       href: '/memos?status=pending_business_head&memo_type=marketing_request',
@@ -95,6 +98,7 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
   department_head: [
     { label: 'Dashboard', href: '/dashboard/department-head', icon: <LayoutDashboard size={18} /> },
     { label: 'Create Memo', href: '/memos/create', icon: <PlusCircle size={18} /> },
+    { label: 'My Memos', href: '/memos?view=mine', icon: <FileEdit size={18} /> },
     { label: 'My Drafts', href: '/memos?status=draft', icon: <FileEdit size={18} /> },
     { label: 'Pending Approval', href: '/memos?status=pending_department_head', icon: <FileText size={18} /> },
     { label: 'I approved', href: '/memos?status=approved', icon: <FileText size={18} /> },
@@ -207,6 +211,16 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
       const dashIdx = navItems.findIndex((i) => i.href === '/dashboard/department-head');
       const insertAt = dashIdx >= 0 ? dashIdx + 1 : 1;
       navItems = [...navItems.slice(0, insertAt), mktPending, ...navItems.slice(insertAt)];
+    }
+    const myMemos: NavItem = {
+      label: 'My Memos',
+      href: '/memos?view=mine',
+      icon: <FileEdit size={18} />,
+    };
+    if (!navItems.some((i) => i.href === myMemos.href)) {
+      const createIdx = navItems.findIndex((i) => i.href === '/memos/create');
+      const insertAt = createIdx >= 0 ? createIdx + 1 : 1;
+      navItems = [...navItems.slice(0, insertAt), myMemos, ...navItems.slice(insertAt)];
     }
   }
 
