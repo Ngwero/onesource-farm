@@ -7,7 +7,6 @@ import { canApproveMemo } from '@/lib/auth/rbac';
 import { joinSlug, rowToMemoForAccess } from '@/lib/auth/memoRbacShape';
 import { MemoTemplate } from '@/components/memo/MemoTemplate';
 import { MemoAttachmentList } from '@/components/memo/MemoAttachmentList';
-import { DraftAttachments } from '@/components/memo/DraftAttachments';
 import { MemoDocumentExport } from '@/components/memo/MemoDocumentExport';
 import { WorkflowTimeline } from '@/components/memo/WorkflowTimeline';
 import { MemoActivity } from '@/components/memo/MemoActivity';
@@ -27,7 +26,6 @@ import { getUserRoleSlug } from '@/lib/auth/profile';
 import {
   hasPermission,
   canEditMemo,
-  canUploadAttachments,
   canResubmitMemo,
   canAdminResubmitMemo,
   canAdminReturnMemo,
@@ -340,7 +338,6 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
   const needsSignatureReminder = canApprove && user ? !hasUploadedSignature(user) : false;
   const isCreator = memo.creator_id === user?.id;
   const canEdit = user ? canEditMemo(user, memoForEdit) : false;
-  const canAttach = user ? canUploadAttachments(user, memoForRbac) : false;
   const canSubmit = user ? canResubmitMemo(user, memoForEdit) && isCreator : false;
   const roleSlug = getUserRoleSlug(user) as RoleSlug | undefined;
   const isAdmin = roleSlug === 'admin';
@@ -478,18 +475,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
             />
           </div>
 
-          {canAttach ? (
-            <div className="space-y-2">
-              {!canEdit ? (
-                <p className="text-xs text-slate-500 px-1">
-                  You can add supporting files until this memo is fully approved.
-                </p>
-              ) : null}
-              <DraftAttachments memoId={id} />
-            </div>
-          ) : (
-            <MemoAttachmentList attachments={attachments} />
-          )}
+          <MemoAttachmentList attachments={attachments} />
         </div>
 
         <div className="space-y-4 order-1 xl:order-2">

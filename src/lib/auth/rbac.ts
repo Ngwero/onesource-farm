@@ -401,12 +401,8 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
   return false;
 }
 
-export function canUploadAttachments(user: User, memo: Pick<Memo, 'creator_id' | 'status'>): boolean {
-  if (memo.creator_id !== user.id && user.role?.slug !== 'admin') return false;
-  const statusSlug = memo.status?.slug || '';
-  if (['approved', 'withdrawn', 'deleted', 'archived'].includes(statusSlug)) return false;
-  if (['draft', 'returned', 'rejected'].includes(statusSlug)) return true;
-  return statusSlug.startsWith('pending_');
+export function canUploadAttachments(user: User, memo: Memo): boolean {
+  return canEditMemo(user, memo);
 }
 
 export const DASHBOARD_ROUTES: Record<RoleSlug, string> = {
