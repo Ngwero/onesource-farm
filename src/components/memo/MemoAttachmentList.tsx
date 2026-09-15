@@ -76,9 +76,19 @@ export function MemoAttachmentList({
                         className="text-brand-600 hover:underline flex items-center gap-1 text-xs"
                       >
                         <Eye size={14} />
-                        Preview
+                        View
                       </button>
-                    ) : null}
+                    ) : (
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-600 hover:underline flex items-center gap-1 text-xs"
+                      >
+                        <Eye size={14} />
+                        View
+                      </a>
+                    )}
                     <a
                       href={url}
                       className="text-brand-600 hover:underline flex items-center gap-1 text-xs"
@@ -102,7 +112,7 @@ export function MemoAttachmentList({
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
           role="dialog"
           aria-modal="true"
-          aria-label={`Preview ${preview.attachment.file_name}`}
+          aria-label={`View ${preview.attachment.file_name}`}
         >
           <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-200">
