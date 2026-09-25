@@ -19,8 +19,14 @@ export default function ItCheckerDashboard() {
 
   const { memos, loading, paymentTrackingEnabled } = useMemos({ status: pendingStatus });
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
-  const { memos: deptHeadPending } = useMemos({ status: 'pending_department_head' });
+  const { memos: deptHeadAll, loading: loadingDeptHead } = useMemos({
+    status: 'pending_department_head',
+  });
+  const deptHeadPending = (deptHeadAll as Array<{ pending_assignee_is_you?: boolean }>).filter(
+    (m) => m.pending_assignee_is_you
+  );
   const all = memos as Array<{ memo_statuses?: { slug: string } }>;
+  const queue = [...deptHeadPending, ...memos];
 
   const stats = [
     {
@@ -39,7 +45,7 @@ export default function ItCheckerDashboard() {
     },
     {
       label: 'In my queue',
-      value: all.length,
+      value: queue.length,
       variant: 'info' as const,
       icon: <FileStack size={16} />,
     },
@@ -61,11 +67,11 @@ export default function ItCheckerDashboard() {
           : 'You are the second IT checker. Memos reach you after Emmanuel’s first approval.'
       }
       stats={stats}
-      loading={loading || loadingApproved}
-      memos={memos as Parameters<typeof DashboardPage>[0]['memos']}
+      loading={loading || loadingApproved || loadingDeptHead}
+      memos={queue as Parameters<typeof DashboardPage>[0]['memos']}
       paymentTrackingEnabled={paymentTrackingEnabled}
-      memosTitle="IT memos awaiting your check"
-      emptyMessage="No IT memos pending your review"
+      memosTitle="Memos awaiting your approval"
+      emptyMessage="No memos pending your review"
     />
   );
 }
