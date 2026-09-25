@@ -201,6 +201,8 @@ export function canViewMemo(user: User, memo: Memo, sharedWith?: string[]): bool
     return true;
   }
 
+  if (memo.department?.code === 'IT' && isDesignatedItDeptHead(user)) return true;
+
   if (designatedFinanceStepReviewerCanView(user, memo)) return true;
   if (designatedCfoFinanceRequestCanView(user, memo)) return true;
 

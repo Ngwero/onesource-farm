@@ -223,12 +223,18 @@ export async function GET(request: NextRequest) {
           query = query.eq('department_id', user.department_id);
         }
       } else if (role === 'it_checker_first' || role === 'it_checker_second') {
-        const { data: itType } = await supabase
-          .from('memo_types')
-          .select('id')
-          .eq('slug', 'it_request')
-          .single();
-        if (itType) query = query.eq('memo_type_id', itType.id);
+        const [{ data: itType }, { data: itDept }, { data: pendingDeptHead }] = await Promise.all([
+          supabase.from('memo_types').select('id').eq('slug', 'it_request').single(),
+          supabase.from('departments').select('id').eq('code', 'IT').maybeSingle(),
+          supabase.from('memo_statuses').select('id').eq('slug', 'pending_department_head').single(),
+        ]);
+        if (itType && itDept?.id && pendingDeptHead?.id) {
+          query = query.or(
+            `memo_type_id.eq.${itType.id},and(department_id.eq.${itDept.id},status_id.eq.${pendingDeptHead.id})`
+          );
+        } else if (itType) {
+          query = query.eq('memo_type_id', itType.id);
+        }
       } else if (role === 'staff') {
         const statusIds = await getPrivateMemoStatusIds(supabase);
         query = applyDepartmentMemoListFilter(

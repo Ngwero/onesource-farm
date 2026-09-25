@@ -19,6 +19,7 @@ export default function ItCheckerDashboard() {
 
   const { memos, loading, paymentTrackingEnabled } = useMemos({ status: pendingStatus });
   const { memos: approvedByMe, loading: loadingApproved } = useMemos({ status: 'approved' });
+  const { memos: deptHeadPending } = useMemos({ status: 'pending_department_head' });
   const all = memos as Array<{ memo_statuses?: { slug: string } }>;
 
   const stats = [
@@ -28,6 +29,13 @@ export default function ItCheckerDashboard() {
       variant: 'pending' as const,
       icon: <Clock size={16} />,
       href: `/memos?status=${pendingStatus}`,
+    },
+    {
+      label: 'Awaiting dept head approval',
+      value: deptHeadPending.length,
+      variant: 'pending' as const,
+      icon: <Clock size={16} />,
+      href: '/memos?status=pending_department_head',
     },
     {
       label: 'In my queue',

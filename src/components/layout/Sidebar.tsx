@@ -127,6 +127,11 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
       href: '/memos?status=pending_it_checker_second',
       icon: <FileText size={18} />,
     },
+    {
+      label: 'Pending dept head approval',
+      href: '/memos?status=pending_department_head',
+      icon: <FileText size={18} />,
+    },
     { label: 'I approved', href: '/memos?status=approved', icon: <FileText size={18} /> },
     { label: 'IT Requests', href: '/memos?memo_type=it_request', icon: <FileText size={18} /> },
     { label: 'Notifications', href: '/notifications', icon: <Bell size={18} /> },

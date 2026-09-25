@@ -101,7 +101,10 @@ export async function findApproversForStep(
     const deptCode = await deptCodeForId(supabase, departmentId);
     const headEmails = deptCode ? DESIGNATED_DEPT_HEAD_EMAILS[deptCode] : undefined;
     if (headEmails?.length) {
-      return approverIdsForEmails(supabase, headEmails);
+      const others = creatorEmail
+        ? headEmails.filter((e) => e.toLowerCase() !== creatorEmail.toLowerCase())
+        : headEmails;
+      return approverIdsForEmails(supabase, others.length ? others : headEmails);
     }
     const { data: heads } = await supabase
       .from('users')
