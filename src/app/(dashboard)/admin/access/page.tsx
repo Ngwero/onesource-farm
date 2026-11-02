@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, Lock, Pencil, Search } from 'lucide-react';
+import { Loader2, Lock, Mail, Pencil, Plus, Search } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyRow, ErrorState, LoadingRows } from '@/components/farm/DataStates';
+import { InviteUserSheet } from '@/components/farm/forms/InviteUserSheet';
 import { RequirePermission } from '@/components/farm/RequirePermission';
 import { farmKeys } from '@/hooks/farm';
 import { useFarmAccess } from '@/hooks/useFarmAccess';
@@ -135,11 +136,19 @@ function UserRolesDialog({
 function UsersTab({ roles }: { roles: RoleRow[] }) {
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<AccessUser | null>(null);
+  const [inviting, setInviting] = useState(false);
   const users = useQuery({
     queryKey: farmKeys.userRoles,
     queryFn: () => farmFetch<{ users: AccessUser[] }>('/api/farm/user-roles').then((r) => r.users),
   });
   const roleName = useMemo(() => new Map(roles.map((r) => [r.id, r.name])), [roles]);
+  const sendLogin = useActionMutation(
+    (id: string) => farmFetch<{ message: string; emailSent: boolean }>(`/api/farm/users/${id}/send-login`, { method: 'POST' }),
+    {
+      success: 'Login details sent',
+      invalidate: [farmKeys.userRoles],
+    }
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -152,9 +161,14 @@ function UsersTab({ roles }: { roles: RoleRow[] }) {
 
   return (
     <div className="space-y-3">
-      <div className="relative w-full sm:w-80">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Search name, email or department" value={search} onChange={(e) => setSearch(e.target.value)} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:w-80">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Search name, email or department" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <Button onClick={() => setInviting(true)}>
+          <Plus className="size-4" /> Add user
+        </Button>
       </div>
       <div className="data-table">
         <Table>
@@ -196,9 +210,19 @@ function UsersTab({ roles }: { roles: RoleRow[] }) {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => setEditing(u)}>
-                      <Pencil className="size-4" /> Roles
-                    </Button>
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={sendLogin.isPending || !u.is_active}
+                        onClick={() => sendLogin.mutate(u.id)}
+                      >
+                        <Mail className="size-4" /> Send login
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setEditing(u)}>
+                        <Pencil className="size-4" /> Roles
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -207,6 +231,7 @@ function UsersTab({ roles }: { roles: RoleRow[] }) {
         </Table>
       </div>
       {editing ? <UserRolesDialog user={editing} roles={roles} onOpenChange={(open) => !open && setEditing(null)} /> : null}
+      <InviteUserSheet open={inviting} onOpenChange={setInviting} farmRoles={roles} />
     </div>
   );
 }
@@ -359,7 +384,7 @@ function AccessPage() {
     <div className="space-y-5">
       <PageHeader
         title="Access & roles"
-        subtitle="Give staff farm roles and control what each role can do. eMemo approval roles are unaffected."
+        subtitle="Add staff, email them their login, assign farm roles, and control what each role can do. eMemo approval roles are assigned when you create the user."
       />
       {roles.error ? (
         <ErrorState message={errorMessage(roles.error)} onRetry={() => roles.refetch()} />

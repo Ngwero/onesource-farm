@@ -50,7 +50,9 @@ export default function AdminUsersPage() {
     title: '',
     department_id: '',
     role_id: '',
+    send_login: true,
   });
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   const load = useCallback(() => {
     Promise.all([
@@ -169,21 +171,43 @@ export default function AdminUsersPage() {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...form,
-        password: '',
-      }),
+      body: JSON.stringify(form),
     });
+    const data = await res.json();
     if (res.ok) {
       setShowForm(false);
-      setForm({ email: '', full_name: '', title: '', department_id: '', role_id: '' });
+      setForm({ email: '', full_name: '', title: '', department_id: '', role_id: '', send_login: true });
       load();
-      alert(
-        `User created.\nFirst login: ${ONBOARDING_PASSWORD_HINT}\nThen they set their own password.`
-      );
+      if (data.emailSent) {
+        alert(`User created and login details emailed to ${form.email}.`);
+      } else {
+        alert(
+          `User created. Email was not sent${data.emailReason ? ` (${data.emailReason})` : ''}.\nTemporary password: ${data.temporaryPassword || ONBOARDING_PASSWORD_HINT}`
+        );
+      }
     } else {
-      const err = await res.json();
-      alert(err.error);
+      alert(data.error);
+    }
+  }
+
+  async function sendLogin(id: string) {
+    if (!confirm('Email this person their portal login and a temporary password? They will set a new password on first sign-in.')) {
+      return;
+    }
+    setSendingId(id);
+    try {
+      const res = await fetch(`/api/admin/users/${id}/send-login`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Send failed');
+      alert(data.message);
+      load();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Send failed');
+    } finally {
+      setSendingId(null);
     }
   }
 
@@ -249,7 +273,7 @@ export default function AdminUsersPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Manage Users</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Assign department and role per person. Reset logins for testing or first-time setup.
+            Add staff, email them their login, and assign department and role.
           </p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="btn-primary flex items-center gap-2">
@@ -434,12 +458,22 @@ export default function AdminUsersPage() {
               ))}
             </select>
           </div>
-          <div className="col-span-1 sm:col-span-2 text-xs text-slate-500">
-            New users sign in with {ONBOARDING_PASSWORD_HINT}, then set their own password.
-          </div>
+          <label className="col-span-1 sm:col-span-2 flex items-start gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={form.send_login}
+              onChange={(e) => setForm({ ...form, send_login: e.target.checked })}
+            />
+            <span>
+              Email them the portal link, their email, and the temporary password (
+              <code className="text-xs bg-slate-100 px-1 rounded">{ONBOARDING_PASSWORD_HINT}</code>
+              ). They set their own password on first sign-in.
+            </span>
+          </label>
           <div className="col-span-1 sm:col-span-2">
             <button type="submit" className="btn-primary w-full sm:w-auto">
-              Create User
+              {form.send_login ? 'Create and send login' : 'Create user'}
             </button>
           </div>
         </form>
@@ -515,6 +549,15 @@ export default function AdminUsersPage() {
                       >
                         <Save size={12} />
                         {savingId === u.id ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={sendingId === u.id}
+                        onClick={() => void sendLogin(u.id)}
+                        className="text-xs text-brand-700 hover:underline text-left inline-flex items-center gap-1"
+                      >
+                        <Mail size={12} />
+                        {sendingId === u.id ? 'Sending…' : 'Send login'}
                       </button>
                       <button
                         type="button"

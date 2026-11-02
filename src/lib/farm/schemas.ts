@@ -510,6 +510,17 @@ export const userRolesSchema = z.object({
   role_ids: z.array(z.uuid()),
 });
 
+export const inviteUserSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Enter a valid email'),
+  full_name: requiredText(120),
+  title: optionalText(120),
+  department_id: optionalId,
+  role_id: z.uuid('Select a role'),
+  farm_role_ids: z.array(z.uuid()).optional(),
+  send_login: z.boolean(),
+});
+export type InviteUserInput = z.infer<typeof inviteUserSchema>;
+
 // ——— System settings ———
 
 export const SYSTEM_SETTINGS = {

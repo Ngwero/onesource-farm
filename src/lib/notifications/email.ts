@@ -212,6 +212,45 @@ export async function sendSystemLaunchEmail(params: {
   );
 }
 
+export async function sendAccountLoginEmail(params: {
+  email: string;
+  fullName: string;
+  password: string;
+  portalUrl: string;
+  roleName?: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const portalUrl = params.portalUrl.replace(/\/$/, '') || appBaseUrl();
+  const loginUrl = `${portalUrl}/login`;
+  const roleNote = params.roleName ? ` Assigned role: ${params.roleName}.` : '';
+
+  return sendTransactionalEmail(
+    {
+      to: params.email,
+      toName: params.fullName,
+      subject: 'Your OneSource account login',
+      title: 'Your account is ready',
+      body: `<p style="margin:0;">
+        An administrator created a <strong>OneSource</strong> account for you.${roleNote}
+        Sign in with the details below, then choose your own password on the next screen.
+      </p>`,
+      highlightText: params.email,
+      highlightSubtext: `Temporary password: ${params.password}`,
+      bullets: [
+        `Portal: <strong>${loginUrl}</strong>`,
+        `Email: <strong>${params.email}</strong>`,
+        `Temporary password: <strong>${params.password}</strong>`,
+        'You will be asked to set a personal password the first time you sign in.',
+        'Do not share this password. Change it as soon as you sign in.',
+        'Need help? Contact your system administrator.',
+      ],
+      ctaLabel: 'Open the portal',
+      ctaUrl: loginUrl,
+      footerNote: 'This is an automated message from OneSource. Please do not reply to this email.',
+    },
+    { appUrl: portalUrl }
+  );
+}
+
 export async function sendWelcomeSignInEmail(params: {
   email: string;
   fullName: string;
