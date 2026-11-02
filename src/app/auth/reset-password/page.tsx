@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { RukaPayLogo } from '@/components/brand/RukaPayLogo';
+import { OneSourceLogo } from '@/components/brand/OneSourceLogo';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { getPasswordStrength } from '@/lib/auth/passwordStrength';
 
@@ -137,8 +137,8 @@ export default function AuthResetPasswordPage() {
 
   return (
     <div className="login-scene">
-      <div className="login-orb login-orb--navy" aria-hidden />
-      <div className="login-orb login-orb--blue" aria-hidden />
+      <div className="login-orb login-orb--forest" aria-hidden />
+      <div className="login-orb login-orb--leaf" aria-hidden />
 
       <div className="login-glass max-w-md w-full">
         <Link
@@ -150,7 +150,7 @@ export default function AuthResetPasswordPage() {
         </Link>
 
         <div className="login-logo-mark">
-          <RukaPayLogo width={180} variant="full" priority centered />
+          <OneSourceLogo width={180} variant="full" priority centered />
         </div>
 
         <h1 className="login-title">Choose a new password</h1>

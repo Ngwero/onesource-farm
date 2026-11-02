@@ -128,7 +128,7 @@ export function buildTourSteps(user: User | null, roleSlug: RoleSlug): TourStep[
   const steps: TourStep[] = [
     {
       id: 'welcome',
-      title: 'Welcome to RukaPay e-Memo',
+      title: 'Welcome to OneSource e-Memo',
       body: `Hi ${user?.full_name?.split(' ')[0] || 'there'} — this short tour walks you through the buttons you will use as <strong>${roleName}</strong>. You can skip anytime or replay it from the help button in the top bar.`,
     },
     {

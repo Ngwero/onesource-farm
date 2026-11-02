@@ -29,7 +29,7 @@ export default function AdminBrandingPage() {
 
   const fields = [
     { key: 'company_name', label: 'Company Name' },
-    { key: 'company_short_name', label: 'Short Name (RukaPay)' },
+    { key: 'company_short_name', label: 'Short Name (OneSource)' },
     { key: 'company_address', label: 'Company Address', textarea: true },
     { key: 'footer_text', label: 'Footer Text', textarea: true },
     { key: 'confidentiality_notice', label: 'Confidentiality Notice', textarea: true },

@@ -41,8 +41,8 @@ export async function GET(
     const workflowTimeline = await buildWorkflowTimelineForMemo(memo, user.id);
 
     const brandingSettings = branding || {
-      company_name: 'Rhino Payment Services Limited',
-      company_short_name: 'RukaPay',
+      company_name: 'OneSource',
+      company_short_name: 'OneSource',
       company_address:
         'P.O BOX 111498, 2nd Floor, TMT Building\nBukoto-Ntinda Road, Kampala\nTel: +256 (0) 200 244 400\nEmail: info@rukapay.co.ug',
       confidentiality_notice: 'CONFIDENTIAL',

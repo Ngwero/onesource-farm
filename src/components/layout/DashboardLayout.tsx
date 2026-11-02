@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { NotificationsPanel } from '../notifications/NotificationsPanel';
 import { MemoGlobalSearch } from '../memo/MemoGlobalSearch';
 import { ProductTour, TourHelpButton } from '../tour/ProductTour';
+import { FarmProviders } from '../farm/FarmProviders';
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -102,5 +103,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 }
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return <DashboardShell>{children}</DashboardShell>;
+  return (
+    <FarmProviders>
+      <DashboardShell>{children}</DashboardShell>
+    </FarmProviders>
+  );
 }

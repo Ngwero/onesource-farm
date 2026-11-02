@@ -4,7 +4,7 @@ export const MEMO_ECOPY_WATERMARK_MAIN = 'E-COPY';
 export const MEMO_ECOPY_WATERMARK_SUB =
   'ELECTRONIC COPY — OFFICIAL RECORD ONLY — NOT FOR EDITING';
 
-const WATERMARK_NAVY = '#001D6E';
+const WATERMARK_GREEN = '#2E5E4A';
 
 /** Diagonal watermark + corner tag on every exported memo page. */
 export function drawMemoEcopyWatermark(
@@ -19,7 +19,7 @@ export function drawMemoEcopyWatermark(
   doc.save();
   doc.opacity(0.1);
   doc.rotate(-38, { origin: [cx, cy] });
-  doc.fillColor(WATERMARK_NAVY).font('Helvetica-Bold').fontSize(64);
+  doc.fillColor(WATERMARK_GREEN).font('Helvetica-Bold').fontSize(64);
   doc.text(MEMO_ECOPY_WATERMARK_MAIN, 0, cy - 36, {
     width: pageWidth,
     align: 'center',
@@ -37,7 +37,7 @@ export function drawMemoEcopyWatermark(
   const tagY = margin - 8;
   doc.save();
   doc.roundedRect(tagX, tagY, tagW, tagH, 3).fill('#f1f5f9');
-  doc.fillColor(WATERMARK_NAVY).font('Helvetica-Bold').fontSize(7);
+  doc.fillColor(WATERMARK_GREEN).font('Helvetica-Bold').fontSize(7);
   doc.text(MEMO_ECOPY_WATERMARK_MAIN, tagX, tagY + 7, { width: tagW, align: 'center' });
   doc.restore();
 }

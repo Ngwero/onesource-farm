@@ -13,11 +13,11 @@ export interface EmailPayload {
   heroImageUrl?: string;
 }
 
-const BRAND_NAVY = '#001d6e';
-const BRAND_FOOTER = '#1a237e';
-const BRAND_FOOTER_DEEP = '#0d1440';
-const ACCENT_BLUE = '#1565c0';
-const HIGHLIGHT_BORDER = '#90caf9';
+const BRAND_PRIMARY = '#2e5e4a';
+const BRAND_FOOTER = '#1e3e31';
+const BRAND_FOOTER_DEEP = '#152c23';
+const ACCENT_GREEN = '#377256';
+const HIGHLIGHT_BORDER = '#b4cf5e';
 
 function escapeHtml(value: string): string {
   return value
@@ -41,7 +41,7 @@ export function buildBrandedEmailHtml(
   appUrl: string,
   inline?: EmailInlineCids
 ): string {
-  const logoUrl = inline?.logoCid ? `cid:${inline.logoCid}` : `${appUrl}/rukapay-logo-white.png`;
+  const logoUrl = inline?.logoCid ? `cid:${inline.logoCid}` : `${appUrl}/onesource-logo-white.png`;
   const heroUrl = inline?.heroCid
     ? `cid:${inline.heroCid}`
     : payload.heroImageUrl || `${appUrl}/email-hero.png`;
@@ -62,7 +62,7 @@ export function buildBrandedEmailHtml(
     payload.ctaUrl && payload.ctaLabel
       ? `<p style="margin:16px 0 0;">
            <a href="${escapeHtml(payload.ctaUrl)}"
-              style="display:inline-block;background:${BRAND_NAVY};color:#ffffff;text-decoration:none;
+              style="display:inline-block;background:${BRAND_PRIMARY};color:#ffffff;text-decoration:none;
                      padding:10px 24px;border-radius:4px;font-size:13px;font-weight:700;
                      letter-spacing:0.04em;text-transform:uppercase;">
              ${escapeHtml(payload.ctaLabel)}
@@ -112,16 +112,16 @@ export function buildBrandedEmailHtml(
 
           <!-- Header -->
           <tr>
-            <td style="background:${BRAND_NAVY};padding:14px 20px;">
+            <td style="background:${BRAND_PRIMARY};padding:14px 20px;">
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td width="120" style="vertical-align:middle;">
-                    <img src="${logoUrl}" alt="RukaPay" width="100" height="auto"
+                    <img src="${logoUrl}" alt="OneSource" width="100" height="auto"
                          style="display:block;border:0;max-height:36px;width:auto;" />
                   </td>
                   <td align="center" style="vertical-align:middle;">
                     <span style="color:#ffffff;font-size:15px;font-weight:700;letter-spacing:0.02em;">
-                      RukaPay e-Memo
+                      OneSource e-Memo
                     </span>
                   </td>
                   <td width="120" align="right" style="vertical-align:middle;">
@@ -139,7 +139,7 @@ export function buildBrandedEmailHtml(
           <!-- Hero -->
           <tr>
             <td style="padding:0;line-height:0;font-size:0;">
-              <img src="${escapeHtml(heroUrl)}" alt="RukaPay — Get paid faster, run your business smarter"
+              <img src="${escapeHtml(heroUrl)}" alt="OneSource"
                    width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;" />
             </td>
           </tr>
@@ -161,10 +161,10 @@ export function buildBrandedEmailHtml(
                   <td align="center">
                     <table cellpadding="0" cellspacing="0" role="presentation"
                            style="border:2px dashed ${HIGHLIGHT_BORDER};border-radius:8px;
-                                  background:#fafcff;min-width:280px;max-width:420px;">
+                                  background:#f7fbf3;min-width:280px;max-width:420px;">
                       <tr>
                         <td align="center" style="padding:22px 28px;">
-                          <p style="margin:0;font-size:14px;color:${ACCENT_BLUE};font-weight:600;
+                          <p style="margin:0;font-size:14px;color:${ACCENT_GREEN};font-weight:600;
                                     letter-spacing:0.02em;">
                             ${highlightMain}
                           </p>
@@ -182,7 +182,7 @@ export function buildBrandedEmailHtml(
 
               <p style="margin:28px 0 0;font-size:14px;font-weight:700;color:#212121;">
                 Regards,<br/>
-                RukaPay e-Memo Admin
+                OneSource e-Memo Admin
               </p>
             </td>
           </tr>
@@ -195,13 +195,13 @@ export function buildBrandedEmailHtml(
                         letter-spacing:0.06em;text-transform:uppercase;margin:0 12px;">
                 Contact us
               </a>
-              <span style="color:#7986cb;">|</span>
+              <span style="color:#a9d3be;">|</span>
               <a href="${escapeHtml(appUrl)}"
                  style="color:#ffffff;font-size:11px;font-weight:700;text-decoration:none;
                         letter-spacing:0.06em;text-transform:uppercase;margin:0 12px;">
                 Privacy
               </a>
-              <span style="color:#7986cb;">|</span>
+              <span style="color:#a9d3be;">|</span>
               <a href="${escapeHtml(appUrl)}"
                  style="color:#ffffff;font-size:11px;font-weight:700;text-decoration:none;
                         letter-spacing:0.06em;text-transform:uppercase;margin:0 12px;">
@@ -221,7 +221,7 @@ export function buildBrandedEmailHtml(
                   </td>
                   <td style="vertical-align:middle;">
                     <p style="margin:0;font-size:11px;color:#b0bec5;line-height:1.4;">
-                      © ${year} Rhino Payment Services Limited. All Rights Reserved.
+                      © ${year} OneSource. All Rights Reserved.
                     </p>
                   </td>
                 </tr>

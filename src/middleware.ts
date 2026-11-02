@@ -23,7 +23,11 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  // Do not block the page for tens of seconds if Auth is unreachable.
+  await Promise.race([
+    supabase.auth.getUser(),
+    new Promise<void>((resolve) => setTimeout(resolve, 2500)),
+  ]);
   return response;
 }
 

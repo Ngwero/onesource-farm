@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { RukaPayLogo } from '@/components/brand/RukaPayLogo';
+import { OneSourceLogo } from '@/components/brand/OneSourceLogo';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { getPasswordStrength } from '@/lib/auth/passwordStrength';
 
@@ -112,8 +112,8 @@ export default function SetPasswordPage() {
 
   return (
     <div className="login-scene">
-      <div className="login-orb login-orb--navy" aria-hidden />
-      <div className="login-orb login-orb--blue" aria-hidden />
+      <div className="login-orb login-orb--forest" aria-hidden />
+      <div className="login-orb login-orb--leaf" aria-hidden />
 
       <div className="login-glass max-w-md w-full">
         <button
@@ -127,7 +127,7 @@ export default function SetPasswordPage() {
         </button>
 
         <div className="login-logo-mark">
-          <RukaPayLogo width={180} variant="full" priority centered />
+          <OneSourceLogo width={180} variant="full" priority centered />
         </div>
 
         <h1 className="login-title">Set your password</h1>

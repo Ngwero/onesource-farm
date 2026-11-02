@@ -11,11 +11,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'RukaPay e-Memo System',
-  description: 'Internal memo management for Rhino Payment Services Limited',
+  title: 'OneSource e-Memo System',
+  description: 'Internal memo management for OneSource',
   icons: {
-    icon: '/rukapay-logo-full.png',
-    apple: '/rukapay-logo-full.png',
+    icon: '/onesource-icon.png',
+    apple: '/onesource-icon.png',
   },
 };
 

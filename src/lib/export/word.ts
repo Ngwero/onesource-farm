@@ -21,12 +21,12 @@ import {
 import { getMemoBodyRowsForExport, memoDocumentTitle } from '@/lib/memo/leaveTemplate';
 import { resolveSignatureForBlock } from '@/lib/memo/signatureBlocks';
 
-const NAVY = '001D6E';
+const BRAND_GREEN = '2E5E4A';
 const cellBorder = {
-  top: { style: BorderStyle.SINGLE, size: 6, color: NAVY },
-  bottom: { style: BorderStyle.SINGLE, size: 6, color: NAVY },
-  left: { style: BorderStyle.SINGLE, size: 6, color: NAVY },
-  right: { style: BorderStyle.SINGLE, size: 6, color: NAVY },
+  top: { style: BorderStyle.SINGLE, size: 6, color: BRAND_GREEN },
+  bottom: { style: BorderStyle.SINGLE, size: 6, color: BRAND_GREEN },
+  left: { style: BorderStyle.SINGLE, size: 6, color: BRAND_GREEN },
+  right: { style: BorderStyle.SINGLE, size: 6, color: BRAND_GREEN },
 };
 
 function labelCell(text: string) {
@@ -36,7 +36,7 @@ function labelCell(text: string) {
     verticalAlign: VerticalAlign.TOP,
     children: [
       new Paragraph({
-        children: [new TextRun({ text, bold: true, color: NAVY, size: 18 })],
+        children: [new TextRun({ text, bold: true, color: BRAND_GREEN, size: 18 })],
       }),
     ],
   });
@@ -65,7 +65,7 @@ export async function generateMemoWord(
   signatures: SignatureRecord[]
 ): Promise<Buffer> {
   const contactLines = getCompanyContactLines(branding);
-  const companyName = (branding.company_name || 'RHINO PAYMENT SERVICES LIMITED').toUpperCase();
+  const companyName = (branding.company_name || 'ONESOURCE').toUpperCase();
 
   const metaRows = [
     ['From', memo.memo_from],
@@ -100,7 +100,7 @@ export async function generateMemoWord(
               new TextRun({
                 text: MEMO_VISION_STATEMENT,
                 size: 14,
-                color: NAVY,
+                color: BRAND_GREEN,
                 italics: true,
               }),
             ],
@@ -109,7 +109,7 @@ export async function generateMemoWord(
           new Paragraph({
             alignment: AlignmentType.RIGHT,
             children: [
-              new TextRun({ text: companyName, bold: true, size: 22, color: NAVY }),
+              new TextRun({ text: companyName, bold: true, size: 22, color: BRAND_GREEN }),
             ],
           }),
           ...contactLines.map(
@@ -126,7 +126,7 @@ export async function generateMemoWord(
               new TextRun({
                 text: memoDocumentTitle(memo),
                 size: 36,
-                color: NAVY,
+                color: BRAND_GREEN,
                 underline: {},
               }),
             ],

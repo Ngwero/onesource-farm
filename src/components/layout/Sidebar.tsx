@@ -18,9 +18,37 @@ import {
   PenLine,
   Share2,
   UserCog,
+  ChevronDown,
+  Sprout,
+  Map as MapIcon,
+  LayoutGrid,
+  Leaf,
+  ShieldCheck,
+  Award,
+  Package,
+  FileCheck,
+  SlidersHorizontal,
+  Tractor,
+  Bug,
+  HardHat,
+  CalendarCheck,
+  ListChecks,
+  Wallet,
+  Wheat,
+  Boxes,
+  ClipboardCheck,
+  Ban,
+  BadgeCheck,
+  ClipboardList,
+  Warehouse,
+  History,
+  GitBranch,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { RukaPayLogo } from '@/components/brand/RukaPayLogo';
+import { useFarmAccess } from '@/hooks/useFarmAccess';
+import type { Permission } from '@/lib/farm/permissions';
+import { OneSourceLogo } from '@/components/brand/OneSourceLogo';
 import { canCreateMemo } from '@/lib/auth/rbac';
 import { isDesignatedItFirstChecker } from '@/lib/workflow/itCheckers';
 import { isBusinessHead } from '@/lib/memo/marketingRouting';
@@ -199,10 +227,88 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
+type FarmNavItem = NavItem & { permission: Permission; exact?: boolean };
+type NavGroup = { id: string; label: string; icon: React.ReactNode; items: (NavItem & { exact?: boolean })[] };
+
+const FARM_NAV_GROUPS: (Omit<NavGroup, 'items'> & { items: FarmNavItem[] })[] = [
+  {
+    id: 'farm',
+    label: 'Farm',
+    icon: <Sprout size={18} />,
+    items: [
+      { label: 'Farm Overview', href: '/farm', icon: <MapIcon size={18} />, permission: 'farm.view', exact: true },
+      { label: 'Blocks', href: '/farm/blocks', icon: <LayoutGrid size={18} />, permission: 'farm.view' },
+      { label: 'Crops', href: '/farm/crops', icon: <Leaf size={18} />, permission: 'crops.view' },
+      { label: 'Activities', href: '/farm/activities', icon: <Tractor size={18} />, permission: 'activities.view' },
+      { label: 'Pest & Disease', href: '/farm/incidents', icon: <Bug size={18} />, permission: 'pest.view' },
+    ],
+  },
+  {
+    id: 'workforce',
+    label: 'Workforce',
+    icon: <HardHat size={18} />,
+    items: [
+      { label: 'Workers', href: '/workforce/workers', icon: <Users size={18} />, permission: 'workforce.view' },
+      { label: 'Attendance', href: '/workforce/attendance', icon: <CalendarCheck size={18} />, permission: 'attendance.record' },
+      { label: 'Tasks', href: '/workforce/tasks', icon: <ListChecks size={18} />, permission: 'workforce.view' },
+      { label: 'Payroll Costing', href: '/workforce/payroll', icon: <Wallet size={18} />, permission: 'payroll.view' },
+    ],
+  },
+  {
+    id: 'harvest',
+    label: 'Harvest',
+    icon: <Wheat size={18} />,
+    items: [
+      { label: 'Harvest Batches', href: '/harvest/batches', icon: <Boxes size={18} />, permission: 'harvest.view' },
+      { label: 'Grading', href: '/harvest/grading', icon: <ClipboardCheck size={18} />, permission: 'harvest.view' },
+    ],
+  },
+  {
+    id: 'quality',
+    label: 'Quality',
+    icon: <BadgeCheck size={18} />,
+    items: [{ label: 'QC Inspections', href: '/quality/inspections', icon: <ClipboardList size={18} />, permission: 'qc.view' }],
+  },
+  {
+    id: 'packhouse',
+    label: 'Packhouse & Warehouse',
+    icon: <Warehouse size={18} />,
+    items: [
+      { label: 'Packed Batches', href: '/packhouse/packing', icon: <Package size={18} />, permission: 'packing.view' },
+      { label: 'Inventory', href: '/warehouse/inventory', icon: <Warehouse size={18} />, permission: 'warehouse.view' },
+      { label: 'Stock Movements', href: '/warehouse/movements', icon: <History size={18} />, permission: 'warehouse.view' },
+    ],
+  },
+  {
+    id: 'trace',
+    label: 'Traceability',
+    icon: <GitBranch size={18} />,
+    items: [{ label: 'Trace a Batch', href: '/trace', icon: <GitBranch size={18} />, permission: 'traceability.view' }],
+  },
+];
+
+const FARM_ADMIN_GROUP: Omit<NavGroup, 'items'> & { items: FarmNavItem[] } = {
+  id: 'farm-admin',
+  label: 'Administration',
+  icon: <Settings size={18} />,
+  items: [
+    { label: 'Access & Roles', href: '/admin/access', icon: <ShieldCheck size={18} />, permission: 'admin.users' },
+    { label: 'Grades', href: '/admin/master/grades', icon: <Award size={18} />, permission: 'admin.settings' },
+    { label: 'Activity Types', href: '/admin/master/activity-types', icon: <Tractor size={18} />, permission: 'admin.settings' },
+    { label: 'Rejection Reasons', href: '/admin/master/rejection-reasons', icon: <Ban size={18} />, permission: 'admin.settings' },
+    { label: 'Packaging', href: '/admin/master/packaging-types', icon: <Package size={18} />, permission: 'admin.settings' },
+    { label: 'Warehouse Locations', href: '/admin/master/warehouse-locations', icon: <Warehouse size={18} />, permission: 'admin.settings' },
+    { label: 'Document Types', href: '/admin/master/document-types', icon: <FileCheck size={18} />, permission: 'admin.settings' },
+    { label: 'System Settings', href: '/admin/system-settings', icon: <SlidersHorizontal size={18} />, permission: 'admin.settings' },
+  ],
+};
+
 export function Sidebar({ open = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user, logout } = useAuth();
+  const access = useFarmAccess();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const roleSlug = (user?.role?.slug || (user as { roles?: { slug: string } })?.roles?.slug || 'staff') as RoleSlug;
   let navItems = navWithCreateMemo(NAV_BY_ROLE[roleSlug] || NAV_BY_ROLE.staff, roleSlug, user);
 
@@ -302,15 +408,50 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   const query = searchParams.toString();
   const fullPath = query ? `${pathname}?${query}` : pathname;
   const roleLabel =
+    access.roles[0]?.name ||
     user?.title?.trim() ||
     roleSlug.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const dashboardItem = navItems.find((i) => i.href.startsWith('/dashboard'));
+  const groups: NavGroup[] = [
+    ...FARM_NAV_GROUPS.map((g) => ({
+      ...g,
+      items: g.items.filter((i) => access.can(i.permission)),
+    })),
+    {
+      id: 'ememo',
+      label: 'eMemo',
+      icon: <FileText size={18} />,
+      items: navItems.filter((i) => i !== dashboardItem),
+    },
+    {
+      ...FARM_ADMIN_GROUP,
+      items: FARM_ADMIN_GROUP.items.filter((i) => access.can(i.permission)),
+    },
+  ].filter((g) => g.items.length > 0);
+
+  const renderLink = (item: NavItem & { exact?: boolean }, nested = false) => {
+    const active = item.exact ? pathname === item.href : isNavActive(pathname, fullPath, item.href);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        data-tour-id={navTourId(item.href, item.label)}
+        className={`app-sidebar__link${nested ? ' app-sidebar__link--nested' : ''}${active ? ' app-sidebar__link--active' : ''}`}
+        onClick={onClose}
+      >
+        <span className={active ? 'text-white' : 'text-white/55'}>{item.icon}</span>
+        {item.label}
+      </Link>
+    );
+  };
 
   return (
     <aside className={`app-sidebar${open ? ' app-sidebar--open' : ''}`}>
       <div className="app-sidebar__brand">
-        <RukaPayLogo width={168} variant="full" priority centered />
+        <OneSourceLogo width={168} variant="full" priority centered />
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 text-center mt-3">
-          e-Memo
+          Farm to Export
         </p>
       </div>
 
@@ -320,19 +461,26 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
       </div>
 
       <nav className="app-sidebar__nav" data-tour-id="tour-sidebar">
-        {navItems.map((item) => {
-          const active = isNavActive(pathname, fullPath, item.href);
+        {dashboardItem ? renderLink(dashboardItem) : null}
+        {groups.map((group) => {
+          const containsActive = group.items.some((i) =>
+            'exact' in i && i.exact ? pathname === i.href : isNavActive(pathname, fullPath, i.href)
+          );
+          const expanded = openGroups[group.id] ?? (containsActive || group.id === 'farm');
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              data-tour-id={navTourId(item.href, item.label)}
-              className={`app-sidebar__link${active ? ' app-sidebar__link--active' : ''}`}
-              onClick={onClose}
-            >
-              <span className={active ? 'text-white' : 'text-white/55'}>{item.icon}</span>
-              {item.label}
-            </Link>
+            <div key={group.id} className="app-sidebar__group">
+              <button
+                type="button"
+                className="app-sidebar__group-toggle"
+                aria-expanded={expanded}
+                onClick={() => setOpenGroups((s) => ({ ...s, [group.id]: !expanded }))}
+              >
+                <span className="text-white/55">{group.icon}</span>
+                <span className="flex-1 text-left">{group.label}</span>
+                <ChevronDown size={16} className={`transition-transform ${expanded ? '' : '-rotate-90'}`} />
+              </button>
+              {expanded ? <div className="app-sidebar__group-items">{group.items.map((i) => renderLink(i, true))}</div> : null}
+            </div>
           );
         })}
       </nav>

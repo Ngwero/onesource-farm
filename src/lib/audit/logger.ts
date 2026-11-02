@@ -23,7 +23,10 @@ export type AuditAction =
   | 'status_changed'
   | 'comment_added'
   | 'version_created'
-  | 'payment_updated';
+  | 'payment_updated'
+  | 'farm_record_created'
+  | 'farm_record_updated'
+  | 'farm_record_deleted';
 
 export async function logAudit(params: {
   memoId?: string;

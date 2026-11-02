@@ -44,3 +44,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# backup of the old RukaPay Supabase settings
+.env.local.rukapay-backup

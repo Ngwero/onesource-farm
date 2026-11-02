@@ -141,10 +141,10 @@ export async function sendPasswordResetEmail(params: {
     {
       to: params.email,
       toName: params.fullName,
-      subject: 'Reset your RukaPay e-Memo password',
+      subject: 'Reset your OneSource e-Memo password',
       title: 'Password reset',
       body: `<p style="margin:0;">
-        We received a request to reset the password for your <strong>RukaPay e-Memo</strong> account.
+        We received a request to reset the password for your <strong>OneSource e-Memo</strong> account.
         Use the button below to choose a new password. This link is valid for a limited time.
       </p>`,
       highlightText: 'Reset your password',
@@ -152,13 +152,13 @@ export async function sendPasswordResetEmail(params: {
       bullets: [
         'If you did not request a password reset, you can safely ignore this email.',
         'Never share your password or this reset link with anyone.',
-        'This is an automated message from RukaPay e-Memo.',
+        'This is an automated message from OneSource e-Memo.',
         'For help, contact support@rukapay.co.ug or your system administrator.',
       ],
       ctaLabel: 'Reset password',
       ctaUrl: params.resetUrl,
       footerNote:
-        'This is an automated message from RukaPay e-Memo. Please do not reply to this email.',
+        'This is an automated message from OneSource e-Memo. Please do not reply to this email.',
     },
     { appUrl: portalUrl }
   );
@@ -182,11 +182,11 @@ export async function sendSystemLaunchEmail(params: {
     {
       to: params.email,
       toName: params.fullName,
-      subject: 'RukaPay e-Memo is live — please sign in before Monday 8 June',
+      subject: 'OneSource e-Memo is live — please sign in before Monday 8 June',
       title: 'e-Memo is live',
       body: `<p style="margin:0;">
-        The <strong>RukaPay e-Memo System</strong> is now live at
-        <a href="${portalUrl}" style="color:#001d6e;font-weight:600;">${portalUrl}</a>.
+        The <strong>OneSource e-Memo System</strong> is now live at
+        <a href="${portalUrl}" style="color:#2e5e4a;font-weight:600;">${portalUrl}</a>.
       </p>
       <p style="margin:14px 0 0;">
         From <strong>${effectiveDate}</strong>, all internal memos and leave requests must be
@@ -195,13 +195,13 @@ export async function sendSystemLaunchEmail(params: {
       highlightText: 'Go-live: Monday, 8 June 2026',
       highlightSubtext: `Temporary password: ${tempPassword}`,
       bullets: [
-        `Sign in with your RukaPay email and the temporary password <strong>${tempPassword}</strong>.`,
+        `Sign in with your OneSource email and the temporary password <strong>${tempPassword}</strong>.`,
         'You will be prompted to create your own personal password on first login.',
         'Upload your signature under <strong>Settings → My Signature</strong> before creating or approving memos.',
         'Use <strong>Create Memo</strong> for payment, procurement, IT, HR, leave, and general internal requests.',
         'Approvers will receive notifications when memos need your action.',
         'Need help? Contact support@rukapay.co.ug or your system administrator.',
-        'This is an official notice from RukaPay e-Memo — please do not reply to this email.',
+        'This is an official notice from OneSource e-Memo — please do not reply to this email.',
       ],
       ctaLabel: 'Open e-Memo portal',
       ctaUrl: portalUrl,
@@ -223,10 +223,10 @@ export async function sendWelcomeSignInEmail(params: {
   return sendTransactionalEmail({
     to: params.email,
     toName: params.fullName,
-    subject: 'Your RukaPay e-Memo account is ready',
+    subject: 'Your OneSource e-Memo account is ready',
     title: 'Welcome to the paperless era',
     body: `<p style="margin:0;">
-        You have successfully signed in to the <strong>RukaPay e-Memo System</strong>.
+        You have successfully signed in to the <strong>OneSource e-Memo System</strong>.
         Please use the portal link below to create, route, and approve internal memos digitally.${roleNote}
       </p>`,
     highlightText: 'Welcome to the paperless era',
@@ -345,7 +345,7 @@ export async function sendMemoEmailToUser(params: {
     bullets: params.bullets ?? [
       'Please sign in to review and take action on this memo.',
       'Do not share approval links or credentials with others.',
-      'This is an automated notification from RukaPay e-Memo.',
+      'This is an automated notification from OneSource e-Memo.',
     ],
     ctaLabel: params.ctaLabel || 'Review memo',
     ctaUrl: memoLink,

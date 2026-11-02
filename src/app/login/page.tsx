@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { RukaPayLogo } from '@/components/brand/RukaPayLogo';
+import { OneSourceLogo } from '@/components/brand/OneSourceLogo';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 
 function LoginForm() {
@@ -97,13 +97,13 @@ function LoginForm() {
 
   return (
     <div className="login-scene">
-      <div className="login-orb login-orb--navy" aria-hidden />
-      <div className="login-orb login-orb--blue" aria-hidden />
+      <div className="login-orb login-orb--forest" aria-hidden />
+      <div className="login-orb login-orb--leaf" aria-hidden />
       <div className="login-orb login-orb--deep" aria-hidden />
 
       <div className="login-glass">
         <div className="login-logo-mark">
-          <RukaPayLogo width={200} variant="full" priority centered />
+          <OneSourceLogo width={200} variant="full" priority centered />
         </div>
 
         <h1 className="login-title">Welcome back</h1>
@@ -204,7 +204,7 @@ function LoginForm() {
             type="button"
             className="login-link-inline"
             onClick={() =>
-              setError('Request access from your RukaPay system administrator.')
+              setError('Request access from your OneSource system administrator.')
             }
           >
             Need help?

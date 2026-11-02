@@ -1,4 +1,4 @@
--- Seed data for RukaPay e-Memo System
+-- Seed data for OneSource e-Memo System
 
 -- Roles
 INSERT INTO roles (name, slug, description) VALUES
@@ -74,13 +74,13 @@ INSERT INTO branding_settings (
   confidentiality_notice,
   page_number_style
 ) VALUES (
-  'Rhino Payment Services Limited',
-  'RukaPay',
+  'OneSource',
+  'OneSource',
   'P.O BOX 111498, 2nd Floor, TMT Building' || E'\n' ||
   'Bukoto-Ntinda Road, Kampala' || E'\n' ||
   'Tel: +256 (0) 200 244 400' || E'\n' ||
   'Email: info@rukapay.co.ug',
-  'Rhino Payment Services Limited | RukaPay | www.rukapay.com',
+  'OneSource',
   'CONFIDENTIAL - This document is intended for internal use only. Unauthorized disclosure, copying, or distribution is strictly prohibited.',
   'Page {current} of {total}'
 );

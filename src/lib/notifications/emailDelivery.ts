@@ -13,7 +13,7 @@ export interface ParsedFrom {
 }
 
 export function parseSmtpFrom(): ParsedFrom {
-  const raw = process.env.SMTP_FROM?.trim() || 'RukaPay e-Memo <noreply@rukapay.co.ug>';
+  const raw = process.env.SMTP_FROM?.trim() || 'OneSource e-Memo <noreply@rukapay.co.ug>';
   const match = raw.match(/^(.+?)\s*<([^>]+)>$/);
   if (match) {
     return {
@@ -22,7 +22,7 @@ export function parseSmtpFrom(): ParsedFrom {
       formatted: raw,
     };
   }
-  return { name: 'RukaPay e-Memo', address: raw.toLowerCase(), formatted: raw };
+  return { name: 'OneSource e-Memo', address: raw.toLowerCase(), formatted: raw };
 }
 
 /** Align envelope sender with authenticated SMTP user (helps SPF/DMARC pass). */
@@ -71,7 +71,7 @@ export async function loadInlineImageAttachments(): Promise<
 > {
   const publicDir = join(process.cwd(), 'public');
   const items: Array<{ file: string; cid: string }> = [
-    { file: 'rukapay-logo-white.png', cid: INLINE_LOGO_CID },
+    { file: 'onesource-logo-white.png', cid: INLINE_LOGO_CID },
     { file: 'email-hero.png', cid: INLINE_HERO_CID },
   ];
 
@@ -131,8 +131,8 @@ export function buildPlainTextBody(payload: EmailPayload): string {
     payload.footerNote ? stripHtml(payload.footerNote) : '',
     '',
     'Regards,',
-    'RukaPay e-Memo',
-    'Rhino Payment Services Limited',
+    'OneSource e-Memo',
+    'OneSource',
     '',
     `Questions: ${replyToAddress()}`,
   ];

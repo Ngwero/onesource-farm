@@ -23,7 +23,7 @@ import {
   MEMO_ECOPY_WATERMARK_SUB,
 } from '@/lib/export/pdfWatermark';
 
-const NAVY = '#001D6E';
+const BRAND_GREEN = '#2E5E4A';
 const PDF_OWNER_PASSWORD =
   process.env.PDF_OWNER_PASSWORD || 'rukapay-ememo-system-owner-key';
 const SLATE = '#64748B';
@@ -59,7 +59,7 @@ async function resolveLogoBuffer(logoPath?: string): Promise<Buffer | null> {
     if (buf) return buf;
   }
   try {
-    return fs.readFile(path.join(process.cwd(), 'public', 'rukapay-logo-white.png'));
+    return fs.readFile(path.join(process.cwd(), 'public', 'onesource-logo-white.png'));
   } catch {
     return null;
   }
@@ -172,7 +172,7 @@ export async function generateMemoPDF(
 ): Promise<Buffer> {
   const logoBuffer = await resolveLogoBuffer(branding.logo_path);
   const contactLines = getCompanyContactLines(branding);
-  const companyName = (branding.company_name || 'RHINO PAYMENT SERVICES LIMITED').toUpperCase();
+  const companyName = (branding.company_name || 'ONESOURCE').toUpperCase();
   const approvalSteps = workflowStepsForDocumentApprovals(workflowSteps);
   const approvalRowCount = approvalSteps.length + 1;
   const layout = pickLayout(memo, approvalRowCount);
@@ -219,7 +219,7 @@ export async function generateMemoPDF(
     const pageHeight = PAGE.height;
 
     const headerY = MARGIN;
-    doc.rect(x, headerY, contentWidth, layout.headerHeight).fill(NAVY);
+    doc.rect(x, headerY, contentWidth, layout.headerHeight).fill(BRAND_GREEN);
 
     if (logoBuffer) {
       try {
@@ -233,7 +233,7 @@ export async function generateMemoPDF(
     doc.text(companyName, x, headerY + 8, { width: contentWidth - 16, align: 'right' });
     doc.font('Helvetica').fontSize(Math.max(6, 6.5 * layout.scale));
     contactLines.forEach((line, i) => {
-      doc.fillColor('#e8eeff').text(line, x, headerY + 18 + i * 8, {
+      doc.fillColor('#eef6e0').text(line, x, headerY + 18 + i * 8, {
         width: contentWidth - 16,
         align: 'right',
       });
@@ -245,7 +245,7 @@ export async function generateMemoPDF(
     doc.text('OFFICIAL CORRESPONDENCE', x, y, { lineBreak: false });
     y += 10;
 
-    doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(layout.titleSize);
+    doc.fillColor(BRAND_GREEN).font('Helvetica-Bold').fontSize(layout.titleSize);
     doc.text(memoDocumentTitle(memo), x, y, { width: contentWidth - 150, lineBreak: false });
     y += layout.titleSize + 4;
 
@@ -256,7 +256,7 @@ export async function generateMemoPDF(
       doc.roundedRect(refX, refY, refW, 24, 3).fill(LIGHT_BG);
       doc.fillColor(SLATE).font('Helvetica-Bold').fontSize(5.5);
       doc.text('REFERENCE', refX + 6, refY + 4, { lineBreak: false });
-      doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(6.5);
+      doc.fillColor(BRAND_GREEN).font('Helvetica-Bold').fontSize(6.5);
       doc.text(memo.reference_number, refX + 6, refY + 11, {
         width: refW - 12,
         height: 10,
@@ -294,8 +294,8 @@ export async function generateMemoPDF(
 
     for (const section of layout.bodySections) {
       doc.roundedRect(x, y, contentWidth, section.blockHeight, 3).fillAndStroke('#ffffff', BORDER_LIGHT);
-      doc.rect(x, y, 2, section.blockHeight).fill(NAVY);
-      doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(Math.max(6, 6.5 * layout.scale));
+      doc.rect(x, y, 2, section.blockHeight).fill(BRAND_GREEN);
+      doc.fillColor(BRAND_GREEN).font('Helvetica-Bold').fontSize(Math.max(6, 6.5 * layout.scale));
       doc.text(section.label, x + 10, y + 5, { lineBreak: false });
       doc.fillColor('#334155').font('Helvetica').fontSize(layout.bodyFontSize);
       doc.text(section.content, x + 10, y + 13, {
@@ -342,7 +342,7 @@ export async function generateMemoPDF(
 
     pdfApprovalRows.forEach((row) => {
       doc.roundedRect(x, y, contentWidth, rowH, 3).fillAndStroke('#ffffff', BORDER_LIGHT);
-      doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(6);
+      doc.fillColor(BRAND_GREEN).font('Helvetica-Bold').fontSize(6);
       doc.text(row.role, x + 6, y + 4, {
         width: contentWidth * 0.38,
         lineBreak: false,
