@@ -25,8 +25,8 @@ const GROUPS: { prefix: string; title: string; description: string }[] = [
   { prefix: 'general', title: 'General', description: 'Defaults used across the farm modules.' },
   {
     prefix: 'ememo',
-    title: 'eMemo approvals',
-    description: 'Amounts at or above these limits are sent to eMemo for approval before they can proceed.',
+    title: 'Approvals',
+    description: 'Amounts at or above these limits are sent to OneSource for approval before they can proceed.',
   },
   {
     prefix: 'workforce',
@@ -97,7 +97,7 @@ function SystemSettingsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="System settings" subtitle="Farm-wide defaults, eMemo approval limits and alert timing." />
+      <PageHeader title="System settings" subtitle="Farm-wide defaults, approval limits and alert timing." />
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit((v) => save.mutate(v))}

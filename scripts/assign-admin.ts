@@ -1,7 +1,7 @@
 /**
  * Promote a user to system admin (full access).
  * Usage: npm run assign:admin
- * Optional: npm run assign:admin -- other@rukapay.co.ug
+ * Optional: npm run assign:admin -- other@onesourcefresh.com
  */
 
 import { readFileSync, existsSync } from 'fs';
@@ -34,7 +34,7 @@ function loadEnvLocal() {
 loadEnvLocal();
 
 const DEFAULT_ADMIN_EMAIL = ADMIN_EMAIL;
-const PREVIOUS_ADMIN_EMAIL = 'rowena.turinawe@rukapay.co.ug';
+const PREVIOUS_ADMIN_EMAIL = 'rowena.turinawe@onesourcefresh.com';
 
 async function main() {
   const targetEmail = (process.argv[2] || DEFAULT_ADMIN_EMAIL).trim().toLowerCase();

@@ -1,4 +1,4 @@
--- RukaPay e-Memo System - Initial Schema
+-- OneSource - Initial Schema
 -- Rhino Payment Services Limited
 
 -- Extensions
@@ -76,8 +76,8 @@ CREATE TABLE memo_sequences (
 -- Branding settings
 CREATE TABLE branding_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  company_name TEXT DEFAULT 'Rhino Payment Services Limited',
-  company_short_name TEXT DEFAULT 'RukaPay',
+  company_name TEXT DEFAULT 'OneSource',
+  company_short_name TEXT DEFAULT 'OneSource',
   company_address TEXT,
   logo_path TEXT,
   footer_text TEXT,

@@ -31,19 +31,19 @@ async function main() {
   const supabase = createTestSupabase(url, serviceKey);
   const results: PolicyResult[] = [];
 
-  const ngabo = await fetchUserByEmail(supabase, 'ngabo.sevelin@rukapay.co.ug');
+  const ngabo = await fetchUserByEmail(supabase, 'ngabo.sevelin@onesourcefresh.com');
   const emma = await fetchUserByEmail(supabase, IT_FIRST_CHECKER_EMAIL);
-  const jim = await fetchUserByEmail(supabase, 'jim.ntare@rukapay.co.ug');
+  const jim = await fetchUserByEmail(supabase, 'jim.ntare@onesourcefresh.com');
 
   if (!ngabo) {
-    console.error('Need ngabo.sevelin@rukapay.co.ug (staff). Run seed:team.');
+    console.error('Need ngabo.sevelin@onesourcefresh.com (staff). Run seed:team.');
     process.exit(1);
   }
 
   await ensureTestSignatures(supabase, [
     ngabo.email,
     emma?.email || IT_FIRST_CHECKER_EMAIL,
-    jim?.email || 'jim.ntare@rukapay.co.ug',
+    jim?.email || 'jim.ntare@onesourcefresh.com',
   ]);
 
   const memoTypes = [

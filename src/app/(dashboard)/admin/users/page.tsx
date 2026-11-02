@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { KeyRound, Mail, Plus, RefreshCw, Save, Send } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
-const TEST_PASSWORD_HINT = 'Test@RukaPay2026';
-const ONBOARDING_PASSWORD_HINT = 'Welcome@RukaPay2026';
+const TEST_PASSWORD_HINT = 'Test@OneSource2026';
+const ONBOARDING_PASSWORD_HINT = 'Welcome@OneSource2026';
 
 type LaunchPreview = {
   portalUrl: string;
@@ -94,7 +94,7 @@ export default function AdminUsersPage() {
     if (
       !confirm(
         allStaff
-          ? `Send the e-Memo go-live announcement to ALL ${count} active staff?\n\nThis cannot be undone.`
+          ? `Send the go-live announcement to ALL ${count} active staff?\n\nThis cannot be undone.`
           : `Send a test go-live email to ${testEmail}?`
       )
     ) {
@@ -320,13 +320,13 @@ export default function AdminUsersPage() {
       <div className="card p-5 mb-6 border-emerald-100 bg-emerald-50/30">
         <h2 className="font-semibold text-slate-800 flex items-center gap-2 mb-2">
           <Mail size={18} className="text-emerald-700" />
-          e-Memo go-live announcement
+          go-live announcement
         </h2>
         <p className="text-sm text-slate-600 mb-3">
-          Branded email telling staff e-Memo is live from <strong>Monday, 8 June 2026</strong> for all
+          Branded email telling staff OneSource is live from <strong>Monday, 8 June 2026</strong> for all
           memos and leave requests. Includes temporary password{' '}
           <code className="text-xs bg-white px-1 rounded">{ONBOARDING_PASSWORD_HINT}</code> and link to{' '}
-          <strong>{launchPreview?.portalUrl || 'ememo.rukapay.co.ug'}</strong>.
+          <strong>{launchPreview?.portalUrl || 'onesourcefresh.com'}</strong>.
         </p>
 
         {launchLoading ? (
@@ -358,7 +358,7 @@ export default function AdminUsersPage() {
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
               className="input-field text-sm"
-              placeholder="you@rukapay.co.ug"
+              placeholder="you@email.com"
             />
           </div>
           <button

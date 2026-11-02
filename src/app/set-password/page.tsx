@@ -81,15 +81,15 @@ export default function SetPasswordPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to update password');
 
       completedRef.current = true;
-      sessionStorage.setItem('rukapay_password_ready', '1');
+      sessionStorage.setItem('onesource_password_ready', '1');
       if (data.welcome_email_sent) {
         sessionStorage.setItem(
-          'rukapay_welcome_notice',
+          'onesource_welcome_notice',
           'Welcome email sent — check your inbox and spam for “Welcome to the paperless era”.'
         );
       } else {
         sessionStorage.setItem(
-          'rukapay_welcome_notice',
+          'onesource_welcome_notice',
           'Password saved. If you do not see a welcome email, check spam or sign in again once SMTP is configured.'
         );
       }

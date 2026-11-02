@@ -127,7 +127,7 @@ export default function DelegationPage() {
             value={form.delegated_to_email}
             onChange={(e) => setForm({ ...form, delegated_to_email: e.target.value })}
             required
-            placeholder="colleague@rukapay.co.ug"
+            placeholder="colleague@email.com"
           />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

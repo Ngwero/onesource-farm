@@ -280,12 +280,12 @@ async function main() {
 
   let itStaff =
     (await fetchStaffInDept(supabase, 'IT')) ||
-    (await fetchUserByEmail(supabase, 'doreen.kembabazi@rukapay.co.ug'));
+    (await fetchUserByEmail(supabase, 'doreen.kembabazi@onesourcefresh.com'));
   let hrHead =
     (await fetchDeptHead(supabase, 'HR')) ||
     (await promoteUserForTest(
       supabase,
-      'portia.nayebare@rukapay.co.ug',
+      'portia.nayebare@onesourcefresh.com',
       'department_head',
       'HR',
       'HR — Dept Head (test)'
@@ -298,7 +298,7 @@ async function main() {
     (await fetchDeptHead(supabase, 'OPS')) ||
     (await promoteUserForTest(
       supabase,
-      'emmanuel.ngwero@rukapay.co.ug',
+      'emmanuel.ngwero@onesourcefresh.com',
       'admin',
       'OPS',
       'OPS — Dept Head (test)'
@@ -307,7 +307,7 @@ async function main() {
   if (!itStaff) {
     itStaff = await promoteUserForTest(
       supabase,
-      'doreen.kembabazi@rukapay.co.ug',
+      'doreen.kembabazi@onesourcefresh.com',
       'staff',
       'IT',
       'IT — Staff (test)'

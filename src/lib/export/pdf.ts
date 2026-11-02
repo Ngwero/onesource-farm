@@ -25,7 +25,7 @@ import {
 
 const BRAND_GREEN = '#2E5E4A';
 const PDF_OWNER_PASSWORD =
-  process.env.PDF_OWNER_PASSWORD || 'rukapay-ememo-system-owner-key';
+  process.env.PDF_OWNER_PASSWORD || 'onesource-system-owner-key';
 const SLATE = '#64748B';
 const LIGHT_BG = '#F8FAFC';
 const BORDER_LIGHT = '#E2E8F4';

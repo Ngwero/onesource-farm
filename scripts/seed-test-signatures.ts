@@ -24,7 +24,7 @@ async function ensureSignatureImage(uploadRoot: string): Promise<void> {
     <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
       <rect width="100%" height="100%" fill="white"/>
       <path d="M 24 72 Q 120 18, 210 58 T 396 42" stroke="#001D6E" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <text x="24" y="92" font-family="Arial, sans-serif" font-size="11" fill="#64748B">Test signature — RukaPay e-Memo</text>
+      <text x="24" y="92" font-family="Arial, sans-serif" font-size="11" fill="#64748B">Test signature — OneSource</text>
     </svg>
   `;
 

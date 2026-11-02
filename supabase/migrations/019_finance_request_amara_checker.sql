@@ -42,10 +42,10 @@ BEGIN
     SET role_id = finance_reviewer_role_id,
         department_id = fin_dept_id,
         title = 'CFO / Finance Reviewer'
-    WHERE email ILIKE 'amara.oto@rukapay.co.ug';
+    WHERE email ILIKE 'amara.oto@onesourcefresh.com';
   END IF;
 
-  SELECT id INTO christine_id FROM users WHERE email ILIKE 'christine.kangume@rukapay.co.ug' LIMIT 1;
+  SELECT id INTO christine_id FROM users WHERE email ILIKE 'christine.kangume@onesourcefresh.com' LIMIT 1;
   SELECT id INTO pending_finance_id FROM memo_statuses WHERE slug = 'pending_finance' LIMIT 1;
   SELECT id INTO pending_ceo_id FROM memo_statuses WHERE slug = 'pending_ceo' LIMIT 1;
 

@@ -1,6 +1,6 @@
 /**
  * Assign Finance Reviewer role + department to a user (default: Christine).
- * Usage: npm run assign:finance -- christine.kangume@rukapay.co.ug
+ * Usage: npm run assign:finance -- christine.kangume@onesourcefresh.com
  */
 
 import { readFileSync, existsSync } from 'fs';
@@ -31,7 +31,7 @@ function loadEnvLocal() {
 
 loadEnvLocal();
 
-const DEFAULT_EMAIL = 'christine.kangume@rukapay.co.ug';
+const DEFAULT_EMAIL = 'christine.kangume@onesourcefresh.com';
 
 async function main() {
   const email = (process.argv[2] || DEFAULT_EMAIL).trim().toLowerCase();

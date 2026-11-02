@@ -85,7 +85,7 @@ export async function sendTransactionalEmail(
   try {
     const baseUrl = options?.appUrl?.replace(/\/$/, '') || appBaseUrl();
     const from = parseSmtpFrom();
-    const fromDomain = from.address.split('@')[1] || 'rukapay.co.ug';
+    const fromDomain = from.address.split('@')[1] || 'one-sourcebrand.com';
     const messageId = buildMessageId(fromDomain);
     const inlineAttachments = await getInlineAttachments();
     const html = buildBrandedEmailHtml(
@@ -96,7 +96,7 @@ export async function sendTransactionalEmail(
         : undefined
     );
 
-    const replyTo = process.env.SMTP_REPLY_TO?.trim() || 'support@rukapay.co.ug';
+    const replyTo = process.env.SMTP_REPLY_TO?.trim() || 'your system administrator';
     const envelopeFrom = envelopeFromAddress();
 
     await transporter.sendMail({
@@ -141,10 +141,10 @@ export async function sendPasswordResetEmail(params: {
     {
       to: params.email,
       toName: params.fullName,
-      subject: 'Reset your OneSource e-Memo password',
+      subject: 'Reset your OneSource password',
       title: 'Password reset',
       body: `<p style="margin:0;">
-        We received a request to reset the password for your <strong>OneSource e-Memo</strong> account.
+        We received a request to reset the password for your <strong>OneSource</strong> account.
         Use the button below to choose a new password. This link is valid for a limited time.
       </p>`,
       highlightText: 'Reset your password',
@@ -152,20 +152,20 @@ export async function sendPasswordResetEmail(params: {
       bullets: [
         'If you did not request a password reset, you can safely ignore this email.',
         'Never share your password or this reset link with anyone.',
-        'This is an automated message from OneSource e-Memo.',
-        'For help, contact support@rukapay.co.ug or your system administrator.',
+        'This is an automated message from OneSource.',
+        'For help, contact your system administrator.',
       ],
       ctaLabel: 'Reset password',
       ctaUrl: params.resetUrl,
       footerNote:
-        'This is an automated message from OneSource e-Memo. Please do not reply to this email.',
+        'This is an automated message from OneSource. Please do not reply to this email.',
     },
     { appUrl: portalUrl }
   );
 }
 
 export const SYSTEM_LAUNCH_EFFECTIVE_DATE = 'Monday, 8 June 2026';
-export const SYSTEM_LAUNCH_TEMP_PASSWORD = 'Welcome@RukaPay2026';
+export const SYSTEM_LAUNCH_TEMP_PASSWORD = 'Welcome@OneSource2026';
 
 export async function sendSystemLaunchEmail(params: {
   email: string;
@@ -182,15 +182,15 @@ export async function sendSystemLaunchEmail(params: {
     {
       to: params.email,
       toName: params.fullName,
-      subject: 'OneSource e-Memo is live — please sign in before Monday 8 June',
-      title: 'e-Memo is live',
+      subject: 'OneSource is live — please sign in before Monday 8 June',
+      title: 'OneSource is live',
       body: `<p style="margin:0;">
-        The <strong>OneSource e-Memo System</strong> is now live at
+        The <strong>OneSource</strong> is now live at
         <a href="${portalUrl}" style="color:#2e5e4a;font-weight:600;">${portalUrl}</a>.
       </p>
       <p style="margin:14px 0 0;">
         From <strong>${effectiveDate}</strong>, all internal memos and leave requests must be
-        created and approved through e-Memo. Paper memos will no longer be processed after this date.
+        created and approved through OneSource. Paper memos will no longer be processed after this date.
       </p>`,
       highlightText: 'Go-live: Monday, 8 June 2026',
       highlightSubtext: `Temporary password: ${tempPassword}`,
@@ -200,10 +200,10 @@ export async function sendSystemLaunchEmail(params: {
         'Upload your signature under <strong>Settings → My Signature</strong> before creating or approving memos.',
         'Use <strong>Create Memo</strong> for payment, procurement, IT, HR, leave, and general internal requests.',
         'Approvers will receive notifications when memos need your action.',
-        'Need help? Contact support@rukapay.co.ug or your system administrator.',
-        'This is an official notice from OneSource e-Memo — please do not reply to this email.',
+        'Need help? Contact your system administrator.',
+        'This is an official notice from OneSource — please do not reply to this email.',
       ],
-      ctaLabel: 'Open e-Memo portal',
+      ctaLabel: 'Open the portal',
       ctaUrl: portalUrl,
       footerNote:
         'Please sign in before Monday, 8 June 2026 so your account and signature are ready.',
@@ -262,10 +262,10 @@ export async function sendWelcomeSignInEmail(params: {
   return sendTransactionalEmail({
     to: params.email,
     toName: params.fullName,
-    subject: 'Your OneSource e-Memo account is ready',
+    subject: 'Your OneSource account is ready',
     title: 'Welcome to the paperless era',
     body: `<p style="margin:0;">
-        You have successfully signed in to the <strong>OneSource e-Memo System</strong>.
+        You have successfully signed in to the <strong>OneSource</strong>.
         Please use the portal link below to create, route, and approve internal memos digitally.${roleNote}
       </p>`,
     highlightText: 'Welcome to the paperless era',
@@ -276,9 +276,9 @@ export async function sendWelcomeSignInEmail(params: {
       'Export approved memos as a watermarked PDF (E-Copy) when processing is complete.',
       'Please do not share your login credentials with anyone.',
       'This is an automated message — please do not reply to this email.',
-      'For access issues, contact your system administrator or support@rukapay.co.ug.',
+      'For access issues, contact your system administrator.',
     ],
-    ctaLabel: 'Open e-Memo portal',
+    ctaLabel: 'Open the portal',
     ctaUrl: dashboardUrl,
     footerNote:
       'This welcome message is sent once after your first successful sign-in.',
@@ -384,7 +384,7 @@ export async function sendMemoEmailToUser(params: {
     bullets: params.bullets ?? [
       'Please sign in to review and take action on this memo.',
       'Do not share approval links or credentials with others.',
-      'This is an automated notification from OneSource e-Memo.',
+      'This is an automated notification from OneSource.',
     ],
     ctaLabel: params.ctaLabel || 'Review memo',
     ctaUrl: memoLink,

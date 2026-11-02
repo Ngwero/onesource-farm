@@ -118,7 +118,7 @@ async function main() {
   const password =
     process.env.TEST_UNIFIED_PASSWORD ||
     process.env.TEAM_INITIAL_PASSWORD ||
-    'Welcome@RukaPay2026';
+    'Welcome@OneSource2026';
 
   console.log('CEO / Chairman routing\n');
   console.log(`  Creator:  ${CEO_MEMO_CREATOR_EMAIL} (Rowena — CEO)`);

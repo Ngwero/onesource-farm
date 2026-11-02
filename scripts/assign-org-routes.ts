@@ -19,7 +19,7 @@ import { CFO_EMAIL } from '../src/lib/memo/designatedUsers';
 import { HR_MEMO_CREATOR_EMAIL } from '../src/lib/workflow/hrWorkflowSteps';
 import { IT_FIRST_CHECKER_EMAIL } from '../src/lib/workflow/itCheckers';
 
-const BD_STAFF_EMAIL = 'mutorine.silas@rukapay.co.ug';
+const BD_STAFF_EMAIL = 'mutorine.silas@onesourcefresh.com';
 
 function loadEnvLocal() {
   const envPath = resolve(process.cwd(), '.env.local');

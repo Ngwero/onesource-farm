@@ -32,7 +32,7 @@ async function main() {
   console.log(`Done. Auth passwords updated: ${ok}/${authUsers.length}`);
   if (failed) console.log(`Failed: ${failed}`);
   console.log('\nSign in as any team email with the password above.');
-  console.log(`Example: emmanuel.ngwero@rukapay.co.ug / ${TEST_PASSWORD}`);
+  console.log(`Example: emmanuel.ngwero@onesourcefresh.com / ${TEST_PASSWORD}`);
 }
 
 main().catch((err) => {

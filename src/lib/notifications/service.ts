@@ -38,9 +38,9 @@ type MemoEmailCopy = {
 const EVENT_COPY: Partial<Record<NotificationEvent, (ctx: MemoNotificationContext) => MemoEmailCopy>> = {
   memo_routed: (ctx) => ({
     title: 'Memo pending your approval',
-    emailSubject: `[OneSource e-Memo] Action required: ${ctx.referenceNumber}`,
+    emailSubject: `[OneSource] Action required: ${ctx.referenceNumber}`,
     message: `Memo ${ctx.referenceNumber} is waiting for your approval.`,
-    bodyHtml: `<p style="margin:0;">A memo has been routed to you for <strong>approval</strong> on the OneSource e-Memo portal.</p>`,
+    bodyHtml: `<p style="margin:0;">A memo has been routed to you for <strong>approval</strong> on the OneSource portal.</p>`,
     highlightText: `Memo : ${ctx.referenceNumber}`,
     highlightSubtext: [
       ctx.subject ? `Subject: ${ctx.subject}` : '',
@@ -53,7 +53,7 @@ const EVENT_COPY: Partial<Record<NotificationEvent, (ctx: MemoNotificationContex
   }),
   memo_submitted: (ctx) => ({
     title: 'New memo submitted',
-    emailSubject: `[OneSource e-Memo] Submitted: ${ctx.referenceNumber}`,
+    emailSubject: `[OneSource] Submitted: ${ctx.referenceNumber}`,
     message: `Memo ${ctx.referenceNumber} has been submitted.`,
     bodyHtml: `<p style="margin:0;">Your memo has been submitted and is entering the approval workflow.</p>`,
     highlightText: `Memo : ${ctx.referenceNumber}`,
@@ -61,7 +61,7 @@ const EVENT_COPY: Partial<Record<NotificationEvent, (ctx: MemoNotificationContex
   }),
   memo_returned: (ctx) => ({
     title: 'Memo returned for correction',
-    emailSubject: `[OneSource e-Memo] Returned: ${ctx.referenceNumber}`,
+    emailSubject: `[OneSource] Returned: ${ctx.referenceNumber}`,
     message: `Memo ${ctx.referenceNumber} was returned for correction.`,
     bodyHtml: `<p style="margin:0;">Your memo has been <strong>returned</strong> for correction.${ctx.comments ? ` Comment: ${ctx.comments}` : ''}</p>`,
     highlightText: `Memo : ${ctx.referenceNumber}`,
@@ -69,7 +69,7 @@ const EVENT_COPY: Partial<Record<NotificationEvent, (ctx: MemoNotificationContex
   }),
   memo_resubmitted: (ctx) => ({
     title: 'Memo resubmitted for your approval',
-    emailSubject: `[OneSource e-Memo] Resubmitted: ${ctx.referenceNumber}`,
+    emailSubject: `[OneSource] Resubmitted: ${ctx.referenceNumber}`,
     message: `Memo ${ctx.referenceNumber} was corrected and sent back for approval.`,
     bodyHtml: `<p style="margin:0;">A returned memo has been <strong>updated and resubmitted</strong> to you for approval.</p>`,
     highlightText: `Memo : ${ctx.referenceNumber}`,
@@ -83,7 +83,7 @@ const EVENT_COPY: Partial<Record<NotificationEvent, (ctx: MemoNotificationContex
   }),
   memo_rejected: (ctx) => ({
     title: 'Memo rejected',
-    emailSubject: `[OneSource e-Memo] Rejected: ${ctx.referenceNumber}`,
+    emailSubject: `[OneSource] Rejected: ${ctx.referenceNumber}`,
     message: `Memo ${ctx.referenceNumber} has been rejected.`,
     bodyHtml: `<p style="margin:0;">Your memo has been <strong>rejected</strong>.${ctx.comments ? ` Reason: ${ctx.comments}` : ''}</p>`,
     highlightText: `Memo : ${ctx.referenceNumber}`,
@@ -91,7 +91,7 @@ const EVENT_COPY: Partial<Record<NotificationEvent, (ctx: MemoNotificationContex
   }),
   memo_fully_approved: (ctx) => ({
     title: 'Memo fully approved',
-    emailSubject: `[OneSource e-Memo] Approved: ${ctx.referenceNumber}`,
+    emailSubject: `[OneSource] Approved: ${ctx.referenceNumber}`,
     message: `Memo ${ctx.referenceNumber} has been fully approved.`,
     bodyHtml: `<p style="margin:0;">Your memo has completed all approval steps and is now <strong>approved</strong>.</p>`,
     highlightText: `Memo : ${ctx.referenceNumber}`,
@@ -99,7 +99,7 @@ const EVENT_COPY: Partial<Record<NotificationEvent, (ctx: MemoNotificationContex
   }),
   memo_trail_fully_approved: (ctx) => ({
     title: 'Memo fully approved',
-    emailSubject: `[OneSource e-Memo] Approved: ${ctx.referenceNumber}`,
+    emailSubject: `[OneSource] Approved: ${ctx.referenceNumber}`,
     message: `Memo ${ctx.referenceNumber} has been fully approved.`,
     bodyHtml: `<p style="margin:0;">A memo you were part of in the approval trail is now <strong>fully approved</strong>.</p>`,
     highlightText: `Memo : ${ctx.referenceNumber}`,
@@ -111,12 +111,12 @@ const EVENT_COPY: Partial<Record<NotificationEvent, (ctx: MemoNotificationContex
       .join(' · '),
     bullets: [
       'Sign in to view the approved memo and signatures on the portal.',
-      'This is an automated notification from OneSource e-Memo.',
+      'This is an automated notification from OneSource.',
     ],
   }),
   memo_approved: (ctx) => ({
     title: 'Memo approved at current step',
-    emailSubject: `[OneSource e-Memo] Progress: ${ctx.referenceNumber}`,
+    emailSubject: `[OneSource] Progress: ${ctx.referenceNumber}`,
     message: `Memo ${ctx.referenceNumber} was approved at the current step.`,
     bodyHtml: `<p style="margin:0;">Your memo has been approved at the current step and moved forward in the workflow.</p>`,
     highlightText: `Memo : ${ctx.referenceNumber}`,
@@ -183,7 +183,7 @@ export async function sendNotification(params: {
 
     const copy = EVENT_COPY[params.type]?.(ctx) || {
       title: params.title,
-      emailSubject: `[OneSource e-Memo] ${params.title}`,
+      emailSubject: `[OneSource] ${params.title}`,
       message: params.message,
       bodyHtml: `<p>${params.message}</p>`,
     };

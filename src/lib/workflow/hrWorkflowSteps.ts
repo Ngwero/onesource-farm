@@ -18,4 +18,4 @@ export const HR_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
   },
 ];
 
-export const HR_MEMO_CREATOR_EMAIL = 'dorothy.kubakurungi@rukapay.co.ug';
+export const HR_MEMO_CREATOR_EMAIL = 'dorothy.kubakurungi@onesourcefresh.com';

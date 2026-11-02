@@ -30,5 +30,5 @@ export const MARKETING_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
   },
 ];
 
-export const MARKETING_HEAD_EMAIL = 'margaret.nassiwa@rukapay.co.ug';
-export const BUSINESS_HEAD_EMAIL = 'norman.nowamani@rukapay.co.ug';
+export const MARKETING_HEAD_EMAIL = 'margaret.nassiwa@onesourcefresh.com';
+export const BUSINESS_HEAD_EMAIL = 'norman.nowamani@onesourcefresh.com';

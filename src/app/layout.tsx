@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'OneSource e-Memo System',
+  title: 'OneSource',
   description: 'Internal memo management for OneSource',
   icons: {
     icon: '/onesource-icon.png',

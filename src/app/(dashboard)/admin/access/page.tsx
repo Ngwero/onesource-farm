@@ -89,7 +89,7 @@ function UserRolesDialog({
         <DialogHeader>
           <DialogTitle>Farm roles for {user.full_name}</DialogTitle>
           <DialogDescription>
-            Farm roles control what this person can see and do in the farm modules. Their eMemo role
+            Farm roles control what this person can see and do in the farm modules. Their System role
             {user.ememo_role ? ` (${user.ememo_role.name})` : ''} is managed separately under Users.
           </DialogDescription>
         </DialogHeader>
@@ -176,7 +176,7 @@ function UsersTab({ roles }: { roles: RoleRow[] }) {
             <TableRow>
               <TableHead>User</TableHead>
               <TableHead>Department</TableHead>
-              <TableHead>eMemo role</TableHead>
+              <TableHead>System role</TableHead>
               <TableHead>Farm roles</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -384,7 +384,7 @@ function AccessPage() {
     <div className="space-y-5">
       <PageHeader
         title="Access & roles"
-        subtitle="Add staff, email them their login, assign farm roles, and control what each role can do. eMemo approval roles are assigned when you create the user."
+        subtitle="Add staff, email them their login, assign farm roles, and control what each role can do. approval roles are assigned when you create the user."
       />
       {roles.error ? (
         <ErrorState message={errorMessage(roles.error)} onRetry={() => roles.refetch()} />

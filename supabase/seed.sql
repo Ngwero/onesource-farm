@@ -1,4 +1,4 @@
--- Seed data for OneSource e-Memo System
+-- Seed data for OneSource
 
 -- Roles
 INSERT INTO roles (name, slug, description) VALUES
@@ -79,7 +79,7 @@ INSERT INTO branding_settings (
   'P.O BOX 111498, 2nd Floor, TMT Building' || E'\n' ||
   'Bukoto-Ntinda Road, Kampala' || E'\n' ||
   'Tel: +256 (0) 200 244 400' || E'\n' ||
-  'Email: info@rukapay.co.ug',
+  'Email: your system administrator',
   'OneSource',
   'CONFIDENTIAL - This document is intended for internal use only. Unauthorized disclosure, copying, or distribution is strictly prohibited.',
   'Page {current} of {total}'

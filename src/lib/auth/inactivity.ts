@@ -5,4 +5,4 @@ export const SESSION_INACTIVITY_SECONDS = SESSION_INACTIVITY_MS / 1000;
 
 export const SESSION_INACTIVITY_MINUTES = 20;
 
-export const CLIENT_LAST_ACTIVITY_KEY = 'rukapay_last_activity';
+export const CLIENT_LAST_ACTIVITY_KEY = 'onesource_last_activity';

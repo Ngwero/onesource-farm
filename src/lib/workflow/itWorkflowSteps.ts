@@ -1,6 +1,6 @@
 import type { WorkflowStep } from '@/lib/workflow/engine';
 
-export const IT_MEMO_CREATOR_EMAIL = 'doreen.kembabazi@rukapay.co.ug';
+export const IT_MEMO_CREATOR_EMAIL = 'doreen.kembabazi@onesourcefresh.com';
 
 /** IT Request: Emmanuel → Jim → Christine (finance) → CEO */
 export const IT_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [

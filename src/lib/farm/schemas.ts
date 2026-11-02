@@ -536,12 +536,12 @@ export const SYSTEM_SETTINGS = {
     kind: 'number',
   },
   'ememo.purchase_order_threshold': {
-    label: 'Purchase orders needing eMemo approval (amount at or above)',
+    label: 'Purchase orders needing approval (amount at or above)',
     schema: z.number().min(0),
     kind: 'number',
   },
   'ememo.supplier_payment_threshold': {
-    label: 'Supplier payments needing eMemo approval (amount at or above)',
+    label: 'Supplier payments needing approval (amount at or above)',
     schema: z.number().min(0),
     kind: 'number',
   },

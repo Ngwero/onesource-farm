@@ -93,7 +93,7 @@ export function InviteUserSheet({ open, onOpenChange, farmRoles }: Props) {
       />
       <SelectField<InviteUserInput>
         name="role_id"
-        label="eMemo role"
+        label="System role"
         required
         placeholder="Select a role"
         options={(lookup.data?.roles ?? []).map((r) => ({ value: r.id, label: r.name }))}

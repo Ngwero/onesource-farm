@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 
-const PRODUCTION_APP_URL = 'https://ememo.rukapay.co.ug';
+const PRODUCTION_APP_URL = 'https://onesourcefresh.com';
 
 /** Portal link for go-live announcement emails (always production when app runs on Vercel). */
 export function resolveLaunchEmailAppUrl(request?: NextRequest): string {

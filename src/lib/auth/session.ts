@@ -6,8 +6,8 @@ import { normalizeUserProfile } from '@/lib/auth/profile';
 import { SESSION_INACTIVITY_MS, SESSION_INACTIVITY_SECONDS } from '@/lib/auth/inactivity';
 import type { User } from '@/types';
 
-const DEV_SESSION_COOKIE = 'rukapay_dev_session';
-const LAST_ACTIVITY_COOKIE = 'rukapay_last_activity';
+const DEV_SESSION_COOKIE = 'onesource_dev_session';
+const LAST_ACTIVITY_COOKIE = 'onesource_last_activity';
 const DEV_SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
 export class AuthError extends Error {

@@ -98,7 +98,7 @@ export async function fetchCeoUser(supabase: SupabaseClient): Promise<TestUser |
 
 /** Any staff account (for “open create” tests). */
 export async function fetchAnyStaff(supabase: SupabaseClient): Promise<TestUser | null> {
-  const preferred = await fetchUserByEmail(supabase, 'ngabo.sevelin@rukapay.co.ug');
+  const preferred = await fetchUserByEmail(supabase, 'ngabo.sevelin@onesourcefresh.com');
   if (preferred?.role_slug === 'staff') return preferred;
 
   const { data } = await supabase

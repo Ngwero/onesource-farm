@@ -599,7 +599,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
                 <input
                   type="email"
                   className="input-field flex-1 text-base sm:text-sm"
-                  placeholder="colleague@rukapay.co.ug"
+                  placeholder="colleague@email.com"
                   value={shareEmail}
                   onChange={(e) => setShareEmail(e.target.value)}
                 />

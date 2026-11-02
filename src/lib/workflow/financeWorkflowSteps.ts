@@ -20,9 +20,9 @@ export const FINANCE_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
   },
 ];
 
-export const FINANCE_MEMO_CREATOR_EMAIL = 'christine.kangume@rukapay.co.ug';
-export const FINANCE_MEMO_APPROVER_EMAIL = 'christine.kangume@rukapay.co.ug';
-export const FINANCE_DEPT_HEAD_EMAIL = 'amara.oto@rukapay.co.ug';
+export const FINANCE_MEMO_CREATOR_EMAIL = 'christine.kangume@onesourcefresh.com';
+export const FINANCE_MEMO_APPROVER_EMAIL = 'christine.kangume@onesourcefresh.com';
+export const FINANCE_DEPT_HEAD_EMAIL = 'amara.oto@onesourcefresh.com';
 
 export function isFinanceRequestCreator(
   user: { email?: string | null } | null | undefined

@@ -420,7 +420,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
     })),
     {
       id: 'ememo',
-      label: 'eMemo',
+      label: 'Requests',
       icon: <FileText size={18} />,
       items: navItems.filter((i) => i !== dashboardItem),
     },

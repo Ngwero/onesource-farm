@@ -7,7 +7,7 @@ export const DEFAULT_COMPANY_CONTACT = [
   'P.O BOX 111498, 2nd Floor, TMT Building',
   'Bukoto-Ntinda Road, Kampala',
   'Tel: +256 (0) 200 244 400',
-  'Email: info@rukapay.co.ug',
+  'Email: your system administrator',
 ];
 
 export function getCompanyContactLines(branding?: Partial<BrandingSettings>): string[] {

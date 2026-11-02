@@ -44,7 +44,7 @@ export function buildBrandedEmailHtml(
   const logoUrl = inline?.logoCid ? `cid:${inline.logoCid}` : `${appUrl}/onesource-logo-white.png`;
   const heroUrl = inline?.heroCid
     ? `cid:${inline.heroCid}`
-    : payload.heroImageUrl || `${appUrl}/email-hero.png`;
+    : payload.heroImageUrl || `${appUrl}/email-hero.jpg`;
   const portalUrl = payload.ctaUrl || appUrl;
   const safeName = displayName(payload.toName || 'Colleague');
 
@@ -121,7 +121,7 @@ export function buildBrandedEmailHtml(
                   </td>
                   <td align="center" style="vertical-align:middle;">
                     <span style="color:#ffffff;font-size:15px;font-weight:700;letter-spacing:0.02em;">
-                      OneSource e-Memo
+                      OneSource
                     </span>
                   </td>
                   <td width="120" align="right" style="vertical-align:middle;">
@@ -182,7 +182,7 @@ export function buildBrandedEmailHtml(
 
               <p style="margin:28px 0 0;font-size:14px;font-weight:700;color:#212121;">
                 Regards,<br/>
-                OneSource e-Memo Admin
+                OneSource
               </p>
             </td>
           </tr>
@@ -190,7 +190,7 @@ export function buildBrandedEmailHtml(
           <!-- Footer links -->
           <tr>
             <td style="background:${BRAND_FOOTER};padding:14px 20px;text-align:center;">
-              <a href="mailto:support@rukapay.co.ug"
+              <a href="mailto:your system administrator"
                  style="color:#ffffff;font-size:11px;font-weight:700;text-decoration:none;
                         letter-spacing:0.06em;text-transform:uppercase;margin:0 12px;">
                 Contact us

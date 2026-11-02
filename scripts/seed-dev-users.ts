@@ -48,15 +48,15 @@ if (!supabaseUrl || !serviceRoleKey) {
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 const DEMO_USERS = [
-  { email: 'admin@rukapay.com', password: 'Admin@123', full_name: 'System Admin', role: 'admin', dept: 'CEO' },
-  { email: 'staff@rukapay.com', password: 'Staff@123', full_name: 'John Staff', role: 'staff', dept: 'IT' },
-  { email: 'depthead@rukapay.com', password: 'Head@123', full_name: 'Sarah Dept Head', role: 'department_head', dept: 'IT' },
-  { email: 'finance@rukapay.com', password: 'Finance@123', full_name: 'Peter Finance', role: 'finance_reviewer', dept: 'Finance' },
-  { email: 'hr@rukapay.com', password: 'HR@123', full_name: 'Mary HR', role: 'hr_reviewer', dept: 'HR' },
-  { email: 'ceo@rukapay.com', password: 'CEO@123', full_name: 'David CEO', role: 'ceo', dept: 'CEO' },
-  { email: 'cbdo@rukapay.com', password: 'EXCO@123', full_name: 'James CBDO', role: 'exco_member', dept: 'BD', exco: 'CBDO' },
-  { email: 'cto@rukapay.com', password: 'EXCO@123', full_name: 'Alice CTO', role: 'exco_member', dept: 'IT', exco: 'CTO' },
-  { email: 'cfo@rukapay.com', password: 'EXCO@123', full_name: 'Robert CFO', role: 'exco_member', dept: 'Finance', exco: 'CFO' },
+  { email: 'admin@onesourcefresh.com', password: 'Admin@123', full_name: 'System Admin', role: 'admin', dept: 'CEO' },
+  { email: 'staff@onesourcefresh.com', password: 'Staff@123', full_name: 'John Staff', role: 'staff', dept: 'IT' },
+  { email: 'depthead@onesourcefresh.com', password: 'Head@123', full_name: 'Sarah Dept Head', role: 'department_head', dept: 'IT' },
+  { email: 'finance@onesourcefresh.com', password: 'Finance@123', full_name: 'Peter Finance', role: 'finance_reviewer', dept: 'Finance' },
+  { email: 'hr@onesourcefresh.com', password: 'HR@123', full_name: 'Mary HR', role: 'hr_reviewer', dept: 'HR' },
+  { email: 'ceo@onesourcefresh.com', password: 'CEO@123', full_name: 'David CEO', role: 'ceo', dept: 'CEO' },
+  { email: 'cbdo@onesourcefresh.com', password: 'EXCO@123', full_name: 'James CBDO', role: 'exco_member', dept: 'BD', exco: 'CBDO' },
+  { email: 'cto@onesourcefresh.com', password: 'EXCO@123', full_name: 'Alice CTO', role: 'exco_member', dept: 'IT', exco: 'CTO' },
+  { email: 'cfo@onesourcefresh.com', password: 'EXCO@123', full_name: 'Robert CFO', role: 'exco_member', dept: 'Finance', exco: 'CFO' },
 ];
 
 async function seed() {

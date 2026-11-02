@@ -1,6 +1,6 @@
 -- Farm Export Management System — Phase 1 foundation
 -- Farm, blocks, planting cycles, crops, master data, permission-based access, attachments.
--- eMemo tables are untouched: users.role_id keeps driving eMemo routing; farm access uses app roles.
+-- OneSource tables are untouched: users.role_id keeps driving OneSource routing; farm access uses app roles.
 -- Safe to re-run: objects use IF NOT EXISTS and seeds use ON CONFLICT DO NOTHING.
 
 CREATE OR REPLACE FUNCTION farm_set_updated_at() RETURNS trigger AS $$
@@ -342,7 +342,7 @@ INSERT INTO app_roles (slug, name, description) VALUES
   ('finance_officer', 'Finance Officer', 'Records invoices, payments and costs'),
   ('auditor', 'Auditor / Viewer', 'Read-only access across the system'),
   ('management', 'Management / CEO', 'Dashboard and reporting visibility across the operation'),
-  ('ememo_approver', 'eMemo Approver', 'Approves farm requests routed through the eMemo module')
+  ('ememo_approver', 'OneSource Approver', 'Approves farm requests routed through the OneSource module')
 ON CONFLICT (slug) DO NOTHING;
 
 -- ——— Seed: permissions (catalogue for all phases) ———
@@ -463,7 +463,7 @@ JOIN permissions p
   ON EXISTS (SELECT 1 FROM unnest(m.patterns) AS pat WHERE p.key LIKE replace(pat, '*', '%'))
 ON CONFLICT DO NOTHING;
 
--- Existing eMemo administrators become system administrators.
+-- Existing OneSource administrators become system administrators.
 INSERT INTO user_app_roles (user_id, role_id)
 SELECT u.id, ar.id
 FROM users u
@@ -528,8 +528,8 @@ INSERT INTO system_settings (key, value, description) VALUES
   ('general.default_currency', '"USD"', 'Currency used for contracts and reporting'),
   ('general.weight_unit', '"kg"', 'Base unit for harvest, stock and export weights'),
   ('general.fiscal_year_start_month', '1', 'Month (1–12) the financial year starts'),
-  ('ememo.purchase_order_threshold', '1000', 'Purchase orders at or above this amount need eMemo approval'),
-  ('ememo.supplier_payment_threshold', '1000', 'Supplier payments at or above this amount need eMemo approval'),
+  ('ememo.purchase_order_threshold', '1000', 'Purchase orders at or above this amount need approval'),
+  ('ememo.supplier_payment_threshold', '1000', 'Supplier payments at or above this amount need approval'),
   ('alerts.upcoming_harvest_days', '7', 'Days before expected harvest to raise an alert'),
   ('alerts.document_expiry_days', '14', 'Days before a document expires to raise an alert')
 ON CONFLICT (key) DO NOTHING;

@@ -1,10 +1,10 @@
 /**
- * Send the e-Memo go-live announcement to all active staff.
+ * Send the go-live announcement to all active staff.
  *
  * Usage:
  *   npm run send:launch              # preview recipients (dry run)
  *   npm run send:launch -- --send    # send to everyone
- *   npm run send:launch -- you@rukapay.co.ug --send   # test one address first
+ *   npm run send:launch -- you@email.com --send   # test one address first
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -31,7 +31,7 @@ async function main() {
   const appUrl = resolveLaunchEmailAppUrl();
   const smtpHost = process.env.SMTP_HOST?.trim();
 
-  console.log('\n── RukaPay e-Memo launch announcement ──');
+  console.log('\n── OneSource launch announcement ──');
   console.log(`  Portal:           ${appUrl}`);
   console.log(`  Go-live:          ${SYSTEM_LAUNCH_EFFECTIVE_DATE}`);
   console.log(`  Temp password:    ${SYSTEM_LAUNCH_TEMP_PASSWORD}`);

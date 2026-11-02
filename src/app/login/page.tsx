@@ -44,12 +44,12 @@ function LoginForm() {
   }, [searchParams]);
 
   useEffect(() => {
-    const welcomeNotice = sessionStorage.getItem('rukapay_welcome_notice');
+    const welcomeNotice = sessionStorage.getItem('onesource_welcome_notice');
     if (welcomeNotice) {
-      sessionStorage.removeItem('rukapay_welcome_notice');
+      sessionStorage.removeItem('onesource_welcome_notice');
     }
-    if (sessionStorage.getItem('rukapay_password_ready') === '1') {
-      sessionStorage.removeItem('rukapay_password_ready');
+    if (sessionStorage.getItem('onesource_password_ready') === '1') {
+      sessionStorage.removeItem('onesource_password_ready');
       const base = 'Password saved successfully. Sign in with your new password.';
       setSuccess(welcomeNotice ? `${base} ${welcomeNotice}` : base);
     } else if (welcomeNotice) {
@@ -180,7 +180,7 @@ function LoginForm() {
               className="login-input"
               value={forgotEmail}
               onChange={(e) => setForgotEmail(e.target.value)}
-              placeholder="name@rukapay.co.ug"
+              placeholder="name@email.com"
               required
             />
             <div className="flex gap-2">

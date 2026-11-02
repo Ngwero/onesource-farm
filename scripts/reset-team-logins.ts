@@ -3,7 +3,7 @@
  *
  *   npm run reset:logins
  *
- * Sets every account to TEST_UNIFIED_PASSWORD (default Test@RukaPay2026),
+ * Sets every account to TEST_UNIFIED_PASSWORD (default Test@OneSource2026),
  * clears must_set_password, then runs assign:org and assign:it-checkers.
  */
 
@@ -35,7 +35,7 @@ async function main() {
 
   console.log('\n────────────────────────────────────────');
   console.log('All team logins reset for testing.');
-  console.log(`  Sign in: any @rukapay.co.ug email + ${TEST_PASSWORD}`);
+  console.log(`  Sign in: any @onesourcefresh.com email + ${TEST_PASSWORD}`);
   console.log('  Admin → Users: assign department & role per person.');
   console.log('────────────────────────────────────────\n');
 }

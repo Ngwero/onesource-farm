@@ -17,14 +17,14 @@ const MIN_LENGTH = 10;
 
 const DISALLOWED_PASSWORDS = new Set(
   [
-    'Welcome@RukaPay2026',
+    'Welcome@OneSource2026',
     'password',
     'password1',
     'Password1',
     'Password123',
     '12345678',
     'qwerty123',
-    'rukapay123',
+    'onesource123',
   ].map((p) => p.toLowerCase())
 );
 
@@ -88,7 +88,7 @@ export function validateAccountPassword(password: string): { ok: boolean; reason
     return { ok: false, reason: 'Password must include a special character (!@#$…)' };
   }
 
-  const initial = process.env.TEAM_INITIAL_PASSWORD || 'Welcome@RukaPay2026';
+  const initial = process.env.TEAM_INITIAL_PASSWORD || 'Welcome@OneSource2026';
   if (password === initial) {
     return { ok: false, reason: 'Choose a new password — not the temporary one from your administrator' };
   }

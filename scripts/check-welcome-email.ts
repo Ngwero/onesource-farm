@@ -1,8 +1,8 @@
 /**
  * Check welcome-email status for a user and optionally resend.
  * Usage:
- *   npm run check:email -- rowena.turinawe@rukapay.co.ug
- *   npm run check:email -- rowena.turinawe@rukapay.co.ug --send
+ *   npm run check:email -- rowena.turinawe@onesourcefresh.com
+ *   npm run check:email -- rowena.turinawe@onesourcefresh.com --send
  */
 
 import { readFileSync, existsSync } from 'fs';
@@ -91,7 +91,7 @@ async function main() {
     console.log('     Welcome email fires on the FIRST login after password is set.');
   } else if (user.welcome_email_sent_at) {
     console.log(`  ✓ Marked sent at ${user.welcome_email_sent_at}`);
-    console.log('     Check inbox/spam for: Welcome to the paperless era — RukaPay e-Memo');
+    console.log('     Check inbox/spam for: Welcome to the paperless era — OneSource');
   } else {
     console.log('  ⚠ Password is set but welcome_email_sent_at is empty.');
     console.log('     Either login has not completed since setup, SMTP failed, or');
@@ -108,7 +108,7 @@ async function main() {
       : await sendWelcomeSignInEmailOnce(user.id);
     console.log(`  Result: sent=${result.sent}${result.reason ? `, reason=${result.reason}` : ''}`);
     if (result.sent) {
-      console.log('  Check inbox and spam for: Welcome to the paperless era — RukaPay e-Memo');
+      console.log('  Check inbox and spam for: Welcome to the paperless era — OneSource');
     }
   } else if (!user.welcome_email_sent_at && !user.must_set_password && smtpHost) {
     console.log('\n  Tip: run with --send or --resend:');

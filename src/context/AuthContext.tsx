@@ -20,8 +20,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'rukapay_ememo_user';
-const PENDING_KEY = 'rukapay_ememo_pending';
+const STORAGE_KEY = 'onesource_ememo_user';
+const PENDING_KEY = 'onesource_ememo_pending';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

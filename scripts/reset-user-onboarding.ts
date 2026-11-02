@@ -1,6 +1,6 @@
 /**
  * Reset a user so they can go through first-login password setup again.
- * Usage: npm run reset:user -- rowena.turinawe@rukapay.co.ug
+ * Usage: npm run reset:user -- rowena.turinawe@onesourcefresh.com
  */
 
 import { readFileSync, existsSync } from 'fs';
@@ -31,7 +31,7 @@ function loadEnvLocal() {
 
 loadEnvLocal();
 
-const INITIAL_PASSWORD = process.env.TEAM_INITIAL_PASSWORD || 'Welcome@RukaPay2026';
+const INITIAL_PASSWORD = process.env.TEAM_INITIAL_PASSWORD || 'Welcome@OneSource2026';
 
 async function main() {
   const emailArg = process.argv[2];

@@ -8,16 +8,16 @@ import {
 import { IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL } from '@/lib/workflow/itCheckers';
 
 /** Final approver (CEO) for all memos except those authored by the CEO. */
-export const CEO_APPROVER_EMAIL = 'rowena.turinawe@rukapay.co.ug';
+export const CEO_APPROVER_EMAIL = 'rowena.turinawe@onesourcefresh.com';
 
 /** CEO memos are authored by Rowena and approved by the Chairman. */
 export const CEO_MEMO_CREATOR_EMAIL = CEO_APPROVER_EMAIL;
 
 /** Chairman — final approver for memos created by the CEO. */
-export const CHAIRMAN_APPROVER_EMAIL = 'douglasrk@rukapay.co.ug';
+export const CHAIRMAN_APPROVER_EMAIL = 'douglasrk@onesourcefresh.com';
 
 /** Finance department head (Amara). Reviews Finance Request memos from Christine. */
-export const CFO_EMAIL = 'amara.oto@rukapay.co.ug';
+export const CFO_EMAIL = 'amara.oto@onesourcefresh.com';
 
 /** IT department heads. */
 export const IT_DEPT_HEAD_EMAILS = [IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL] as const;

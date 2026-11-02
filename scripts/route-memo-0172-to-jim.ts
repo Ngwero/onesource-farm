@@ -31,7 +31,7 @@ function loadEnvLocal() {
 loadEnvLocal();
 
 const REF = 'RPS/EMEMO/2026/0172';
-const JIM_EMAIL = 'jim.ntare@rukapay.co.ug';
+const JIM_EMAIL = 'jim.ntare@onesourcefresh.com';
 
 async function main() {
   const supabase = createClient(

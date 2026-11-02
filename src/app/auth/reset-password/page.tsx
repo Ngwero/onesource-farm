@@ -96,11 +96,11 @@ export default function AuthResetPasswordPage() {
 
       await supabase.auth.signOut();
       sessionStorage.setItem(
-        'rukapay_password_ready',
+        'onesource_password_ready',
         '1'
       );
       sessionStorage.setItem(
-        'rukapay_welcome_notice',
+        'onesource_welcome_notice',
         'Password updated. Sign in with your new password.'
       );
       router.replace('/login');

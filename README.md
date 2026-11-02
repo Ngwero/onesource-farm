@@ -1,4 +1,4 @@
-# OneSource e-Memo System
+# OneSource
 
 Internal memo management system for **OneSource**.
 
@@ -35,7 +35,7 @@ Internal memo management system for **OneSource**.
 ### 1. Clone and install
 
 ```bash
-cd rukapay-ememo-system
+cd onesource-ememo-system
 npm install
 cp .env.example .env.local
 ```
@@ -48,7 +48,7 @@ cp .env.example .env.local
    - `supabase/migrations/001_initial_schema.sql`
    - `supabase/seed.sql`
 
-### 3. Team accounts (RukaPay staff)
+### 3. Team accounts (OneSource staff)
 
 Run the password-setup migration in **Supabase → SQL Editor**:
 
@@ -56,15 +56,15 @@ Run the password-setup migration in **Supabase → SQL Editor**:
 ALTER TABLE users ADD COLUMN IF NOT EXISTS must_set_password BOOLEAN NOT NULL DEFAULT FALSE;
 ```
 
-Then seed the team (18 accounts from `@rukapay.co.ug`):
+Then seed the team (18 accounts from `@onesourcefresh.com`):
 
 ```bash
 npm run seed:team
 ```
 
-- **First login:** work email + temporary password `Welcome@RukaPay2026` (then set a new password with confirmation).
-- **Testing (all accounts):** `npm run reset:logins` or **Admin → Users → Reset all logins (testing)** — shared password `Test@RukaPay2026`, skips set-password screen.
-- **Admin + 1st IT checker (Emma):** `emmanuel.ngwero@rukapay.co.ug` — admin role in DB; IT 1st-check queue via sidebar. `npm run assign:admin` / `npm run assign:it-checkers`.
+- **First login:** work email + temporary password `Welcome@OneSource2026` (then set a new password with confirmation).
+- **Testing (all accounts):** `npm run reset:logins` or **Admin → Users → Reset all logins (testing)** — shared password `Test@OneSource2026`, skips set-password screen.
+- **Admin + 1st IT checker (Emma):** `emmanuel.ngwero@onesourcefresh.com` — admin role in DB; IT 1st-check queue via sidebar. `npm run assign:admin` / `npm run assign:it-checkers`.
 - Everyone else starts as **Staff** (can create memos); admin assigns **department** and **role** per person in **Admin → Users**.
 
 ### 4. Seed demo users (optional, old dev accounts)
@@ -84,20 +84,20 @@ mkdir -p uploads/attachments uploads/signatures uploads/logos
 Add SMTP settings to `.env.local` so approvers receive email when a memo is submitted or routed to them:
 
 ```env
-SMTP_HOST=mail.rukapay.co.ug
+SMTP_HOST=mail.one-sourcebrand.com
 SMTP_PORT=465
 SMTP_SECURE=true
-SMTP_USER=noreply@rukapay.co.ug
+SMTP_USER=noreply@one-sourcebrand.com
 SMTP_PASS=your-email-account-password
-SMTP_FROM="RukaPay e-Memo <noreply@rukapay.co.ug>"
+SMTP_FROM="OneSource <noreply@one-sourcebrand.com>"
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-Use the password for the `noreply@rukapay.co.ug` mailbox (outgoing server: `mail.rukapay.co.ug`, port **465** SSL). Set `SMTP_REPLY_TO=support@rukapay.co.ug`. In-app notifications always appear in the bell panel; email is sent in parallel when SMTP is configured.
+Use the password for the `noreply@one-sourcebrand.com` mailbox (outgoing server: `mail.one-sourcebrand.com`, port **465** SSL). Set `SMTP_REPLY_TO=your system administrator`. In-app notifications always appear in the bell panel; email is sent in parallel when SMTP is configured.
 
 After a user’s **first successful sign-in** (once they have set their own password), they receive a one-time welcome email. Apply `supabase/migrations/003_welcome_email_sent.sql` in the Supabase SQL editor so the system does not resend it on every login.
 
-**Outlook inbox (not Junk / Other):** Ask IT to enable **SPF**, **DKIM**, and **DMARC** for `rukapay.co.ug` on the same host that sends mail (`mail.rukapay.co.ug`). The app sends as transactional mail (not bulk), embeds images inline, and uses a clear subject line. Users can also right-click the first message → **Move to Inbox** → **Always move messages from this sender** so future e-Memo mail stays in the inbox.
+**Outlook inbox (not Junk / Other):** Ask IT to enable **SPF**, **DKIM**, and **DMARC** for `one-sourcebrand.com` on the same host that sends mail (`mail.one-sourcebrand.com`). The app sends as transactional mail (not bulk), embeds images inline, and uses a clear subject line. Users can also right-click the first message → **Move to Inbox** → **Always move messages from this sender** so future OneSource mail stays in the inbox.
 
 ### 6. Run development server
 
@@ -111,15 +111,15 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Email | Role | Password |
 |-------|------|----------|
-| admin@rukapay.com | Admin | Admin@123 |
-| staff@rukapay.com | Staff | Staff@123 |
-| depthead@rukapay.com | Department Head | Head@123 |
-| finance@rukapay.com | Finance Reviewer | Finance@123 |
-| hr@rukapay.com | HR Reviewer | HR@123 |
-| ceo@rukapay.com | CEO | CEO@123 |
-| cbdo@rukapay.com | EXCO (CBDO) | EXCO@123 |
-| cto@rukapay.com | EXCO (CTO) | EXCO@123 |
-| cfo@rukapay.com | EXCO (CFO) | EXCO@123 |
+| admin@onesourcefresh.com | Admin | Admin@123 |
+| staff@onesourcefresh.com | Staff | Staff@123 |
+| depthead@onesourcefresh.com | Department Head | Head@123 |
+| finance@onesourcefresh.com | Finance Reviewer | Finance@123 |
+| hr@onesourcefresh.com | HR Reviewer | HR@123 |
+| ceo@onesourcefresh.com | CEO | CEO@123 |
+| cbdo@onesourcefresh.com | EXCO (CBDO) | EXCO@123 |
+| cto@onesourcefresh.com | EXCO (CTO) | EXCO@123 |
+| cfo@onesourcefresh.com | EXCO (CFO) | EXCO@123 |
 
 ## Default Workflows
 
@@ -142,12 +142,12 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Code | Head(s) |
 |------|---------|
-| HR | dorothy.kubakurungi@rukapay.co.ug |
+| HR | dorothy.kubakurungi@onesourcefresh.com |
 | IT | emmanuel.ngwero + jim.ntare |
-| OPS | emmanuel.ngwero@rukapay.co.ug |
-| MKT | margaret.nassiwa@rukapay.co.ug (marketing head) |
-| BD | norman.nowamani@rukapay.co.ug (business — marketing_request step) |
-| FIN | amara.oto@rukapay.co.ug |
+| OPS | emmanuel.ngwero@onesourcefresh.com |
+| MKT | margaret.nassiwa@onesourcefresh.com (marketing head) |
+| BD | norman.nowamani@onesourcefresh.com (business — marketing_request step) |
+| FIN | amara.oto@onesourcefresh.com |
 
 | Memo type | Route |
 |-----------|-------|

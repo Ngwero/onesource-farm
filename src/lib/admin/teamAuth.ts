@@ -3,10 +3,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export const TEST_PASSWORD =
   process.env.TEST_UNIFIED_PASSWORD ||
   process.env.TEAM_INITIAL_PASSWORD ||
-  'Test@RukaPay2026';
+  'Test@OneSource2026';
 
 export const ONBOARDING_PASSWORD =
-  process.env.TEAM_INITIAL_PASSWORD || 'Welcome@RukaPay2026';
+  process.env.TEAM_INITIAL_PASSWORD || 'Welcome@OneSource2026';
 
 export type LoginResetMode = 'test' | 'onboarding';
 

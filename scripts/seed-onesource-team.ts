@@ -1,5 +1,5 @@
 /**
- * Seed RukaPay team accounts.
+ * Seed OneSource team accounts.
  * Run after migrations + seed.sql:
  *   npm run seed:team
  *
@@ -42,54 +42,54 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const INITIAL_PASSWORD =
   process.env.TEST_UNIFIED_PASSWORD ||
   process.env.TEAM_INITIAL_PASSWORD ||
-  'Welcome@RukaPay2026';
+  'Welcome@OneSource2026';
 const SKIP_PASSWORD_SETUP = Boolean(process.env.TEST_UNIFIED_PASSWORD);
 
 const TEAM_EMAILS = [
-  'allan.kankiriho@rukapay.co.ug',
-  'amara.oto@rukapay.co.ug',
-  'ashiraf.kaweesi@rukapay.co.ug',
-  'christine.kangume@rukapay.co.ug',
-  'doreen.kembabazi@rukapay.co.ug',
-  'doreen.nalwooga@rukapay.co.ug',
-  'dorothy.kubakurungi@rukapay.co.ug',
-  'emmanuel.ngwero@rukapay.co.ug',
-  'gerald.naluja@rukapay.co.ug',
-  'jason.ishiimwe@rukapay.co.ug',
-  'jim.ntare@rukapay.co.ug',
-  'margaret.nassiwa@rukapay.co.ug',
-  'micheal.osiaga@rukapay.co.ug',
-  'mutorine.silas@rukapay.co.ug',
-  'ngabo.sevelin@rukapay.co.ug',
-  'norman.nowamani@rukapay.co.ug',
-  'portia.nayebare@rukapay.co.ug',
-  'rowena.turinawe@rukapay.co.ug',
-  'douglasrk@rukapay.co.ug',
+  'allan.kankiriho@onesourcefresh.com',
+  'amara.oto@onesourcefresh.com',
+  'ashiraf.kaweesi@onesourcefresh.com',
+  'christine.kangume@onesourcefresh.com',
+  'doreen.kembabazi@onesourcefresh.com',
+  'doreen.nalwooga@onesourcefresh.com',
+  'dorothy.kubakurungi@onesourcefresh.com',
+  'emmanuel.ngwero@onesourcefresh.com',
+  'gerald.naluja@onesourcefresh.com',
+  'jason.ishiimwe@onesourcefresh.com',
+  'jim.ntare@onesourcefresh.com',
+  'margaret.nassiwa@onesourcefresh.com',
+  'micheal.osiaga@onesourcefresh.com',
+  'mutorine.silas@onesourcefresh.com',
+  'ngabo.sevelin@onesourcefresh.com',
+  'norman.nowamani@onesourcefresh.com',
+  'portia.nayebare@onesourcefresh.com',
+  'rowena.turinawe@onesourcefresh.com',
+  'douglasrk@onesourcefresh.com',
 ];
 
 /** System admin — full access; assign departments and roles for everyone else. */
-const ADMIN_EMAIL = 'emmanuel.ngwero@rukapay.co.ug';
+const ADMIN_EMAIL = 'emmanuel.ngwero@onesourcefresh.com';
 
 /** Finance dept memo creator + HR/marketing finance-step reviewer (Christine). */
-const FINANCE_MEMO_CREATOR_EMAIL = 'christine.kangume@rukapay.co.ug';
+const FINANCE_MEMO_CREATOR_EMAIL = 'christine.kangume@onesourcefresh.com';
 /** Finance Request first approver (Amara). */
-const FINANCE_MEMO_APPROVER_EMAIL = 'amara.oto@rukapay.co.ug';
+const FINANCE_MEMO_APPROVER_EMAIL = 'amara.oto@onesourcefresh.com';
 
 /** HR staff who creates HR memos (Dorothy). */
-const HR_MEMO_CREATOR_EMAIL = 'dorothy.kubakurungi@rukapay.co.ug';
+const HR_MEMO_CREATOR_EMAIL = 'dorothy.kubakurungi@onesourcefresh.com';
 
 /** IT 1st checker = admin (Emma); role stays admin in DB. See src/lib/workflow/itCheckers.ts */
 const IT_FIRST_CHECKER_EMAIL = ADMIN_EMAIL;
-const IT_SECOND_CHECKER_EMAIL = 'jim.ntare@rukapay.co.ug';
+const IT_SECOND_CHECKER_EMAIL = 'jim.ntare@onesourcefresh.com';
 
 /** Business Development staff (Silas). */
-const BD_STAFF_EMAIL = 'mutorine.silas@rukapay.co.ug';
+const BD_STAFF_EMAIL = 'mutorine.silas@onesourcefresh.com';
 
 /** CEO — creates memos routed to the Chairman; approves all other memos at CEO step. */
-const CEO_EMAIL = 'rowena.turinawe@rukapay.co.ug';
+const CEO_EMAIL = 'rowena.turinawe@onesourcefresh.com';
 
 /** Chairman — approves memos created by the CEO (Rowena). */
-const CHAIRMAN_EMAIL = 'douglasrk@rukapay.co.ug';
+const CHAIRMAN_EMAIL = 'douglasrk@onesourcefresh.com';
 
 function fullNameFromEmail(email: string): string {
   const local = email.split('@')[0] || '';

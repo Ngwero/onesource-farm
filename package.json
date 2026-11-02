@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed:users": "tsx scripts/seed-dev-users.ts",
-    "seed:team": "tsx scripts/seed-rukapay-team.ts",
+    "seed:team": "tsx scripts/seed-onesource-team.ts",
     "test:password": "tsx scripts/set-unified-test-password.ts",
     "reset:logins": "tsx scripts/reset-team-logins.ts",
     "reset:onboarding": "tsx scripts/reset-team-onboarding.ts",

@@ -3,8 +3,8 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import type { EmailPayload } from './emailTemplate';
 
-export const INLINE_LOGO_CID = 'logo@rukapay.co.ug';
-export const INLINE_HERO_CID = 'hero@rukapay.co.ug';
+export const INLINE_LOGO_CID = 'logo@onesourcefresh.com';
+export const INLINE_HERO_CID = 'hero@onesourcefresh.com';
 
 export interface ParsedFrom {
   name: string;
@@ -13,7 +13,7 @@ export interface ParsedFrom {
 }
 
 export function parseSmtpFrom(): ParsedFrom {
-  const raw = process.env.SMTP_FROM?.trim() || 'OneSource e-Memo <noreply@rukapay.co.ug>';
+  const raw = process.env.SMTP_FROM?.trim() || 'OneSource <noreply@onesourcefresh.com>';
   const match = raw.match(/^(.+?)\s*<([^>]+)>$/);
   if (match) {
     return {
@@ -22,7 +22,7 @@ export function parseSmtpFrom(): ParsedFrom {
       formatted: raw,
     };
   }
-  return { name: 'OneSource e-Memo', address: raw.toLowerCase(), formatted: raw };
+  return { name: 'OneSource', address: raw.toLowerCase(), formatted: raw };
 }
 
 /** Align envelope sender with authenticated SMTP user (helps SPF/DMARC pass). */
@@ -33,7 +33,7 @@ export function envelopeFromAddress(): string {
 }
 
 export function replyToAddress(): string {
-  return process.env.SMTP_REPLY_TO?.trim() || 'support@rukapay.co.ug';
+  return process.env.SMTP_REPLY_TO?.trim() || 'your system administrator';
 }
 
 export function buildMessageId(fromDomain: string): string {
@@ -72,7 +72,7 @@ export async function loadInlineImageAttachments(): Promise<
   const publicDir = join(process.cwd(), 'public');
   const items: Array<{ file: string; cid: string }> = [
     { file: 'onesource-logo-white.png', cid: INLINE_LOGO_CID },
-    { file: 'email-hero.png', cid: INLINE_HERO_CID },
+    { file: 'email-hero.jpg', cid: INLINE_HERO_CID },
   ];
 
   const attachments: Array<{
@@ -131,7 +131,7 @@ export function buildPlainTextBody(payload: EmailPayload): string {
     payload.footerNote ? stripHtml(payload.footerNote) : '',
     '',
     'Regards,',
-    'OneSource e-Memo',
+    'OneSource',
     'OneSource',
     '',
     `Questions: ${replyToAddress()}`,

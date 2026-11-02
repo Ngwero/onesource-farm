@@ -44,7 +44,7 @@ const INITIAL_MEMOS: SeedMemo[] = [
   {
     reference: REFERENCES[0],
     memoType: 'general_internal',
-    creatorEmail: 'ngabo.sevelin@rukapay.co.ug',
+    creatorEmail: 'ngabo.sevelin@onesourcefresh.com',
     departmentCode: 'IT',
     statusSlug: 'pending_department_head',
     stepOrder: 1,
@@ -60,7 +60,7 @@ const INITIAL_MEMOS: SeedMemo[] = [
   {
     reference: REFERENCES[1],
     memoType: 'it_request',
-    creatorEmail: 'doreen.kembabazi@rukapay.co.ug',
+    creatorEmail: 'doreen.kembabazi@onesourcefresh.com',
     departmentCode: 'IT',
     statusSlug: 'pending_it_checker_first',
     stepOrder: 1,
@@ -79,7 +79,7 @@ const INITIAL_MEMOS: SeedMemo[] = [
   {
     reference: REFERENCES[2],
     memoType: 'hr_request',
-    creatorEmail: 'dorothy.kubakurungi@rukapay.co.ug',
+    creatorEmail: 'dorothy.kubakurungi@onesourcefresh.com',
     departmentCode: 'HR',
     statusSlug: 'pending_finance',
     stepOrder: 1,
@@ -96,7 +96,7 @@ const INITIAL_MEMOS: SeedMemo[] = [
   {
     reference: REFERENCES[3],
     memoType: 'finance_request',
-    creatorEmail: 'christine.kangume@rukapay.co.ug',
+    creatorEmail: 'christine.kangume@onesourcefresh.com',
     departmentCode: 'FIN',
     statusSlug: 'pending_ceo',
     stepOrder: 2,

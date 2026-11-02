@@ -45,5 +45,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# backup of the old RukaPay Supabase settings
-.env.local.rukapay-backup
+# backup of the old OneSource Supabase settings
+.env.local.legacy-backup

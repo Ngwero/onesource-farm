@@ -44,7 +44,7 @@ export async function GET(
       company_name: 'OneSource',
       company_short_name: 'OneSource',
       company_address:
-        'P.O BOX 111498, 2nd Floor, TMT Building\nBukoto-Ntinda Road, Kampala\nTel: +256 (0) 200 244 400\nEmail: info@rukapay.co.ug',
+        'P.O BOX 111498, 2nd Floor, TMT Building\nBukoto-Ntinda Road, Kampala\nTel: +256 (0) 200 244 400\nEmail: your system administrator',
       confidentiality_notice: 'CONFIDENTIAL',
       page_number_style: 'Page {current} of {total}',
     };

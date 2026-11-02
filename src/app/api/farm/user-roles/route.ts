@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { withPermission } from '@/lib/farm/access';
 
-/** Every user with their eMemo role and farm roles. */
+/** Every user with their System role and farm roles. */
 export async function GET() {
   return withPermission('admin.users', async () => {
     const supabase = createServiceClient();

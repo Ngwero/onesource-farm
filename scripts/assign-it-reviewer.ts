@@ -1,6 +1,6 @@
 /**
  * Assign IT Reviewer role (second checker for IT memos). Default: Jim Ntare.
- * Usage: npm run assign:it -- jim.ntare@rukapay.co.ug
+ * Usage: npm run assign:it -- jim.ntare@onesourcefresh.com
  */
 
 import { readFileSync, existsSync } from 'fs';
@@ -31,7 +31,7 @@ function loadEnvLocal() {
 
 loadEnvLocal();
 
-const DEFAULT_EMAIL = 'jim.ntare@rukapay.co.ug';
+const DEFAULT_EMAIL = 'jim.ntare@onesourcefresh.com';
 
 async function main() {
   const email = (process.argv[2] || DEFAULT_EMAIL).trim().toLowerCase();
