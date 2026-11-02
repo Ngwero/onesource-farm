@@ -41,8 +41,8 @@ export async function GET(
     const workflowTimeline = await buildWorkflowTimelineForMemo(memo, user.id);
 
     const brandingSettings = branding || {
-      company_name: 'OneSource',
-      company_short_name: 'OneSource',
+      company_name: 'OneSource Farm',
+      company_short_name: 'OneSource Farm',
       company_address:
         'P.O BOX 111498, 2nd Floor, TMT Building\nBukoto-Ntinda Road, Kampala\nTel: +256 (0) 200 244 400\nEmail: your system administrator',
       confidentiality_notice: 'CONFIDENTIAL',

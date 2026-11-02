@@ -3,7 +3,7 @@
 @source "../components/**/*.{js,ts,jsx,tsx}";
 @source "../app/**/*.{js,ts,jsx,tsx}";
 
-/* OneSource — logo forest green #2E5E4A + leaf lime #B4CF5E */
+/* OneSource Farm — logo forest green #2E5E4A + leaf lime #B4CF5E */
 @theme {
   --color-brand-50: #eef6f1;
   --color-brand-100: #d5eadf;
@@ -1566,7 +1566,7 @@ body {
   border-color: rgb(46 94 74 / 0.2);
 }
 
-/* ——— Login (cosmic glass + OneSource green) ——— */
+/* ——— Login (cosmic glass + OneSource Farm green) ——— */
 .login-scene {
   min-height: 100vh;
   display: flex;

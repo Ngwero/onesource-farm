@@ -13,7 +13,7 @@ export interface ParsedFrom {
 }
 
 export function parseSmtpFrom(): ParsedFrom {
-  const raw = process.env.SMTP_FROM?.trim() || 'OneSource <noreply@onesourcefresh.com>';
+  const raw = process.env.SMTP_FROM?.trim() || 'OneSource Farm <noreply@onesourcefresh.com>';
   const match = raw.match(/^(.+?)\s*<([^>]+)>$/);
   if (match) {
     return {
@@ -22,7 +22,7 @@ export function parseSmtpFrom(): ParsedFrom {
       formatted: raw,
     };
   }
-  return { name: 'OneSource', address: raw.toLowerCase(), formatted: raw };
+  return { name: 'OneSource Farm', address: raw.toLowerCase(), formatted: raw };
 }
 
 /** Align envelope sender with authenticated SMTP user (helps SPF/DMARC pass). */
@@ -39,7 +39,7 @@ export function replyToAddress(): string {
 export function buildMessageId(fromDomain: string): string {
   const stamp = Date.now();
   const rand = Math.random().toString(36).slice(2, 10);
-  return `<ememo.${stamp}.${rand}@${fromDomain}>`;
+  return `<onesource-farm.${stamp}.${rand}@${fromDomain}>`;
 }
 
 /**
@@ -131,8 +131,8 @@ export function buildPlainTextBody(payload: EmailPayload): string {
     payload.footerNote ? stripHtml(payload.footerNote) : '',
     '',
     'Regards,',
-    'OneSource',
-    'OneSource',
+    'OneSource Farm',
+    'OneSource Farm',
     '',
     `Questions: ${replyToAddress()}`,
   ];

@@ -1,5 +1,5 @@
 /**
- * Seed OneSource team accounts.
+ * Seed OneSource Farm team accounts.
  * Run after migrations + seed.sql:
  *   npm run seed:team
  *

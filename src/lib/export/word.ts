@@ -65,7 +65,7 @@ export async function generateMemoWord(
   signatures: SignatureRecord[]
 ): Promise<Buffer> {
   const contactLines = getCompanyContactLines(branding);
-  const companyName = (branding.company_name || 'ONESOURCE').toUpperCase();
+  const companyName = (branding.company_name || 'ONESOURCE FARM').toUpperCase();
 
   const metaRows = [
     ['From', memo.memo_from],

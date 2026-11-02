@@ -1,6 +1,6 @@
 -- Farm Export Management System — Phase 1 foundation
 -- Farm, blocks, planting cycles, crops, master data, permission-based access, attachments.
--- OneSource tables are untouched: users.role_id keeps driving OneSource routing; farm access uses app roles.
+-- OneSource Farm tables are untouched: users.role_id keeps driving OneSource Farm routing; farm access uses app roles.
 -- Safe to re-run: objects use IF NOT EXISTS and seeds use ON CONFLICT DO NOTHING.
 
 CREATE OR REPLACE FUNCTION farm_set_updated_at() RETURNS trigger AS $$
@@ -342,7 +342,7 @@ INSERT INTO app_roles (slug, name, description) VALUES
   ('finance_officer', 'Finance Officer', 'Records invoices, payments and costs'),
   ('auditor', 'Auditor / Viewer', 'Read-only access across the system'),
   ('management', 'Management / CEO', 'Dashboard and reporting visibility across the operation'),
-  ('ememo_approver', 'OneSource Approver', 'Approves farm requests routed through the OneSource module')
+  ('ememo_approver', 'OneSource Farm Approver', 'Approves farm requests routed through the OneSource Farm module')
 ON CONFLICT (slug) DO NOTHING;
 
 -- ——— Seed: permissions (catalogue for all phases) ———
@@ -463,7 +463,7 @@ JOIN permissions p
   ON EXISTS (SELECT 1 FROM unnest(m.patterns) AS pat WHERE p.key LIKE replace(pat, '*', '%'))
 ON CONFLICT DO NOTHING;
 
--- Existing OneSource administrators become system administrators.
+-- Existing OneSource Farm administrators become system administrators.
 INSERT INTO user_app_roles (user_id, role_id)
 SELECT u.id, ar.id
 FROM users u

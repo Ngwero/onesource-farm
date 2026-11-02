@@ -26,7 +26,7 @@ const GROUPS: { prefix: string; title: string; description: string }[] = [
   {
     prefix: 'ememo',
     title: 'Approvals',
-    description: 'Amounts at or above these limits are sent to OneSource for approval before they can proceed.',
+    description: 'Amounts at or above these limits are sent to OneSource Farm for approval before they can proceed.',
   },
   {
     prefix: 'workforce',

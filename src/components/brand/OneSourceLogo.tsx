@@ -28,13 +28,19 @@ export function OneSourceLogo({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
-        alt="OneSource"
+        alt="OneSource Farm"
         width={width}
         height={height}
         fetchPriority={priority ? 'high' : 'auto'}
         decoding="async"
         className={imgClass}
       />
+      <p
+        aria-hidden="true"
+        className={`mt-1 text-center text-[11px] font-semibold uppercase tracking-[0.32em] ${variant === 'light' ? 'text-[#2E5E4A]' : 'text-white/80'}`}
+      >
+        Farm
+      </p>
     </div>
   );
 }

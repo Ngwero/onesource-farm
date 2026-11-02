@@ -419,7 +419,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
       items: g.items.filter((i) => access.can(i.permission)),
     })),
     {
-      id: 'ememo',
+      id: 'requests',
       label: 'Requests',
       icon: <FileText size={18} />,
       items: navItems.filter((i) => i !== dashboardItem),

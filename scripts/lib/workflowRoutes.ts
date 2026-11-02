@@ -85,7 +85,7 @@ export const WORKFLOW_ROUTES: WorkflowRouteRow[] = [
 
 export function printWorkflowRoutes(): void {
   console.log('\n' + '='.repeat(72));
-  console.log('OneSource — Workflow routes');
+  console.log('OneSource Farm — Workflow routes');
   console.log('='.repeat(72));
   console.log('\nFinance review split:');
   console.log(`  • Finance Request → ${FINANCE_MEMO_APPROVER_EMAIL} (Amara, CFO)`);

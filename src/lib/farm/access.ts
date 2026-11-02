@@ -25,7 +25,7 @@ export async function getFarmAccess(user: User): Promise<FarmAccess> {
   const rows = (data ?? []) as unknown as RoleRow[];
   const roles = rows.flatMap((r) => (r.role ? [{ id: r.role.id, slug: r.role.slug, name: r.role.name }] : []));
 
-  // OneSource administrators always keep full access so the system can never be locked out.
+  // OneSource Farm administrators always keep full access so the system can never be locked out.
   if (user.role?.slug === 'admin') {
     return { roles, permissions: [...PERMISSIONS] };
   }

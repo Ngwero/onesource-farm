@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'OneSource',
-  description: 'Internal memo management for OneSource',
+  title: 'OneSource Farm',
+  description: 'Farm operations, harvests, quality, workforce, and exports for OneSource Farm',
   icons: {
     icon: '/onesource-icon.png',
     apple: '/onesource-icon.png',

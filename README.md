@@ -1,6 +1,6 @@
-# OneSource
+# OneSource Farm
 
-Internal memo management system for **OneSource**.
+Internal memo management system for **OneSource Farm**.
 
 ## Features
 
@@ -35,7 +35,7 @@ Internal memo management system for **OneSource**.
 ### 1. Clone and install
 
 ```bash
-cd onesource-ememo-system
+cd onesource-farm
 npm install
 cp .env.example .env.local
 ```
@@ -48,7 +48,7 @@ cp .env.example .env.local
    - `supabase/migrations/001_initial_schema.sql`
    - `supabase/seed.sql`
 
-### 3. Team accounts (OneSource staff)
+### 3. Team accounts (OneSource Farm staff)
 
 Run the password-setup migration in **Supabase → SQL Editor**:
 
@@ -89,7 +89,7 @@ SMTP_PORT=465
 SMTP_SECURE=true
 SMTP_USER=noreply@one-sourcebrand.com
 SMTP_PASS=your-email-account-password
-SMTP_FROM="OneSource <noreply@one-sourcebrand.com>"
+SMTP_FROM="OneSource Farm <noreply@one-sourcebrand.com>"
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
@@ -97,7 +97,7 @@ Use the password for the `noreply@one-sourcebrand.com` mailbox (outgoing server:
 
 After a user’s **first successful sign-in** (once they have set their own password), they receive a one-time welcome email. Apply `supabase/migrations/003_welcome_email_sent.sql` in the Supabase SQL editor so the system does not resend it on every login.
 
-**Outlook inbox (not Junk / Other):** Ask IT to enable **SPF**, **DKIM**, and **DMARC** for `one-sourcebrand.com` on the same host that sends mail (`mail.one-sourcebrand.com`). The app sends as transactional mail (not bulk), embeds images inline, and uses a clear subject line. Users can also right-click the first message → **Move to Inbox** → **Always move messages from this sender** so future OneSource mail stays in the inbox.
+**Outlook inbox (not Junk / Other):** Ask IT to enable **SPF**, **DKIM**, and **DMARC** for `one-sourcebrand.com` on the same host that sends mail (`mail.one-sourcebrand.com`). The app sends as transactional mail (not bulk), embeds images inline, and uses a clear subject line. Users can also right-click the first message → **Move to Inbox** → **Always move messages from this sender** so future OneSource Farm mail stays in the inbox.
 
 ### 6. Run development server
 
@@ -215,6 +215,4 @@ See `.env.example` for all required variables.
 ## License
 
 Proprietary — Rhino Payment Services Limited
-# ememo
 
-# onesource-farm

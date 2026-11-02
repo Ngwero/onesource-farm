@@ -37,7 +37,7 @@ export async function getLaunchAnnouncementPreview(
     portalUrl,
     effectiveDate: SYSTEM_LAUNCH_EFFECTIVE_DATE,
     temporaryPassword: SYSTEM_LAUNCH_TEMP_PASSWORD,
-    subject: 'OneSource is live — please sign in before Monday 8 June',
+    subject: 'OneSource Farm is live — please sign in before Monday 8 June',
     recipientCount: users?.length ?? 0,
     recipients: (users ?? []).map((u) => ({
       email: u.email,

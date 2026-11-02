@@ -323,7 +323,7 @@ export default function AdminUsersPage() {
           go-live announcement
         </h2>
         <p className="text-sm text-slate-600 mb-3">
-          Branded email telling staff OneSource is live from <strong>Monday, 8 June 2026</strong> for all
+          Branded email telling staff OneSource Farm is live from <strong>Monday, 8 June 2026</strong> for all
           memos and leave requests. Includes temporary password{' '}
           <code className="text-xs bg-white px-1 rounded">{ONBOARDING_PASSWORD_HINT}</code> and link to{' '}
           <strong>{launchPreview?.portalUrl || 'onesourcefresh.com'}</strong>.

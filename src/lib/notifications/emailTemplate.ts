@@ -116,12 +116,12 @@ export function buildBrandedEmailHtml(
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td width="120" style="vertical-align:middle;">
-                    <img src="${logoUrl}" alt="OneSource" width="100" height="auto"
+                    <img src="${logoUrl}" alt="OneSource Farm" width="100" height="auto"
                          style="display:block;border:0;max-height:36px;width:auto;" />
                   </td>
                   <td align="center" style="vertical-align:middle;">
                     <span style="color:#ffffff;font-size:15px;font-weight:700;letter-spacing:0.02em;">
-                      OneSource
+                      OneSource Farm
                     </span>
                   </td>
                   <td width="120" align="right" style="vertical-align:middle;">
@@ -139,7 +139,7 @@ export function buildBrandedEmailHtml(
           <!-- Hero -->
           <tr>
             <td style="padding:0;line-height:0;font-size:0;">
-              <img src="${escapeHtml(heroUrl)}" alt="OneSource"
+              <img src="${escapeHtml(heroUrl)}" alt="OneSource Farm"
                    width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;" />
             </td>
           </tr>
@@ -182,7 +182,7 @@ export function buildBrandedEmailHtml(
 
               <p style="margin:28px 0 0;font-size:14px;font-weight:700;color:#212121;">
                 Regards,<br/>
-                OneSource
+                OneSource Farm
               </p>
             </td>
           </tr>
@@ -221,7 +221,7 @@ export function buildBrandedEmailHtml(
                   </td>
                   <td style="vertical-align:middle;">
                     <p style="margin:0;font-size:11px;color:#b0bec5;line-height:1.4;">
-                      © ${year} OneSource. All Rights Reserved.
+                      © ${year} OneSource Farm. All Rights Reserved.
                     </p>
                   </td>
                 </tr>

@@ -141,10 +141,10 @@ export async function sendPasswordResetEmail(params: {
     {
       to: params.email,
       toName: params.fullName,
-      subject: 'Reset your OneSource password',
+      subject: 'Reset your OneSource Farm password',
       title: 'Password reset',
       body: `<p style="margin:0;">
-        We received a request to reset the password for your <strong>OneSource</strong> account.
+        We received a request to reset the password for your <strong>OneSource Farm</strong> account.
         Use the button below to choose a new password. This link is valid for a limited time.
       </p>`,
       highlightText: 'Reset your password',
@@ -152,13 +152,13 @@ export async function sendPasswordResetEmail(params: {
       bullets: [
         'If you did not request a password reset, you can safely ignore this email.',
         'Never share your password or this reset link with anyone.',
-        'This is an automated message from OneSource.',
+        'This is an automated message from OneSource Farm.',
         'For help, contact your system administrator.',
       ],
       ctaLabel: 'Reset password',
       ctaUrl: params.resetUrl,
       footerNote:
-        'This is an automated message from OneSource. Please do not reply to this email.',
+        'This is an automated message from OneSource Farm. Please do not reply to this email.',
     },
     { appUrl: portalUrl }
   );
@@ -182,26 +182,26 @@ export async function sendSystemLaunchEmail(params: {
     {
       to: params.email,
       toName: params.fullName,
-      subject: 'OneSource is live — please sign in before Monday 8 June',
-      title: 'OneSource is live',
+      subject: 'OneSource Farm is live — please sign in before Monday 8 June',
+      title: 'OneSource Farm is live',
       body: `<p style="margin:0;">
-        The <strong>OneSource</strong> is now live at
+        The <strong>OneSource Farm</strong> is now live at
         <a href="${portalUrl}" style="color:#2e5e4a;font-weight:600;">${portalUrl}</a>.
       </p>
       <p style="margin:14px 0 0;">
         From <strong>${effectiveDate}</strong>, all internal memos and leave requests must be
-        created and approved through OneSource. Paper memos will no longer be processed after this date.
+        created and approved through OneSource Farm. Paper memos will no longer be processed after this date.
       </p>`,
       highlightText: 'Go-live: Monday, 8 June 2026',
       highlightSubtext: `Temporary password: ${tempPassword}`,
       bullets: [
-        `Sign in with your OneSource email and the temporary password <strong>${tempPassword}</strong>.`,
+        `Sign in with your OneSource Farm email and the temporary password <strong>${tempPassword}</strong>.`,
         'You will be prompted to create your own personal password on first login.',
         'Upload your signature under <strong>Settings → My Signature</strong> before creating or approving memos.',
         'Use <strong>Create Memo</strong> for payment, procurement, IT, HR, leave, and general internal requests.',
         'Approvers will receive notifications when memos need your action.',
         'Need help? Contact your system administrator.',
-        'This is an official notice from OneSource — please do not reply to this email.',
+        'This is an official notice from OneSource Farm — please do not reply to this email.',
       ],
       ctaLabel: 'Open the portal',
       ctaUrl: portalUrl,
@@ -227,10 +227,10 @@ export async function sendAccountLoginEmail(params: {
     {
       to: params.email,
       toName: params.fullName,
-      subject: 'Your OneSource account login',
+      subject: 'Your OneSource Farm account login',
       title: 'Your account is ready',
       body: `<p style="margin:0;">
-        An administrator created a <strong>OneSource</strong> account for you.${roleNote}
+        An administrator created a <strong>OneSource Farm</strong> account for you.${roleNote}
         Sign in with the details below, then choose your own password on the next screen.
       </p>`,
       highlightText: params.email,
@@ -245,7 +245,7 @@ export async function sendAccountLoginEmail(params: {
       ],
       ctaLabel: 'Open the portal',
       ctaUrl: loginUrl,
-      footerNote: 'This is an automated message from OneSource. Please do not reply to this email.',
+      footerNote: 'This is an automated message from OneSource Farm. Please do not reply to this email.',
     },
     { appUrl: portalUrl }
   );
@@ -262,10 +262,10 @@ export async function sendWelcomeSignInEmail(params: {
   return sendTransactionalEmail({
     to: params.email,
     toName: params.fullName,
-    subject: 'Your OneSource account is ready',
+    subject: 'Your OneSource Farm account is ready',
     title: 'Welcome to the paperless era',
     body: `<p style="margin:0;">
-        You have successfully signed in to the <strong>OneSource</strong>.
+        You have successfully signed in to the <strong>OneSource Farm</strong>.
         Please use the portal link below to create, route, and approve internal memos digitally.${roleNote}
       </p>`,
     highlightText: 'Welcome to the paperless era',
@@ -384,7 +384,7 @@ export async function sendMemoEmailToUser(params: {
     bullets: params.bullets ?? [
       'Please sign in to review and take action on this memo.',
       'Do not share approval links or credentials with others.',
-      'This is an automated notification from OneSource.',
+      'This is an automated notification from OneSource Farm.',
     ],
     ctaLabel: params.ctaLabel || 'Review memo',
     ctaUrl: memoLink,

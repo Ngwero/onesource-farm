@@ -172,7 +172,7 @@ export async function generateMemoPDF(
 ): Promise<Buffer> {
   const logoBuffer = await resolveLogoBuffer(branding.logo_path);
   const contactLines = getCompanyContactLines(branding);
-  const companyName = (branding.company_name || 'ONESOURCE').toUpperCase();
+  const companyName = (branding.company_name || 'ONESOURCE FARM').toUpperCase();
   const approvalSteps = workflowStepsForDocumentApprovals(workflowSteps);
   const approvalRowCount = approvalSteps.length + 1;
   const layout = pickLayout(memo, approvalRowCount);

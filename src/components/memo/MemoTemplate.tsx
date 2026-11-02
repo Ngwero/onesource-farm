@@ -25,7 +25,7 @@ const BODY_SECTIONS = [
 ] as const;
 
 export function MemoTemplate({ memo, branding, workflowSteps = [] }: MemoTemplateProps) {
-  const companyName = branding?.company_name || 'ONESOURCE';
+  const companyName = branding?.company_name || 'ONESOURCE FARM';
   const contactLines = getCompanyContactLines(branding);
   const logoSrc = branding?.logo_path
     ? `/api/files/${branding.logo_path}`

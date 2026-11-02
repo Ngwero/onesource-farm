@@ -1,4 +1,4 @@
--- Seed data for OneSource
+-- Seed data for OneSource Farm
 
 -- Roles
 INSERT INTO roles (name, slug, description) VALUES
@@ -74,13 +74,13 @@ INSERT INTO branding_settings (
   confidentiality_notice,
   page_number_style
 ) VALUES (
-  'OneSource',
-  'OneSource',
+  'OneSource Farm',
+  'OneSource Farm',
   'P.O BOX 111498, 2nd Floor, TMT Building' || E'\n' ||
   'Bukoto-Ntinda Road, Kampala' || E'\n' ||
   'Tel: +256 (0) 200 244 400' || E'\n' ||
   'Email: your system administrator',
-  'OneSource',
+  'OneSource Farm',
   'CONFIDENTIAL - This document is intended for internal use only. Unauthorized disclosure, copying, or distribution is strictly prohibited.',
   'Page {current} of {total}'
 );

@@ -31,7 +31,7 @@ async function main() {
   const appUrl = resolveLaunchEmailAppUrl();
   const smtpHost = process.env.SMTP_HOST?.trim();
 
-  console.log('\n── OneSource launch announcement ──');
+  console.log('\n── OneSource Farm launch announcement ──');
   console.log(`  Portal:           ${appUrl}`);
   console.log(`  Go-live:          ${SYSTEM_LAUNCH_EFFECTIVE_DATE}`);
   console.log(`  Temp password:    ${SYSTEM_LAUNCH_TEMP_PASSWORD}`);
