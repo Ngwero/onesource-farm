@@ -1,6 +1,6 @@
-# RukaPay e-Memo System
+# OneSource e-Memo System
 
-Internal memo management system for **Rhino Payment Services Limited / RukaPay**.
+Internal memo management system for **OneSource**.
 
 ## Features
 
@@ -216,3 +216,5 @@ See `.env.example` for all required variables.
 
 Proprietary — Rhino Payment Services Limited
 # ememo
+
+# onesource-farm
