@@ -215,4 +215,3 @@ See `.env.example` for all required variables.
 ## License
 
 Proprietary — Rhino Payment Services Limited
-
