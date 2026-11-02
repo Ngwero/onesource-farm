@@ -1584,11 +1584,126 @@ body {
   }
 }
 
+.login-shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1080px;
+  display: grid;
+  gap: 1.75rem;
+}
+
+@media (min-width: 960px) {
+  .login-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+    align-items: center;
+    gap: 3.5rem;
+  }
+}
+
+.login-pitch {
+  color: #fff;
+  padding: 0.25rem 0.15rem 0;
+}
+
+.login-pitch-logo {
+  margin-bottom: 1.35rem;
+}
+
+.login-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c7dd82;
+}
+
+.login-headline {
+  margin: 0.4rem 0 0.85rem;
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.login-lede {
+  margin: 0;
+  max-width: 36rem;
+  color: rgb(255 255 255 / 0.72);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.login-capabilities {
+  display: none;
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  gap: 0.85rem;
+}
+
+.login-capability {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: rgb(255 255 255 / 0.86);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.login-capability strong {
+  font-weight: 600;
+  color: #fff;
+}
+
+.login-capability-mark {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  margin-top: 0.05rem;
+  border-radius: 9999px;
+  background: rgb(180 207 94 / 0.16);
+  color: #c7dd82;
+  border: 1px solid rgb(180 207 94 / 0.22);
+}
+
+@media (min-width: 640px) {
+  .login-headline {
+    font-size: 2.15rem;
+  }
+
+  .login-capabilities {
+    display: grid;
+  }
+}
+
+@media (min-width: 960px) {
+  .login-headline {
+    font-size: 2.65rem;
+  }
+}
+
+.login-shell .login-glass {
+  margin: 0 auto;
+}
+
+.login-orb-field {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
 .login-orb {
   position: absolute;
   border-radius: 50%;
   filter: blur(90px);
   pointer-events: none;
+  will-change: transform;
 }
 
 .login-orb--forest {
@@ -1598,6 +1713,7 @@ body {
   opacity: 0.5;
   top: -5%;
   left: -8%;
+  animation: login-orb-drift-a 22s ease-in-out infinite;
 }
 
 .login-orb--leaf {
@@ -1607,6 +1723,7 @@ body {
   opacity: 0.3;
   top: 15%;
   right: -10%;
+  animation: login-orb-drift-b 26s ease-in-out infinite;
 }
 
 .login-orb--deep {
@@ -1616,6 +1733,146 @@ body {
   opacity: 0.55;
   bottom: -15%;
   left: 25%;
+  animation: login-orb-drift-c 28s ease-in-out infinite;
+}
+
+.login-atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.login-haze-field {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.login-cursor-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(199 221 130 / 0.38) 0%,
+    rgb(180 207 94 / 0.12) 38%,
+    transparent 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: opacity 0.28s ease;
+}
+
+.login-scene--tracking .login-cursor-glow {
+  opacity: 1;
+}
+
+.login-haze {
+  position: absolute;
+  top: -30%;
+  left: -15%;
+  width: 50%;
+  height: 160%;
+  background: linear-gradient(
+    108deg,
+    transparent 35%,
+    rgb(180 207 94 / 0.14) 50%,
+    transparent 65%
+  );
+  filter: blur(28px);
+  animation: login-haze-sweep 24s ease-in-out infinite;
+}
+
+.login-haze--late {
+  left: 40%;
+  width: 42%;
+  opacity: 0.7;
+  animation-duration: 32s;
+  animation-delay: -12s;
+}
+
+.login-mote {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  background: rgb(226 237 168 / 0.95);
+  box-shadow: 0 0 12px 3px rgb(180 207 94 / 0.45);
+  will-change: transform;
+}
+
+.login-drift-leaf {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(145deg, rgb(199 221 130 / 0.5), rgb(116 179 149 / 0.24));
+  border-radius: 80% 0 80% 0;
+  box-shadow: 0 0 16px rgb(180 207 94 / 0.2);
+  will-change: transform;
+}
+
+@keyframes login-orb-drift-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(7%, 8%) scale(1.12);
+  }
+}
+
+@keyframes login-orb-drift-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-9%, 6%) scale(1.1);
+  }
+}
+
+@keyframes login-orb-drift-c {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  45% {
+    transform: translate(6%, -7%) scale(1.14);
+  }
+}
+
+@keyframes login-haze-sweep {
+  0%,
+  100% {
+    transform: translateX(-8%) rotate(8deg);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateX(12%) rotate(14deg);
+    opacity: 0.85;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-orb,
+  .login-haze,
+  .login-mote,
+  .login-drift-leaf {
+    animation: none !important;
+  }
+
+  .login-mote,
+  .login-drift-leaf,
+  .login-cursor-glow {
+    display: none;
+  }
 }
 
 .login-glass {
