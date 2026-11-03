@@ -52,6 +52,10 @@ export type BlockRow = {
   status: 'active' | 'preparation' | 'fallow' | 'inactive';
   supervisor_id: string | null;
   notes: string | null;
+  centroid_lat: number | null;
+  centroid_lng: number | null;
+  boundary_geojson: { type: 'Polygon'; coordinates: [number, number][][] } | null;
+  map_zoom: number | null;
   supervisor: Ref;
   planting_cycles: PlantingCycleRow[];
   current_cycle: PlantingCycleRow | null;
@@ -176,16 +180,98 @@ export type ActivityRow = {
   other_cost: number;
   total_cost: number;
   weather: string | null;
+  weather_temp_c: number | null;
+  weather_wind_kmh: number | null;
+  weather_precip_mm: number | null;
+  weather_humidity_pct: number | null;
+  weather_code: number | null;
+  weather_source: string | null;
+  spray_window_score: number | null;
+  spray_window_label: string | null;
   notes: string | null;
+  application_rate_per_ha: number | null;
+  treated_area_ha: number | null;
+  active_ingredient: string | null;
+  product_registration: string | null;
+  pre_harvest_interval_days: number | null;
+  re_entry_interval_hours: number | null;
+  applicator_id: string | null;
+  safety_equipment: string | null;
+  spray_window_ok: boolean | null;
+  harvest_compliant: boolean | null;
   created_at: string;
   block: BlockRef;
   crop: CodeRef;
   cycle: CycleRef;
   activity_type: Pick<ActivityTypeRow, 'id' | 'code' | 'name' | 'category' | 'uses_inputs'> | null;
   supervisor: Ref;
+  applicator: Ref;
   created_by_user: Ref;
   workers: LabourLine[];
-  inputs: { id: string; input_name: string; quantity: number; unit: string; unit_cost: number | null; cost: number; sort_order: number }[];
+  inputs: {
+    id: string;
+    input_name: string;
+    quantity: number;
+    unit: string;
+    unit_cost: number | null;
+    cost: number;
+    sort_order: number;
+    product_id: string | null;
+    lot_id: string | null;
+  }[];
+};
+
+export type InputProductRow = {
+  id: string;
+  farm_id: string;
+  sku: string;
+  name: string;
+  category: 'seed' | 'fertilizer' | 'crop_protection' | 'fuel' | 'packaging' | 'other';
+  unit: string;
+  active_ingredient: string | null;
+  registration_no: string | null;
+  manufacturer: string | null;
+  default_supplier: string | null;
+  reorder_level: number;
+  status: 'active' | 'inactive';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type InputLotRow = {
+  id: string;
+  farm_id: string;
+  product_id: string;
+  lot_no: string;
+  supplier: string | null;
+  received_date: string;
+  expiry_date: string | null;
+  quantity_received: number;
+  quantity_remaining: number;
+  unit_cost: number | null;
+  location: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  product?: Pick<InputProductRow, 'id' | 'sku' | 'name' | 'unit' | 'category' | 'status'> | null;
+};
+
+export type InputMovementRow = {
+  id: string;
+  farm_id: string;
+  product_id: string;
+  lot_id: string | null;
+  movement_type: 'receipt' | 'issue' | 'adjustment' | 'return' | 'waste';
+  quantity: number;
+  unit_cost: number | null;
+  activity_id: string | null;
+  reference: string | null;
+  notes: string | null;
+  moved_at: string;
+  created_at: string;
+  product?: Pick<InputProductRow, 'id' | 'sku' | 'name' | 'unit'> | null;
+  lot?: Pick<InputLotRow, 'id' | 'lot_no'> | null;
 };
 
 export type IncidentRow = {
@@ -349,6 +435,10 @@ export type AttachmentRow = {
   caption: string | null;
   created_at: string;
   uploaded_by_user: Ref;
+  captured_lat?: number | null;
+  captured_lng?: number | null;
+  captured_at?: string | null;
+  meta?: Record<string, unknown> | null;
 };
 
 export type OpenCycleOption = {
@@ -584,6 +674,145 @@ export type FarmOverview = {
     expectedHarvestDate: string | null;
   }[];
   operations: FarmOperations;
+};
+
+export type BuyerRow = {
+  id: string;
+  farm_id: string;
+  code: string;
+  name: string;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  country: string | null;
+  destination: string | null;
+  address: string | null;
+  payment_terms: string | null;
+  status: 'active' | 'inactive';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ContractRow = {
+  id: string;
+  farm_id: string;
+  buyer_id: string;
+  contract_no: string;
+  crop_id: string | null;
+  grade_id: string | null;
+  title: string;
+  start_date: string;
+  end_date: string | null;
+  agreed_quantity: number;
+  quantity_unit: string;
+  unit_price: number;
+  currency: string;
+  specifications: string | null;
+  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  buyer: Pick<BuyerRow, 'id' | 'code' | 'name' | 'status'> | null;
+  crop: CodeRef;
+  grade: CodeRef;
+};
+
+export type ShipmentLineRow = {
+  id: string;
+  shipment_id: string;
+  packing_batch_id: string;
+  package_count: number;
+  net_weight: number;
+  notes: string | null;
+  created_at: string;
+  packing_batch: {
+    id: string;
+    packing_no: string;
+    package_count: number;
+    net_weight: number;
+    net_weight_per_package: number;
+    qc_status: QcStatus;
+    crop: CodeRef;
+    grade: CodeRef;
+  } | null;
+};
+
+export type ShipmentRow = {
+  id: string;
+  farm_id: string;
+  shipment_no: string;
+  buyer_id: string;
+  contract_id: string | null;
+  destination: string | null;
+  carrier: string | null;
+  booking_ref: string | null;
+  awb_bl_number: string | null;
+  etd: string | null;
+  eta: string | null;
+  dispatched_at: string | null;
+  status: 'planned' | 'loading' | 'dispatched' | 'in_transit' | 'delivered' | 'cancelled';
+  invoice_no: string | null;
+  invoice_amount: number | null;
+  invoice_currency: string | null;
+  payment_status: 'unpaid' | 'partial' | 'paid' | 'overdue';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  buyer: Pick<BuyerRow, 'id' | 'code' | 'name' | 'status'> | null;
+  contract: Pick<ContractRow, 'id' | 'contract_no' | 'title' | 'status'> | null;
+  lines: ShipmentLineRow[];
+};
+
+/** Management KPIs spanning field cost, quality, payroll, stock age and commercial revenue. */
+export type ExecutiveOverview = {
+  since: string;
+  yieldPerHa: number | null;
+  costPerKg: number | null;
+  exportablePct: number | null;
+  rejectionPct: number | null;
+  costsByCrop: {
+    crop: string;
+    labourCost: number;
+    inputCost: number;
+    totalCost: number;
+    harvestedKg: number;
+    costPerKg: number | null;
+  }[];
+  costsByBlock: {
+    block: string;
+    labourCost: number;
+    inputCost: number;
+    totalCost: number;
+    harvestedKg: number;
+    costPerKg: number | null;
+  }[];
+  payroll: { actual: number; budget: number | null; variance: number | null };
+  stockAgeing: { bucket: string; batches: number; kg: number }[];
+  upcomingHarvests: {
+    block: string;
+    crop: string;
+    expectedHarvestDate: string;
+    expectedYield: number | null;
+    unit: string | null;
+  }[];
+  commercial: {
+    revenueByCrop: { crop: string; amount: number }[];
+    revenueByBuyer: { buyer: string; amount: number }[];
+    revenueByShipment: {
+      shipment: string;
+      buyer: string;
+      amount: number;
+      currency: string;
+      paymentStatus: string;
+    }[];
+    profitByBlock: {
+      block: string;
+      shippedKg: number;
+      estimatedCost: number;
+      estimatedProfit: number | null;
+    }[];
+  };
 };
 
 /** Last-30-day operations; a section is absent when the user cannot view those records. */

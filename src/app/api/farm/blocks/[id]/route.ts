@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getCurrentFarmId, withPermission } from '@/lib/farm/access';
+import { deleteAttachmentsFor } from '@/lib/farm/operations';
 import { auditFarm } from '@/lib/farm/audit';
 import { parseBody } from '@/lib/farm/http';
 import { BLOCK_SELECT, withCurrentCycle } from '@/lib/farm/queries';
@@ -57,6 +58,7 @@ export async function DELETE(_request: Request, { params }: Params) {
       .select('id, code, name')
       .single();
     if (error) throw error;
+    await deleteAttachmentsFor(supabase, 'block', id);
     await auditFarm(user.id, 'deleted', 'block', id, { old: data });
     return NextResponse.json({ ok: true });
   });

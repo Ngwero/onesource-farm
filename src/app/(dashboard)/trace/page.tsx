@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ErrorState } from '@/components/farm/DataStates';
 import { InspectionTable, MovementTable } from '@/components/farm/Packhouse';
+import { PublicTraceQrButton } from '@/components/farm/PublicTraceQr';
 import { RequirePermission } from '@/components/farm/RequirePermission';
 import { QcStatusChip, StatusChip } from '@/components/farm/StatusChip';
 import { farmKeys, useCurrency } from '@/hooks/farm';
@@ -425,7 +426,18 @@ function TracePage() {
       ) : trace.isLoading ? (
         <div className="dashboard-loading">Tracing…</div>
       ) : trace.data?.trace ? (
-        <TraceView t={trace.data.trace} />
+        <div className="space-y-4">
+          <PublicTraceQrButton
+            subjectType={trace.data.trace.focus.type}
+            subjectId={trace.data.trace.focus.id}
+            label={
+              trace.data.trace.focus.type === 'packing_batch'
+                ? trace.data.trace.packing.find((p) => p.id === trace.data.trace!.focus.id)?.packing_no
+                : trace.data.trace.harvest.batch_no
+            }
+          />
+          <TraceView t={trace.data.trace} />
+        </div>
       ) : (
         <Card>
           <CardContent className="py-6">

@@ -135,14 +135,14 @@ export function buildTourSteps(user: User | null, roleSlug: RoleSlug): TourStep[
       id: 'sidebar',
       target: 'tour-sidebar',
       title: 'Main menu',
-      body: 'All navigation lives in this sidebar. Your options depend on your role — authors create memos, approvers review queues, admins manage the system.',
+      body: 'Farm operations, harvest, packhouse, export sales, and admin live in this sidebar. What you see depends on your role.',
       placement: 'right',
     },
     {
       id: 'dashboard',
       target: 'tour-dashboard',
-      title: 'Dashboard',
-      body: 'Your home screen — summary counts, quick links, and recent memos relevant to you.',
+      title: 'eMemo Dashboard',
+      body: 'Your memo home screen — approval queues, quick links, and recent memos for your role.',
       placement: 'right',
     },
   ];
@@ -154,8 +154,8 @@ export function buildTourSteps(user: User | null, roleSlug: RoleSlug): TourStep[
     {
       id: 'search',
       target: 'tour-search',
-      title: 'Search memos',
-      body: 'Find memos by reference number, subject, or keyword across everything you can access.',
+      title: 'Search',
+      body: 'Search memos, or switch to Farm to find blocks, workers, and harvest batches from one place.',
       placement: 'bottom',
     },
     {
@@ -175,7 +175,7 @@ export function buildTourSteps(user: User | null, roleSlug: RoleSlug): TourStep[
     {
       id: 'finish',
       title: 'You are ready',
-      body: 'That is the essentials. Create or review your first memo — add a signature anytime under Settings. Need this again? Click <strong>Take tour</strong> in the top bar.',
+      body: 'That is the essentials. Start from Farm Overview or Executive for operations, Export & Sales for buyers and shipments. Need this again? Click <strong>Take tour</strong> in the top bar.',
     }
   );
 

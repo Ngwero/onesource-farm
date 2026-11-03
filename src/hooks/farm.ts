@@ -7,6 +7,8 @@ import type {
   BlockRow,
   CropRow,
   FarmRow,
+  InputLotRow,
+  InputProductRow,
   OpenCycleOption,
   PackagingTypeRow,
   UserOption,
@@ -50,6 +52,15 @@ export const farmKeys = {
   stock: ['farm', 'warehouse', 'stock'] as const,
   movements: ['farm', 'warehouse', 'movements'] as const,
   trace: ['farm', 'trace'] as const,
+  buyers: ['farm', 'buyers'] as const,
+  buyer: (id: string) => ['farm', 'buyers', id] as const,
+  contracts: ['farm', 'contracts'] as const,
+  contract: (id: string) => ['farm', 'contracts', id] as const,
+  shipments: ['farm', 'shipments'] as const,
+  shipment: (id: string) => ['farm', 'shipments', id] as const,
+  inputProducts: ['farm', 'inputs', 'products'] as const,
+  inputLots: ['farm', 'inputs', 'lots'] as const,
+  inputMovements: ['farm', 'inputs', 'movements'] as const,
 };
 
 /** Everything that changes when packing, QC or stock records change. */
@@ -133,4 +144,19 @@ export function useWarehouseLocations() {
 
 export function usePackagingTypes() {
   return useMasterList<PackagingTypeRow>('packaging-types');
+}
+
+export function useInputProducts() {
+  return useQuery({
+    queryKey: farmKeys.inputProducts,
+    queryFn: () => farmFetch<{ products: InputProductRow[] }>('/api/farm/inputs/products').then((r) => r.products),
+  });
+}
+
+export function useInputLots(productId?: string | null) {
+  const qs = productId ? `?product_id=${productId}` : '';
+  return useQuery({
+    queryKey: [...farmKeys.inputLots, productId ?? 'all'] as const,
+    queryFn: () => farmFetch<{ lots: InputLotRow[] }>(`/api/farm/inputs/lots${qs}`).then((r) => r.lots),
+  });
 }

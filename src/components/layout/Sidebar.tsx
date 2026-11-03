@@ -43,6 +43,8 @@ import {
   Warehouse,
   History,
   GitBranch,
+  Truck,
+  FileUp,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -98,7 +100,7 @@ function navWithCreateMemo(items: NavItem[], roleSlug: RoleSlug, user: User | nu
 
 const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
   staff: [
-    { label: 'Dashboard', href: '/dashboard/staff', icon: <LayoutDashboard size={18} /> },
+    { label: 'eMemo Dashboard', href: '/dashboard/staff', icon: <LayoutDashboard size={18} /> },
     { label: 'Create Memo', href: '/memos/create', icon: <PlusCircle size={18} /> },
     { label: 'My Memos', href: '/memos?view=mine', icon: <FileEdit size={18} /> },
     { label: 'My Drafts', href: '/memos?status=draft', icon: <FileText size={18} /> },
@@ -108,7 +110,7 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
     { label: 'My Signature', href: '/settings/signature', icon: <PenLine size={18} /> },
   ],
   business_head: [
-    { label: 'Dashboard', href: '/dashboard/department-head', icon: <LayoutDashboard size={18} /> },
+    { label: 'eMemo Dashboard', href: '/dashboard/department-head', icon: <LayoutDashboard size={18} /> },
     { label: 'Create Memo', href: '/memos/create', icon: <PlusCircle size={18} /> },
     { label: 'My Memos', href: '/memos?view=mine', icon: <FileEdit size={18} /> },
     { label: 'My Drafts', href: '/memos?status=draft', icon: <FileEdit size={18} /> },
@@ -124,7 +126,7 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
     { label: 'Delegation', href: '/settings/delegation', icon: <UserCog size={18} /> },
   ],
   department_head: [
-    { label: 'Dashboard', href: '/dashboard/department-head', icon: <LayoutDashboard size={18} /> },
+    { label: 'eMemo Dashboard', href: '/dashboard/department-head', icon: <LayoutDashboard size={18} /> },
     { label: 'Create Memo', href: '/memos/create', icon: <PlusCircle size={18} /> },
     { label: 'My Memos', href: '/memos?view=mine', icon: <FileEdit size={18} /> },
     { label: 'My Drafts', href: '/memos?status=draft', icon: <FileEdit size={18} /> },
@@ -136,7 +138,7 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
     { label: 'Delegation', href: '/settings/delegation', icon: <UserCog size={18} /> },
   ],
   it_checker_first: [
-    { label: 'Dashboard', href: '/dashboard/it', icon: <LayoutDashboard size={18} /> },
+    { label: 'eMemo Dashboard', href: '/dashboard/it', icon: <LayoutDashboard size={18} /> },
     {
       label: 'Pending my check',
       href: '/memos?status=pending_it_checker_first',
@@ -149,7 +151,7 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
     { label: 'Delegation', href: '/settings/delegation', icon: <UserCog size={18} /> },
   ],
   it_checker_second: [
-    { label: 'Dashboard', href: '/dashboard/it', icon: <LayoutDashboard size={18} /> },
+    { label: 'eMemo Dashboard', href: '/dashboard/it', icon: <LayoutDashboard size={18} /> },
     {
       label: 'Pending my check',
       href: '/memos?status=pending_it_checker_second',
@@ -167,7 +169,7 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
     { label: 'Delegation', href: '/settings/delegation', icon: <UserCog size={18} /> },
   ],
   finance_reviewer: [
-    { label: 'Dashboard', href: '/dashboard/finance', icon: <LayoutDashboard size={18} /> },
+    { label: 'eMemo Dashboard', href: '/dashboard/finance', icon: <LayoutDashboard size={18} /> },
     { label: 'Pending Finance', href: '/memos?status=pending_finance', icon: <FileText size={18} /> },
     { label: 'I approved', href: '/memos?status=approved', icon: <FileText size={18} /> },
     { label: 'Notifications', href: '/notifications', icon: <Bell size={18} /> },
@@ -175,7 +177,7 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
     { label: 'Delegation', href: '/settings/delegation', icon: <UserCog size={18} /> },
   ],
   hr_reviewer: [
-    { label: 'Dashboard', href: '/dashboard/hr', icon: <LayoutDashboard size={18} /> },
+    { label: 'eMemo Dashboard', href: '/dashboard/hr', icon: <LayoutDashboard size={18} /> },
     { label: 'Pending HR', href: '/memos?status=pending_hr', icon: <FileText size={18} /> },
     { label: 'I approved', href: '/memos?status=approved', icon: <FileText size={18} /> },
     { label: 'Leave Requests', href: '/memos?memo_type=leave_request', icon: <FileText size={18} /> },
@@ -185,7 +187,7 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
     { label: 'Delegation', href: '/settings/delegation', icon: <UserCog size={18} /> },
   ],
   ceo: [
-    { label: 'Dashboard', href: '/dashboard/ceo', icon: <LayoutDashboard size={18} /> },
+    { label: 'eMemo Dashboard', href: '/dashboard/ceo', icon: <LayoutDashboard size={18} /> },
     { label: 'Pending CEO', href: '/memos?status=pending_ceo', icon: <FileText size={18} /> },
     { label: 'I approved', href: '/memos?status=approved', icon: <FileText size={18} /> },
     { label: 'Notifications', href: '/notifications', icon: <Bell size={18} /> },
@@ -193,7 +195,7 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
     { label: 'Delegation', href: '/settings/delegation', icon: <UserCog size={18} /> },
   ],
   exco_member: [
-    { label: 'Dashboard', href: '/dashboard/exco', icon: <LayoutDashboard size={18} /> },
+    { label: 'eMemo Dashboard', href: '/dashboard/exco', icon: <LayoutDashboard size={18} /> },
     { label: 'Pending EXCO', href: '/memos?status=pending_exco', icon: <FileText size={18} /> },
     { label: 'I approved', href: '/memos?status=approved', icon: <FileText size={18} /> },
     { label: 'Notifications', href: '/notifications', icon: <Bell size={18} /> },
@@ -201,7 +203,7 @@ const NAV_BY_ROLE: Record<RoleSlug, NavItem[]> = {
     { label: 'Delegation', href: '/settings/delegation', icon: <UserCog size={18} /> },
   ],
   admin: [
-    { label: 'Dashboard', href: '/dashboard/admin', icon: <LayoutDashboard size={18} /> },
+    { label: 'eMemo Dashboard', href: '/dashboard/admin', icon: <LayoutDashboard size={18} /> },
     { label: 'Create Memo', href: '/memos/create', icon: <PlusCircle size={18} /> },
     { label: 'My Drafts', href: '/memos?status=draft', icon: <FileEdit size={18} /> },
     { label: 'All Memos', href: '/memos', icon: <FileText size={18} /> },
@@ -237,10 +239,38 @@ const FARM_NAV_GROUPS: (Omit<NavGroup, 'items'> & { items: FarmNavItem[] })[] = 
     icon: <Sprout size={18} />,
     items: [
       { label: 'Farm Overview', href: '/farm', icon: <MapIcon size={18} />, permission: 'farm.view', exact: true },
+      { label: 'Executive', href: '/farm/executive', icon: <BarChart3 size={18} />, permission: 'farm.view' },
       { label: 'Blocks', href: '/farm/blocks', icon: <LayoutGrid size={18} />, permission: 'farm.view' },
       { label: 'Crops', href: '/farm/crops', icon: <Leaf size={18} />, permission: 'crops.view' },
       { label: 'Activities', href: '/farm/activities', icon: <Tractor size={18} />, permission: 'activities.view' },
       { label: 'Pest & Disease', href: '/farm/incidents', icon: <Bug size={18} />, permission: 'pest.view' },
+    ],
+  },
+  {
+    id: 'export',
+    label: 'Export & Sales',
+    icon: <Package size={18} />,
+    items: [
+      { label: 'Buyers', href: '/export/buyers', icon: <Users size={18} />, permission: 'buyers.view' },
+      { label: 'Contracts', href: '/export/contracts', icon: <FileCheck size={18} />, permission: 'contracts.view' },
+      { label: 'Shipments', href: '/export/shipments', icon: <Truck size={18} />, permission: 'shipments.view' },
+    ],
+  },
+  {
+    id: 'inputs',
+    label: 'Farm Inputs',
+    icon: <Boxes size={18} />,
+    items: [
+      { label: 'Input Store', href: '/inputs/products', icon: <Warehouse size={18} />, permission: 'procurement.view' },
+      { label: 'Lots & Stock', href: '/inputs/lots', icon: <Boxes size={18} />, permission: 'procurement.view' },
+    ],
+  },
+  {
+    id: 'reports',
+    label: 'Reports',
+    icon: <BarChart3 size={18} />,
+    items: [
+      { label: 'Exports & schedules', href: '/reports', icon: <ClipboardList size={18} />, permission: 'reports.view' },
     ],
   },
   {
@@ -300,6 +330,7 @@ const FARM_ADMIN_GROUP: Omit<NavGroup, 'items'> & { items: FarmNavItem[] } = {
     { label: 'Warehouse Locations', href: '/admin/master/warehouse-locations', icon: <Warehouse size={18} />, permission: 'admin.settings' },
     { label: 'Document Types', href: '/admin/master/document-types', icon: <FileCheck size={18} />, permission: 'admin.settings' },
     { label: 'System Settings', href: '/admin/system-settings', icon: <SlidersHorizontal size={18} />, permission: 'admin.settings' },
+    { label: 'CSV Import', href: '/admin/import', icon: <FileUp size={18} />, permission: 'admin.settings' },
   ],
 };
 
@@ -338,7 +369,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   if (roleSlug === 'staff' && user && isInterdeptFinanceReviewer(user)) {
     navItems = navWithCreateMemo(
       [
-        { label: 'Dashboard', href: '/dashboard/finance', icon: <LayoutDashboard size={18} /> },
+        { label: 'eMemo Dashboard', href: '/dashboard/finance', icon: <LayoutDashboard size={18} /> },
         { label: 'My Memos', href: '/memos?view=mine', icon: <FileEdit size={18} /> },
         { label: 'Pending Finance', href: '/memos?status=pending_finance', icon: <FileText size={18} /> },
         { label: 'Awaiting payment',

@@ -215,3 +215,23 @@ See `.env.example` for all required variables.
 ## License
 
 Proprietary — Rhino Payment Services Limited
+
+### Field maps, forecasts, and scheduled reports
+
+Apply Supabase migrations through `028_farm_digest_delivery.sql` in order before deploying. Migration 027 adds block polygons/centroids, attachment GPS, activity forecast fields, and digest subscriptions; 028 adds a single schedule per user/farm and an atomic delivery lease. Migration 028 stops if duplicate schedules exist so they can be reconciled without silently deleting subscriptions.
+
+Blocks support a Leaflet boundary editor on create/edit and a read-only boundary map with photos on detail. Click boundary vertices, use **Finish polygon**, then save the block. Coordinates use GeoJSON longitude/latitude order; the server calculates the polygon centroid. **Use my GPS** centers the map and captures a point when no boundary exists. Camera capture and **Tag GPS** require browser camera/location permissions on HTTPS (or localhost).
+
+**Fill from forecast** on an activity uses the block centroid and activity date via `/api/farm/weather`. The saved snapshot represents 09:00 in the location's timezone. Source: [Open-Meteo forecast API](https://open-meteo.com/en/docs). Changing the block/date clears the previous forecast. Structured weather and spray score/label are persisted after the activity RPC; a failed weather update is reported to the caller. The score is a weather heuristic, and missing data is marked unavailable.
+
+Reports stores daily/weekly digest schedules on the server. Hours and weekdays are UTC (06:00 UTC is 09:00 in Kampala). Delivery rechecks the subscriber's current report permissions and active account, includes CSV sections in the email body, and records `last_sent_at` only after SMTP succeeds. Concurrent jobs use a 15-minute database lease; failed deliveries release it for retry. SMTP delivery and database acknowledgement cannot be atomic: a crash after SMTP accepts a message can cause a duplicate on retry.
+
+Set these environment variables in the Vercel project before enabling delivery:
+
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM` for your mail server; optionally `SMTP_REPLY_TO`.
+- `CRON_SECRET` to a strong random value. Both cron endpoints require `Authorization: Bearer CRON_SECRET`.
+- `NEXT_PUBLIC_APP_URL` to the deployed portal URL, plus the existing Supabase service credentials and storage settings.
+
+`.github/workflows/farm-scheduled-jobs.yml` runs both authenticated endpoints hourly at minute 17 UTC and supports manual dispatch. Set the repository Actions secret `CRON_SECRET` to the same value as Vercel. The workflow requires no repository token permissions or third-party actions. GitHub may delay scheduled jobs; this is an hourly best-effort schedule. Vercel cron definitions are omitted because the production project uses the Hobby plan. For a manual run, send an authenticated GET to `/api/cron/farm-reports`; the response reports checked/sent/failed/skipped counts. Disabling the `reports.digest_enabled` system setting pauses delivery globally.
+
+Run `npm run test:farm-field-ops` for geometry, forecast, report access, schedule, and cron authentication regression checks.

@@ -13,6 +13,8 @@ import { ConfirmDialog } from '@/components/farm/ConfirmDialog';
 import { EmptyRow, ErrorState } from '@/components/farm/DataStates';
 import { RequirePermission } from '@/components/farm/RequirePermission';
 import { StatusChip } from '@/components/farm/StatusChip';
+import { BlockMapEditor } from '@/components/farm/BlockMapEditor';
+import { PhotoGallery } from '@/components/farm/PhotoGallery';
 import { BlockFormSheet } from '@/components/farm/forms/BlockFormSheet';
 import { PlantingCycleSheet } from '@/components/farm/forms/PlantingCycleSheet';
 import { farmKeys } from '@/hooks/farm';
@@ -185,6 +187,19 @@ function BlockDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {(b.centroid_lat != null && b.centroid_lng != null) || b.boundary_geojson ? (
+        <BlockMapEditor
+          readOnly
+          value={{
+            centroid_lat: b.centroid_lat == null ? null : Number(b.centroid_lat),
+            centroid_lng: b.centroid_lng == null ? null : Number(b.centroid_lng),
+            boundary_geojson: b.boundary_geojson,
+          }}
+        />
+      ) : null}
+
+      <PhotoGallery entityType="block" entityId={b.id} canEdit={canManage} title="Block photos" />
 
       <Card>
         <CardHeader>

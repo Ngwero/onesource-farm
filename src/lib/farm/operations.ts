@@ -70,6 +70,34 @@ export function activityRpcArgs(id: string | null, farmId: string, userId: strin
   return { p_id: id, p_farm: farmId, p_user: userId, p_data: data, p_workers: workers, p_inputs: inputs };
 }
 
+/** Persist structured weather / spray-window columns (migration 027+) after the RPC save. */
+export async function patchActivityWeather(
+  supabase: SupabaseClient,
+  activityId: string,
+  farmId: string,
+  input: ActivityInput
+) {
+  const { error } = await supabase
+    .from('farm_activities')
+    .update({
+      weather: input.weather ?? null,
+      weather_temp_c: input.weather_temp_c ?? null,
+      weather_wind_kmh: input.weather_wind_kmh ?? null,
+      weather_precip_mm: input.weather_precip_mm ?? null,
+      weather_humidity_pct: input.weather_humidity_pct ?? null,
+      weather_code: input.weather_code ?? null,
+      weather_source: input.weather_source ?? null,
+      spray_window_score: input.spray_window_score ?? null,
+      spray_window_label: input.spray_window_label ?? null,
+      spray_window_ok:
+        input.spray_window_ok ??
+        (input.spray_window_score != null ? input.spray_window_score >= 55 : null),
+    })
+    .eq('id', activityId)
+    .eq('farm_id', farmId);
+  if (error) throw error;
+}
+
 export function harvestRpcArgs(id: string | null, farmId: string, userId: string, input: HarvestBatchInput) {
   const { workers, ...data } = input;
   return { p_id: id, p_farm: farmId, p_user: userId, p_data: data, p_workers: workers };
@@ -211,6 +239,7 @@ export const ATTACHMENT_ENTITIES = {
   worker: { table: 'workers', view: 'workforce.view', edit: 'workforce.manage' },
   qc_inspection: { table: 'qc_inspections', view: 'qc.view', edit: 'qc.inspect' },
   packing_batch: { table: 'packing_batches', view: 'packing.view', edit: 'packing.record' },
+  block: { table: 'blocks', view: 'farm.view', edit: 'farm.manage' },
 } satisfies Record<string, { table: string; view: Permission; edit: Permission }>;
 
 export type AttachmentEntity = keyof typeof ATTACHMENT_ENTITIES;

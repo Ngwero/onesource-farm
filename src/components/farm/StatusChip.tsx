@@ -64,6 +64,11 @@ const STATUS_TONE: Record<string, keyof typeof TONES> = {
   spoil: 'red',
   reserve: 'blue',
   unreserve: 'slate',
+  loading: 'amber',
+  dispatched: 'lime',
+  in_transit: 'blue',
+  delivered: 'green',
+  partial: 'amber',
 };
 
 /** Plain-language labels for QC states shown on batches. */

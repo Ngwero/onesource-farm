@@ -1,69 +1,53 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Activity,
+  BarChart3,
   Bug,
-  ClipboardCheck,
-  Gauge as GaugeIcon,
   HardHat,
-  LayoutGrid,
-  Leaf,
-  ListChecks,
   Pencil,
   Plus,
-  Sprout,
   Tractor,
-  Wallet,
-  Wheat,
-  Bell,
-  CalendarClock,
 } from 'lucide-react';
 import { RequirePermission } from '@/components/farm/RequirePermission';
 import { ErrorState } from '@/components/farm/DataStates';
 import {
-  AttentionList,
-  BlockTiles,
-  CropMix,
-  DashboardHeader,
-  Gauge,
-  Glass,
-  GlassLink,
-  GlassTitle,
-  HarvestChart,
-  PillAction,
-  RecentFeed,
-  StatRow,
-  UpcomingHarvests,
-  attentionItems,
-  qualityLabel,
-} from '@/components/farm/FarmDashboard';
+  ActivityByDayCard,
+  CropStrip,
+  EmptyFarmSetup,
+  FarmHealthCard,
+  FarmMixCard,
+  HarvestVolumeCard,
+  NeedsAttentionCard,
+  QualityTimesCard,
+  WorkforceLoadCard,
+} from '@/components/farm/FarmOpsDashboard';
 import { FarmProfileSheet } from '@/components/farm/forms/FarmProfileSheet';
 import { useAuth } from '@/context/AuthContext';
 import { farmKeys, useCurrency } from '@/hooks/farm';
 import { useFarmAccess } from '@/hooks/useFarmAccess';
 import { errorMessage, farmFetch } from '@/lib/farm/client';
-import { fmtHa, fmtMoney, fmtNumber, fmtPct, fmtQty } from '@/lib/farm/format';
+import { fmtDate } from '@/lib/farm/format';
 import type { FarmOverview } from '@/lib/farm/types';
-
-function HeroStat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div>
-      <p className="text-xs uppercase tracking-wider text-white/60">{label}</p>
-      <p className="mt-1 text-3xl font-semibold tracking-tight text-white drop-shadow sm:text-4xl">{value}</p>
-      {hint ? <p className="mt-0.5 text-xs text-white/60">{hint}</p> : null}
-    </div>
-  );
-}
 
 function SkeletonPanels() {
   return (
-    <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)_340px]">
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="h-80 animate-pulse rounded-3xl border border-white/10 bg-white/10 backdrop-blur-xl" />
-      ))}
+    <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="h-40 animate-pulse rounded-2xl bg-slate-200/70" />
+        <div className="h-40 animate-pulse rounded-2xl bg-slate-200/70" />
+      </div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]">
+        <div className="h-72 animate-pulse rounded-2xl bg-slate-200/70" />
+        <div className="h-72 animate-pulse rounded-2xl bg-slate-200/70" />
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="h-56 animate-pulse rounded-2xl bg-slate-200/70" />
+        ))}
+      </div>
     </div>
   );
 }
@@ -83,225 +67,120 @@ function FarmDashboardPage() {
   }
 
   const data = overview.data;
-  const t = data?.totals;
-  const ops = data?.operations;
-  const harvest = ops?.harvest;
-  const plantedPct = t && t.totalAreaHa > 0 ? (t.plantedAreaHa / t.totalAreaHa) * 100 : null;
-  const fieldCost = (ops?.activities?.totalCost ?? 0) + (harvest?.labourCost ?? 0);
   const firstName = user?.full_name?.split(' ')[0] ?? '';
-
-  const actions = (
-    <>
-      {can('farm.manage') && data ? (
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20"
-        >
-          <Pencil className="size-4" /> Edit farm
-        </button>
-      ) : null}
-      {can('activities.record') ? (
-        <PillAction href="/farm/activities?new=1" icon={<Tractor className="size-4" />}>
-          Activity
-        </PillAction>
-      ) : null}
-      {can('pest.record') ? (
-        <PillAction href="/farm/incidents?new=1" icon={<Bug className="size-4" />}>
-          Pest report
-        </PillAction>
-      ) : null}
-      {can('attendance.record') ? (
-        <PillAction href="/workforce/attendance" icon={<HardHat className="size-4" />}>
-          Attendance
-        </PillAction>
-      ) : null}
-      {can('harvest.record') ? (
-        <PillAction href="/harvest/batches?new=1" icon={<Plus className="size-4" />} primary>
-          Record harvest
-        </PillAction>
-      ) : null}
-    </>
-  );
+  const farm = data?.farm;
+  const place = farm ? [farm.location, farm.district, farm.country].filter(Boolean).join(', ') : '';
 
   return (
-    <div className="relative isolate -m-1 overflow-hidden rounded-[28px] bg-[#0b1f17]">
-      <Image src="/farm-hero.jpg" alt="" fill priority sizes="100vw" className="-z-20 object-cover object-center" />
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(8,26,19,0.78)_0%,rgba(8,26,19,0.45)_30%,rgba(8,26,19,0.72)_65%,rgba(8,26,19,0.95)_100%)]" />
+    <div className="space-y-5">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm text-slate-500">
+            {firstName ? `Welcome back, ${firstName}` : 'Farm operations'}
+          </p>
+          <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+            {farm?.name ?? 'Farm overview'}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {[place, fmtDate(new Date().toISOString().slice(0, 10))].filter(Boolean).join(' · ')}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {can('farm.view') || can('profitability.view') ? (
+            <Link
+              href="/farm/executive"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <BarChart3 className="size-4 text-brand-600" />
+              Executive
+            </Link>
+          ) : null}
+          {can('farm.manage') && data ? (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <Pencil className="size-4" /> Edit farm
+            </button>
+          ) : null}
+          {can('activities.record') ? (
+            <Link
+              href="/farm/activities?new=1"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <Tractor className="size-4" /> Activity
+            </Link>
+          ) : null}
+          {can('pest.record') ? (
+            <Link
+              href="/farm/incidents?new=1"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <Bug className="size-4" /> Pest
+            </Link>
+          ) : null}
+          {can('attendance.record') ? (
+            <Link
+              href="/workforce/attendance"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <HardHat className="size-4" /> Attendance
+            </Link>
+          ) : null}
+          {can('harvest.record') ? (
+            <Link
+              href="/harvest/batches?new=1"
+              className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+            >
+              <Plus className="size-4" /> Record harvest
+            </Link>
+          ) : null}
+        </div>
+      </header>
 
-      <div className="space-y-6 p-5 sm:p-7 xl:p-8">
-        <DashboardHeader overview={data} firstName={firstName} actions={actions} />
+      {!data ? (
+        <SkeletonPanels />
+      ) : (
+        <>
+          {!data.blockMap.length ? <EmptyFarmSetup canAdd={can('farm.manage')} /> : null}
 
-        {!data || !t || !ops ? (
-          <SkeletonPanels />
-        ) : (
-          <>
-            <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)_340px]">
-              {/* Left column */}
-              <div className="space-y-5">
-                <Glass>
-                  {harvest ? (
-                    <>
-                      <GlassTitle icon={<GaugeIcon className="size-4" />} title="Export quality" subtitle="Graded harvest, last 30 days" />
-                      <Gauge value={harvest.exportablePct} label={qualityLabel(harvest.exportablePct)} caption="Share of graded produce fit for export" />
-                      <div className="mt-4 flex flex-wrap justify-center gap-2 text-[11px]">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-lime-300/15 px-2.5 py-1 text-lime-200">
-                          <span className="size-1.5 rounded-full bg-lime-300" /> Exportable {fmtPct(harvest.exportablePct, 0)}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-1 text-red-200">
-                          <span className="size-1.5 rounded-full bg-red-400" /> Rejected {fmtPct(harvest.rejectionPct, 0)}
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <GlassTitle icon={<GaugeIcon className="size-4" />} title="Land in use" subtitle="Planted share of block area" />
-                      <Gauge value={plantedPct} label={`${fmtHa(t.plantedAreaHa)} planted`} caption={`of ${fmtHa(t.totalAreaHa)} in blocks`} />
-                    </>
-                  )}
-                </Glass>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <FarmHealthCard overview={data} currency={currency} />
+            <FarmMixCard overview={data} />
+          </div>
 
-                <Glass>
-                  <GlassTitle icon={<Bell className="size-4" />} title="Needs attention" subtitle="What to act on today" />
-                  <AttentionList items={attentionItems(data)} />
-                </Glass>
-              </div>
-
-              {/* Centre column */}
-              <div className="flex min-w-0 flex-col gap-5">
-                <div className="grid grid-cols-2 gap-6 px-1 pt-2 sm:grid-cols-3">
-                  <HeroStat
-                    label="Planted area"
-                    value={fmtHa(t.plantedAreaHa)}
-                    hint={plantedPct != null ? `${fmtNumber(plantedPct, 0)}% of ${fmtHa(t.totalAreaHa)}` : 'No blocks yet'}
-                  />
-                  <HeroStat label="Active plantings" value={String(t.openCycles)} hint={`${t.activeCrops} crop${t.activeCrops === 1 ? '' : 's'} · ${t.blocks} blocks`} />
-                  <HeroStat
-                    label="Expected yield"
-                    value={fmtNumber(t.expectedYieldOpen)}
-                    hint={`${fmtNumber(t.actualYieldOpen)} harvested so far`}
-                  />
-                </div>
-
-                {harvest ? (
-                  <Glass>
-                    <GlassTitle
-                      icon={<Wheat className="size-4" />}
-                      title="Harvest"
-                      subtitle="Daily harvested quantity"
-                      action={<GlassLink href="/harvest/batches">All batches</GlassLink>}
-                    />
-                    <HarvestChart harvest={harvest} />
-                  </Glass>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.85fr)]">
+            {data.operations.harvest ? (
+              <HarvestVolumeCard harvest={data.operations.harvest} />
+            ) : (
+              <section className="flex min-h-[280px] flex-col justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center">
+                <p className="font-semibold text-slate-900">Harvest volume</p>
+                <p className="mt-1 text-sm text-slate-500">Record harvest batches to see the 30-day volume chart here.</p>
+                {can('harvest.record') ? (
+                  <Link
+                    href="/harvest/batches?new=1"
+                    className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+                  >
+                    <Plus className="size-4" /> Record harvest
+                  </Link>
                 ) : null}
+              </section>
+            )}
+            <NeedsAttentionCard overview={data} />
+          </div>
 
-                <Glass className="flex-1">
-                  <GlassTitle
-                    icon={<LayoutGrid className="size-4" />}
-                    title="Blocks"
-                    subtitle={`${t.blocks} block${t.blocks === 1 ? '' : 's'} · ${fmtHa(t.totalAreaHa)}`}
-                    action={<GlassLink href="/farm/blocks">Manage</GlassLink>}
-                  />
-                  {data.blockMap.length ? (
-                    <BlockTiles blocks={data.blockMap} canAdd={can('farm.manage')} />
-                  ) : (
-                    <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-white/20 p-5">
-                      <div>
-                        <p className="font-semibold">Set up your farm</p>
-                        <p className="text-sm text-white/60">Add the blocks or plots on the farm, then record what is planted in each.</p>
-                      </div>
-                      {can('farm.manage') ? (
-                        <PillAction href="/farm/blocks?new=1" icon={<Plus className="size-4" />} primary>
-                          Add first block
-                        </PillAction>
-                      ) : null}
-                    </div>
-                  )}
-                </Glass>
-              </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <ActivityByDayCard ops={data.operations} />
+            <WorkforceLoadCard ops={data.operations} />
+            <QualityTimesCard overview={data} />
+          </div>
 
-              {/* Right column */}
-              <div className="grid content-start gap-5 md:grid-cols-2 lg:col-span-2 xl:grid-cols-3 2xl:col-span-1 2xl:grid-cols-1">
-                <Glass>
-                  <GlassTitle icon={<Activity className="size-4" />} title="Today on the farm" subtitle="Live operations" />
-                  <div className="space-y-2">
-                    {ops.workforce ? (
-                      <StatRow
-                        icon={<HardHat className="size-4" />}
-                        label="Workers present"
-                        value={`${ops.workforce.presentToday} of ${ops.workforce.activeWorkers}`}
-                        hint={ops.workforce.markedToday < ops.workforce.activeWorkers ? 'Register open' : 'Register done'}
-                        href="/workforce/attendance"
-                      />
-                    ) : null}
-                    {ops.tasks ? (
-                      <StatRow
-                        icon={<ListChecks className="size-4" />}
-                        label="Open tasks"
-                        value={ops.tasks.open}
-                        hint={ops.tasks.overdue ? `${ops.tasks.overdue} overdue` : undefined}
-                        href="/workforce/tasks"
-                      />
-                    ) : null}
-                    {ops.incidents ? (
-                      <StatRow
-                        icon={<Bug className="size-4" />}
-                        label="Pest & disease open"
-                        value={ops.incidents.unresolved}
-                        hint={ops.incidents.severe ? `${ops.incidents.severe} serious` : undefined}
-                        href="/farm/incidents"
-                      />
-                    ) : null}
-                    {harvest ? (
-                      <StatRow
-                        icon={<ClipboardCheck className="size-4" />}
-                        label="Awaiting grading"
-                        value={harvest.pendingGrading}
-                        href="/harvest/grading"
-                      />
-                    ) : null}
-                    <StatRow
-                      icon={<CalendarClock className="size-4" />}
-                      label="Harvests due (30 days)"
-                      value={t.harvestDueNext30Days}
-                    />
-                    {ops.activities || harvest ? (
-                      <StatRow
-                        icon={<Wallet className="size-4" />}
-                        label="Field cost (30 days)"
-                        value={fmtMoney(fieldCost, currency)}
-                        hint={ops.activities ? `${ops.activities.count} activities` : undefined}
-                        href={ops.activities ? '/farm/activities' : undefined}
-                      />
-                    ) : null}
-                  </div>
-                </Glass>
-
-                <Glass>
-                  <GlassTitle icon={<Leaf className="size-4" />} title="Crop distribution" subtitle="Share of block area" />
-                  <CropMix crops={data.cropBreakdown} totalAreaHa={t.totalAreaHa} />
-                </Glass>
-
-                <Glass>
-                  <GlassTitle icon={<Sprout className="size-4" />} title="Upcoming harvests" subtitle="Next 30 days" />
-                  <UpcomingHarvests items={data.upcomingHarvests} />
-                </Glass>
-              </div>
-            </div>
-
-            <Glass>
-              <GlassTitle icon={<Activity className="size-4" />} title="Recent field records" subtitle="Harvests, activities and pest reports, last 30 days" />
-              <RecentFeed items={ops.recent} />
-              {harvest && harvest.total > 0 && ops.activities ? (
-                <p className="mt-4 text-xs text-white/50">
-                  Field cost per {harvest.unit} harvested this month: {fmtMoney(fieldCost / harvest.total, currency)} ({fmtQty(harvest.total, harvest.unit)} from{' '}
-                  {fmtMoney(fieldCost, currency)}).
-                </p>
-              ) : null}
-            </Glass>
-          </>
-        )}
-      </div>
+          {data.cropBreakdown.length ? (
+            <CropStrip crops={data.cropBreakdown} totalAreaHa={data.totals.totalAreaHa} />
+          ) : null}
+        </>
+      )}
 
       {data ? <FarmProfileSheet open={editing} onOpenChange={setEditing} farm={data.farm} /> : null}
     </div>

@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { getCurrentFarmId, withPermission } from '@/lib/farm/access';
 import { auditFarm } from '@/lib/farm/audit';
 import { parseBody } from '@/lib/farm/http';
-import { activityRpcArgs, deleteAttachmentsFor } from '@/lib/farm/operations';
+import { activityRpcArgs, deleteAttachmentsFor, patchActivityWeather } from '@/lib/farm/operations';
 import { ACTIVITY_SELECT } from '@/lib/farm/queries';
 import { activitySchema } from '@/lib/farm/schemas';
 
@@ -33,6 +33,7 @@ export async function PATCH(request: Request, { params }: Params) {
     const farmId = await getCurrentFarmId();
     const { error } = await supabase.rpc('farm_save_activity', activityRpcArgs(id, farmId, user.id, input));
     if (error) throw error;
+    await patchActivityWeather(supabase, id, farmId, input);
     await auditFarm(user.id, 'updated', 'farm_activity', id, { new: input });
     return NextResponse.json({ id });
   });

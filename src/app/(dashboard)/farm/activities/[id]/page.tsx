@@ -105,6 +105,7 @@ function ActivityDetailPage() {
               <Detail label="Category" value={a.activity_type ? optionLabel(a.activity_type.category) : null} />
               <Detail label="Supervisor" value={a.supervisor?.full_name} />
               <Detail label="Weather" value={a.weather} />
+              <Detail label="Spray window" value={a.spray_window_label ? `${a.spray_window_label}${a.spray_window_score != null ? ` (${Number(a.spray_window_score)}/100)` : ''}` : null} />
               <Detail label="Recorded" value={`${a.created_by_user?.full_name ?? '—'}, ${fmtDateTime(a.created_at)}`} />
             </dl>
             {a.notes ? <p className="mt-4 whitespace-pre-wrap text-sm text-muted-foreground">{a.notes}</p> : null}

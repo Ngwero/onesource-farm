@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { buildTourSteps, resolveVisibleSteps, type TourStep } from '@/lib/tour/steps';
@@ -20,6 +20,7 @@ type SpotlightRect = {
 };
 
 const PAD = 8;
+const VIEW_MARGIN = 16;
 
 function measureTarget(targetId: string): SpotlightRect | null {
   const el = document.querySelector(`[data-tour-id="${targetId}"]`);
@@ -43,6 +44,7 @@ function tooltipStyle(
       left: '50%',
       transform: 'translate(-50%, -50%)',
       maxWidth: '24rem',
+      maxHeight: `calc(100vh - ${VIEW_MARGIN * 2}px)`,
     };
   }
 
@@ -52,24 +54,65 @@ function tooltipStyle(
   if (placement === 'bottom') {
     return {
       top: rect.top + rect.height + gap,
-      left: Math.max(16, Math.min(rect.left, window.innerWidth - 320)),
+      left: Math.max(VIEW_MARGIN, Math.min(rect.left, window.innerWidth - 320)),
       maxWidth: '20rem',
+      maxHeight: `calc(100vh - ${VIEW_MARGIN * 2}px)`,
     };
   }
 
   if (placement === 'left') {
     return {
-      top: Math.max(16, rect.top),
-      right: Math.max(16, window.innerWidth - rect.left + gap),
+      top: Math.max(VIEW_MARGIN, rect.top),
+      right: Math.max(VIEW_MARGIN, window.innerWidth - rect.left + gap),
       maxWidth: '20rem',
+      maxHeight: `calc(100vh - ${VIEW_MARGIN * 2}px)`,
     };
   }
 
   return {
-    top: Math.max(16, rect.top),
+    top: Math.max(VIEW_MARGIN, rect.top),
     left: Math.min(rect.left + rect.width + gap, window.innerWidth - 320),
     maxWidth: '20rem',
+    maxHeight: `calc(100vh - ${VIEW_MARGIN * 2}px)`,
   };
+}
+
+/** Keep the tour card fully inside the viewport after initial placement. */
+function clampCardIntoViewport(card: HTMLElement) {
+  const rect = card.getBoundingClientRect();
+  const maxHeight = Math.max(160, window.innerHeight - VIEW_MARGIN * 2);
+  card.style.maxHeight = `${maxHeight}px`;
+  card.style.overflowY = 'auto';
+
+  let top = rect.top;
+  let left = rect.left;
+
+  if (rect.height > maxHeight) {
+    top = VIEW_MARGIN;
+  } else if (rect.bottom > window.innerHeight - VIEW_MARGIN) {
+    top = Math.max(VIEW_MARGIN, window.innerHeight - VIEW_MARGIN - rect.height);
+  } else if (rect.top < VIEW_MARGIN) {
+    top = VIEW_MARGIN;
+  }
+
+  if (rect.right > window.innerWidth - VIEW_MARGIN) {
+    left = Math.max(VIEW_MARGIN, window.innerWidth - VIEW_MARGIN - rect.width);
+  } else if (rect.left < VIEW_MARGIN) {
+    left = VIEW_MARGIN;
+  }
+
+  card.style.top = `${top}px`;
+  card.style.left = `${left}px`;
+  card.style.right = 'auto';
+  card.style.bottom = 'auto';
+  if (card.style.transform?.includes('translate')) {
+    card.style.transform = 'none';
+  }
+
+  card.querySelector<HTMLElement>('.product-tour__actions')?.scrollIntoView({
+    block: 'nearest',
+    inline: 'nearest',
+  });
 }
 
 export function ProductTour() {
@@ -78,6 +121,7 @@ export function ProductTour() {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [spotlight, setSpotlight] = useState<SpotlightRect | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const allSteps = useMemo(
     () => (user ? buildTourSteps(user, roleSlug) : []),
@@ -146,7 +190,7 @@ export function ProductTour() {
 
     const update = () => {
       const el = document.querySelector(`[data-tour-id="${step.target}"]`);
-      el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       window.setTimeout(() => {
         setSpotlight(measureTarget(step.target!));
         document.querySelectorAll('[data-tour-highlight]').forEach((node) => {
@@ -167,6 +211,16 @@ export function ProductTour() {
       });
     };
   }, [open, step]);
+
+  useLayoutEffect(() => {
+    if (!open || !step) return;
+    const card = cardRef.current;
+    if (!card) return;
+    clampCardIntoViewport(card);
+    const onResize = () => clampCardIntoViewport(card);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [open, step, spotlight, safeIndex]);
 
   if (!open || !user || !step) return null;
 
@@ -189,6 +243,7 @@ export function ProductTour() {
       )}
 
       <div
+        ref={cardRef}
         className={`product-tour__card${spotlight ? '' : ' product-tour__card--centered'}`}
         style={tooltipStyle(step, spotlight)}
       >

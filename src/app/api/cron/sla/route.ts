@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { authorizeCron } from '@/lib/cron/auth';
 import { processSlaChecks } from '@/lib/sla/service';
 
-/** Protected cron endpoint — set CRON_SECRET in env and pass ?secret=... */
+/** Protected cron — Authorization: Bearer CRON_SECRET */
 export async function GET(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const { searchParams } = new URL(request.url);
-  const provided = searchParams.get('secret');
-
-  if (!secret || provided !== secret) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = authorizeCron(request);
+  if (denied) return denied;
 
   const result = await processSlaChecks();
   return NextResponse.json({ ok: true, ...result, at: new Date().toISOString() });

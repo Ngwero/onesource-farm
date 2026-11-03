@@ -1,0 +1,55 @@
+name: Farm scheduled jobs
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: farm-scheduled-jobs
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      APP_URL: https://onesourcefresh.com
+    steps:
+      - name: Run authenticated SLA checks and report digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$CRON_SECRET" ]]; then
+            echo 'CRON_SECRET repository secret is missing.' >&2
+            exit 1
+          fi
+          failed=0
+          for job in sla farm-reports; do
+            response="$(mktemp)"
+            if curl --fail --silent --show-error \
+              --connect-timeout 15 --max-time 180 \
+              --header "Authorization: Bearer $CRON_SECRET" \
+              --output "$response" "$APP_URL/api/cron/$job"; then
+              if ! python3 - "$response" "$job" <<'PY'
+          import json, sys
+          with open(sys.argv[1]) as handle:
+              result = json.load(handle)
+          counts = {key: result[key] for key in ('checked', 'sent', 'failed', 'skipped') if key in result}
+          print(sys.argv[2], json.dumps(counts))
+          if result.get('ok') is not True or result.get('failed', 0):
+              raise SystemExit('Scheduled job reported a failure')
+          PY
+              then
+                failed=1
+              fi
+            else
+              echo "Scheduled endpoint failed: $job" >&2
+              failed=1
+            fi
+            rm -f "$response"
+          done
+          exit "$failed"

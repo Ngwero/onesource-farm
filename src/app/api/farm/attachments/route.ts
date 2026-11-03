@@ -6,7 +6,8 @@ import { HttpError } from '@/lib/farm/http';
 import { attachmentEntity } from '@/lib/farm/operations';
 import { storeFile } from '@/lib/storage';
 
-const SELECT = 'id, entity_type, entity_id, file_name, mime_type, size_bytes, caption, created_at, uploaded_by_user:users!attachments_uploaded_by_fkey(id, full_name)';
+const SELECT =
+  'id, entity_type, entity_id, file_name, mime_type, size_bytes, caption, created_at, captured_lat, captured_lng, captured_at, meta, uploaded_by_user:users!attachments_uploaded_by_fkey(id, full_name)';
 
 export async function GET(request: Request) {
   return withPermission(undefined, async ({ can }) => {
@@ -38,6 +39,29 @@ export async function POST(request: Request) {
     const entityId = String(form.get('entity_id') ?? '');
     const caption = String(form.get('caption') ?? '').trim() || null;
     const file = form.get('file');
+    const capturedLatRaw = String(form.get('captured_lat') ?? '').trim();
+    const capturedLngRaw = String(form.get('captured_lng') ?? '').trim();
+    const capturedAtRaw = String(form.get('captured_at') ?? '').trim();
+    const metaRaw = String(form.get('meta') ?? '').trim();
+    const captured_lat = capturedLatRaw ? Number(capturedLatRaw) : null;
+    const captured_lng = capturedLngRaw ? Number(capturedLngRaw) : null;
+    const captured_at = capturedAtRaw || (captured_lat != null ? new Date().toISOString() : null);
+    if ((captured_lat == null) !== (captured_lng == null) ||
+        (captured_lat != null && (!Number.isFinite(captured_lat) || Math.abs(captured_lat) > 90)) ||
+        (captured_lng != null && (!Number.isFinite(captured_lng) || Math.abs(captured_lng) > 180))) {
+      throw new HttpError('Provide valid latitude and longitude together.', 400);
+    }
+    if (captured_at && !Number.isFinite(Date.parse(captured_at))) {
+      throw new HttpError('Invalid capture timestamp.', 400);
+    }
+    let meta: Record<string, unknown> = {};
+    if (metaRaw) {
+      try {
+        meta = JSON.parse(metaRaw) as Record<string, unknown>;
+      } catch {
+        meta = { note: metaRaw };
+      }
+    }
     const entity = attachmentEntity(entityType);
     if (!can(entity.edit)) throw new HttpError('You do not have permission to add files here.', 403);
     if (!(file instanceof File) || file.size === 0) throw new HttpError('Choose a file to upload', 400);
@@ -77,11 +101,17 @@ export async function POST(request: Request) {
         size_bytes: stored.fileSize,
         caption,
         uploaded_by: user.id,
+        captured_lat: Number.isFinite(captured_lat) ? captured_lat : null,
+        captured_lng: Number.isFinite(captured_lng) ? captured_lng : null,
+        captured_at,
+        meta,
       })
       .select(SELECT)
       .single();
     if (error) throw error;
-    await auditFarm(user.id, 'created', 'attachment', data.id, { new: { entityType, entityId, file: stored.fileName } });
+    await auditFarm(user.id, 'created', 'attachment', data.id, {
+      new: { entityType, entityId, file: stored.fileName, captured_lat, captured_lng },
+    });
     return NextResponse.json({ attachment: data }, { status: 201 });
   });
 }

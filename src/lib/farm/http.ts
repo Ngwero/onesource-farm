@@ -61,9 +61,29 @@ function postgrestResponse(err: PostgrestLikeError): NextResponse {
     case 'P0002':
     case 'PGRST116':
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    default:
+    case '42P01':
+    case 'PGRST205':
+      return NextResponse.json(
+        {
+          error:
+            'Export tables are not set up on this database yet. Apply migration 025 (buyers, contracts, shipments) and try again.',
+        },
+        { status: 503 }
+      );
+    default: {
+      const msg = err.message ?? '';
+      if (/does not exist|schema cache/i.test(msg)) {
+        return NextResponse.json(
+          {
+            error:
+              'Export tables are not set up on this database yet. Apply migration 025 (buyers, contracts, shipments) and try again.',
+          },
+          { status: 503 }
+        );
+      }
       console.error('Database error:', err);
       return NextResponse.json({ error: 'Database request failed' }, { status: 500 });
+    }
   }
 }
 

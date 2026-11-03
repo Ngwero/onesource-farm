@@ -11,7 +11,7 @@ export const CYCLE_SELECT = `
 
 export const BLOCK_SELECT = `
   id, farm_id, code, name, size_value, size_unit, area_ha, soil_type, irrigation_type, status,
-  supervisor_id, notes, created_at, updated_at,
+  supervisor_id, notes, centroid_lat, centroid_lng, boundary_geojson, map_zoom, created_at, updated_at,
   supervisor:users!blocks_supervisor_id_fkey(id, full_name),
   planting_cycles:planting_cycles!planting_cycles_block_id_farm_id_fkey(${CYCLE_SELECT})
 `;
@@ -25,9 +25,28 @@ export const ACTIVITY_SELECT = `
   cycle:planting_cycles!farm_activities_planting_cycle_id_block_id_crop_id_fkey(id, season_label, planting_date),
   activity_type:activity_types!farm_activities_activity_type_id_fkey(id, code, name, category, uses_inputs),
   supervisor:users!farm_activities_supervisor_id_fkey(id, full_name),
+  applicator:users!farm_activities_applicator_id_fkey(id, full_name),
   created_by_user:users!farm_activities_created_by_fkey(id, full_name),
   workers:farm_activity_workers(${LABOUR_LINE}),
-  inputs:farm_activity_inputs(id, input_name, quantity, unit, unit_cost, cost, sort_order)
+  inputs:farm_activity_inputs(id, input_name, quantity, unit, unit_cost, cost, sort_order, product_id, lot_id)
+`;
+
+export const INPUT_PRODUCT_SELECT = `
+  id, farm_id, sku, name, category, unit, active_ingredient, registration_no, manufacturer,
+  default_supplier, reorder_level, status, notes, created_at, updated_at
+`;
+
+export const INPUT_LOT_SELECT = `
+  id, farm_id, product_id, lot_no, supplier, received_date, expiry_date, quantity_received,
+  quantity_remaining, unit_cost, location, notes, created_at, updated_at,
+  product:input_products!input_lots_product_id_fkey(id, sku, name, unit, category, status)
+`;
+
+export const INPUT_MOVEMENT_SELECT = `
+  id, farm_id, product_id, lot_id, movement_type, quantity, unit_cost, activity_id, reference,
+  notes, moved_at, created_at,
+  product:input_products!input_movements_product_id_fkey(id, sku, name, unit),
+  lot:input_lots!input_movements_lot_id_fkey(id, lot_no)
 `;
 
 export const INCIDENT_SELECT = `
@@ -105,6 +124,31 @@ export const MOVEMENT_SELECT = `
 `;
 
 export const WORKER_SELECT = '*, supervisor:users!workers_supervisor_id_fkey(id, full_name)';
+
+export const BUYER_SELECT = '*';
+
+export const CONTRACT_SELECT = `
+  *,
+  buyer:buyers!buyer_contracts_buyer_id_fkey(id, code, name, status),
+  crop:crops!buyer_contracts_crop_id_fkey(id, code, name),
+  grade:grades!buyer_contracts_grade_id_fkey(id, code, name)
+`;
+
+export const SHIPMENT_LINE_SELECT = `
+  id, shipment_id, packing_batch_id, package_count, net_weight, notes, created_at,
+  packing_batch:packing_batches!shipment_lines_packing_batch_id_fkey(
+    id, packing_no, package_count, net_weight, net_weight_per_package, qc_status,
+    crop:crops!packing_batches_crop_id_fkey(id, code, name),
+    grade:grades!packing_batches_grade_id_fkey(id, code, name)
+  )
+`;
+
+export const SHIPMENT_SELECT = `
+  *,
+  buyer:buyers!shipments_buyer_id_fkey(id, code, name, status),
+  contract:buyer_contracts!shipments_contract_id_fkey(id, contract_no, title, status),
+  lines:shipment_lines(${SHIPMENT_LINE_SELECT})
+`;
 
 /** PostgREST returns a one-to-one embed as an object or a one-element array depending on the FK shape. */
 export function single<T>(value: T | T[] | null | undefined): T | null {

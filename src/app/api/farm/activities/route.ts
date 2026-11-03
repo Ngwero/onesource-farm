@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { getCurrentFarmId, withPermission } from '@/lib/farm/access';
 import { auditFarm } from '@/lib/farm/audit';
 import { parseBody } from '@/lib/farm/http';
-import { activityRpcArgs } from '@/lib/farm/operations';
+import { activityRpcArgs, patchActivityWeather } from '@/lib/farm/operations';
 import { ACTIVITY_SELECT } from '@/lib/farm/queries';
 import { activitySchema } from '@/lib/farm/schemas';
 
@@ -37,6 +37,7 @@ export async function POST(request: Request) {
     const farmId = await getCurrentFarmId();
     const { data: id, error } = await supabase.rpc('farm_save_activity', activityRpcArgs(null, farmId, user.id, input));
     if (error) throw error;
+    await patchActivityWeather(supabase, id as string, farmId, input);
     await auditFarm(user.id, 'created', 'farm_activity', id as string, { new: input });
     return NextResponse.json({ id }, { status: 201 });
   });

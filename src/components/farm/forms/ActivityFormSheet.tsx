@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, X } from 'lucide-react';
+import { CloudSun, Plus, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -11,12 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BlockCycleFields } from '@/components/farm/BlockCycleFields';
 import { FormSheet } from '@/components/farm/FormSheet';
 import { DateField, NumberField, SelectField, TextareaField, TextField } from '@/components/farm/fields';
-import { farmKeys, useActivityTypes, useCurrency, useFarmUsers, useWorkers } from '@/hooks/farm';
+import { farmKeys, useActivityTypes, useCurrency, useFarmUsers, useInputLots, useInputProducts, useWorkers } from '@/hooks/farm';
 import { useFormMutation } from '@/hooks/useFormMutation';
-import { farmFetch } from '@/lib/farm/client';
+import { errorMessage, farmFetch } from '@/lib/farm/client';
 import { fmtDate, fmtMoney, todayIso } from '@/lib/farm/format';
 import { activitySchema, type ActivityInput } from '@/lib/farm/schemas';
 import type { ActivityRow } from '@/lib/farm/types';
+
+const SPRAY_TYPE = /pesticide|herbicide|fungicide|spray|chemical/i;
 
 function toValues(activity?: ActivityRow | null, defaults?: Partial<ActivityInput>): ActivityInput {
   if (!activity) {
@@ -30,7 +33,25 @@ function toValues(activity?: ActivityRow | null, defaults?: Partial<ActivityInpu
       other_labour_cost: 0,
       other_cost: 0,
       weather: '',
+      weather_temp_c: null,
+      weather_wind_kmh: null,
+      weather_precip_mm: null,
+      weather_humidity_pct: null,
+      weather_code: null,
+      weather_source: '',
+      spray_window_score: null,
+      spray_window_label: '',
       notes: '',
+      application_rate_per_ha: null,
+      treated_area_ha: null,
+      active_ingredient: '',
+      product_registration: '',
+      pre_harvest_interval_days: null,
+      re_entry_interval_hours: null,
+      applicator_id: null,
+      safety_equipment: '',
+      spray_window_ok: null,
+      harvest_compliant: null,
       workers: [],
       inputs: [],
       ...defaults,
@@ -46,7 +67,25 @@ function toValues(activity?: ActivityRow | null, defaults?: Partial<ActivityInpu
     other_labour_cost: Number(activity.other_labour_cost),
     other_cost: Number(activity.other_cost),
     weather: activity.weather ?? '',
+    weather_temp_c: activity.weather_temp_c == null ? null : Number(activity.weather_temp_c),
+    weather_wind_kmh: activity.weather_wind_kmh == null ? null : Number(activity.weather_wind_kmh),
+    weather_precip_mm: activity.weather_precip_mm == null ? null : Number(activity.weather_precip_mm),
+    weather_humidity_pct: activity.weather_humidity_pct == null ? null : Number(activity.weather_humidity_pct),
+    weather_code: activity.weather_code ?? null,
+    weather_source: activity.weather_source ?? '',
+    spray_window_score: activity.spray_window_score == null ? null : Number(activity.spray_window_score),
+    spray_window_label: activity.spray_window_label ?? '',
     notes: activity.notes ?? '',
+    application_rate_per_ha: activity.application_rate_per_ha == null ? null : Number(activity.application_rate_per_ha),
+    treated_area_ha: activity.treated_area_ha == null ? null : Number(activity.treated_area_ha),
+    active_ingredient: activity.active_ingredient ?? '',
+    product_registration: activity.product_registration ?? '',
+    pre_harvest_interval_days: activity.pre_harvest_interval_days,
+    re_entry_interval_hours: activity.re_entry_interval_hours,
+    applicator_id: activity.applicator_id,
+    safety_equipment: activity.safety_equipment ?? '',
+    spray_window_ok: activity.spray_window_ok,
+    harvest_compliant: activity.harvest_compliant,
     workers: activity.workers.map((w) => ({ worker_id: w.worker_id, hours_worked: Number(w.hours_worked) })),
     inputs: [...activity.inputs]
       .sort((a, b) => a.sort_order - b.sort_order)
@@ -55,6 +94,8 @@ function toValues(activity?: ActivityRow | null, defaults?: Partial<ActivityInpu
         quantity: Number(i.quantity),
         unit: i.unit,
         unit_cost: i.unit_cost == null ? null : Number(i.unit_cost),
+        product_id: i.product_id,
+        lot_id: i.lot_id,
       })),
   };
 }
@@ -71,7 +112,10 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
   const users = useFarmUsers();
   const workers = useWorkers();
   const types = useActivityTypes();
+  const products = useInputProducts();
+  const lots = useInputLots();
   const currency = useCurrency();
+  const [weatherLoading, setWeatherLoading] = useState(false);
   const form = useForm<ActivityInput>({ resolver: zodResolver(activitySchema), defaultValues: toValues(activity, defaults) });
   const workerRows = useFieldArray({ control: form.control, name: 'workers' });
   const inputRows = useFieldArray({ control: form.control, name: 'inputs' });
@@ -90,6 +134,21 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
   });
   const type = types.data?.find((t) => t.id === typeId);
   const showInputs = Boolean(type?.uses_inputs) || inputRows.fields.length > 0;
+  const showSpray = Boolean(type?.name && SPRAY_TYPE.test(type.name));
+
+  useEffect(() => {
+    const subscription = form.watch((_values, { name }) => {
+      if ((name === 'block_id' || name === 'activity_date') && form.getValues('weather_source') === 'open-meteo') {
+        form.setValue('weather', '', { shouldDirty: true });
+        for (const field of ['weather_temp_c', 'weather_wind_kmh', 'weather_precip_mm', 'weather_humidity_pct', 'weather_code', 'spray_window_score', 'spray_window_ok'] as const) {
+          form.setValue(field, null, { shouldDirty: true });
+        }
+        form.setValue('weather_source', '', { shouldDirty: true });
+        form.setValue('spray_window_label', '', { shouldDirty: true });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const rates = useMemo(() => {
     const map = new Map((workers.data ?? []).map((w) => [w.id, Number(w.hourly_rate)]));
@@ -109,17 +168,23 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
     return w ? `${w.full_name} (${w.worker_code})` : 'Worker';
   };
 
+  const activeProducts = (products.data ?? []).filter((p) => p.status === 'active');
+
   const save = useFormMutation(
     form,
     (v) =>
-      farmFetch<{ id: string }>(activity ? `/api/farm/activities/${activity.id}` : '/api/farm/activities', {
-        method: activity ? 'PATCH' : 'POST',
-        body: v,
-      }),
+      farmFetch<{ id: string; queued?: boolean }>(
+        activity ? `/api/farm/activities/${activity.id}` : '/api/farm/activities',
+        {
+          method: activity ? 'PATCH' : 'POST',
+          body: v,
+        }
+      ),
     {
       success: activity ? 'Activity updated' : 'Activity recorded',
-      invalidate: [farmKeys.activities, farmKeys.workers, farmKeys.payroll],
+      invalidate: [farmKeys.activities, farmKeys.workers, farmKeys.payroll, farmKeys.inputLots, farmKeys.inputMovements],
       onDone: (r) => {
+        if (r.queued) toast.message('Queued offline — will sync when you reconnect');
         onOpenChange(false);
         onSaved?.(r.id);
       },
@@ -245,7 +310,16 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => inputRows.append({ input_name: '', quantity: null as unknown as number, unit: 'kg', unit_cost: null })}
+              onClick={() =>
+                inputRows.append({
+                  input_name: '',
+                  quantity: null as unknown as number,
+                  unit: 'kg',
+                  unit_cost: null,
+                  product_id: null,
+                  lot_id: null,
+                })
+              }
             >
               <Plus className="size-4" /> Add input
             </Button>
@@ -253,26 +327,158 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
           {inputRows.fields.length === 0 ? (
             <p className="text-sm text-muted-foreground">Add fertilizer, chemicals or seed used.</p>
           ) : (
-            inputRows.fields.map((f, i) => (
-              <div key={f.id} className="grid grid-cols-12 items-start gap-2">
-                <TextField<ActivityInput> name={`inputs.${i}.input_name`} label="Product" required className="col-span-12 sm:col-span-4" />
-                <NumberField<ActivityInput> name={`inputs.${i}.quantity`} label="Qty" required className="col-span-4 sm:col-span-2" />
-                <TextField<ActivityInput> name={`inputs.${i}.unit`} label="Unit" required className="col-span-4 sm:col-span-2" />
-                <NumberField<ActivityInput> name={`inputs.${i}.unit_cost`} label="Unit cost" className="col-span-4 sm:col-span-3" />
-                <div className="col-span-12 flex justify-end sm:col-span-1 sm:pt-6">
-                  <Button type="button" variant="ghost" size="icon" onClick={() => inputRows.remove(i)} aria-label="Remove input">
-                    <X className="size-4" />
-                  </Button>
+            inputRows.fields.map((f, i) => {
+              const productId = watchedInputs?.[i]?.product_id;
+              const productLots = (lots.data ?? []).filter(
+                (l) => l.product_id === productId && (Number(l.quantity_remaining) > 0 || l.id === watchedInputs?.[i]?.lot_id)
+              );
+              return (
+                <div key={f.id} className="space-y-2 rounded-md border border-dashed p-2">
+                  <div className="grid grid-cols-12 items-start gap-2">
+                    <TextField<ActivityInput> name={`inputs.${i}.input_name`} label="Product" required className="col-span-12 sm:col-span-4" />
+                    <NumberField<ActivityInput> name={`inputs.${i}.quantity`} label="Qty" required className="col-span-4 sm:col-span-2" />
+                    <TextField<ActivityInput> name={`inputs.${i}.unit`} label="Unit" required className="col-span-4 sm:col-span-2" />
+                    <NumberField<ActivityInput> name={`inputs.${i}.unit_cost`} label="Unit cost" className="col-span-4 sm:col-span-3" />
+                    <div className="col-span-12 flex justify-end sm:col-span-1 sm:pt-6">
+                      <Button type="button" variant="ghost" size="icon" onClick={() => inputRows.remove(i)} aria-label="Remove input">
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  {activeProducts.length > 0 ? (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <SelectField<ActivityInput>
+                        name={`inputs.${i}.product_id`}
+                        label="Store product"
+                        emptyLabel="Not linked"
+                        options={activeProducts.map((p) => ({ value: p.id, label: `${p.name} (${p.sku})` }))}
+                        description="Link to issue stock from a lot."
+                        onValueChange={(id) => {
+                          form.setValue(`inputs.${i}.lot_id`, null);
+                          const p = activeProducts.find((x) => x.id === id);
+                          if (p) {
+                            form.setValue(`inputs.${i}.input_name`, p.name);
+                            form.setValue(`inputs.${i}.unit`, p.unit);
+                            if (p.active_ingredient && showSpray) {
+                              form.setValue('active_ingredient', p.active_ingredient);
+                            }
+                            if (p.registration_no && showSpray) {
+                              form.setValue('product_registration', p.registration_no);
+                            }
+                          }
+                        }}
+                      />
+                      <SelectField<ActivityInput>
+                        name={`inputs.${i}.lot_id`}
+                        label="Lot"
+                        emptyLabel="No lot"
+                        options={productLots.map((l) => ({
+                          value: l.id,
+                          label: `${l.lot_no} · ${Number(l.quantity_remaining)} left`,
+                        }))}
+                        onValueChange={(id) => {
+                          const lot = productLots.find((l) => l.id === id);
+                          if (lot?.unit_cost != null) {
+                            form.setValue(`inputs.${i}.unit_cost`, Number(lot.unit_cost));
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : null}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
+        </section>
+      ) : null}
+
+      {showSpray ? (
+        <section className="space-y-3 rounded-lg border p-3">
+          <p className="text-sm font-semibold">Chemical / spray</p>
+          <p className="text-xs text-muted-foreground">Rate, treated area and intervals for spray compliance.</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <NumberField<ActivityInput> name="application_rate_per_ha" label="Application rate" suffix="/ha" />
+            <NumberField<ActivityInput> name="treated_area_ha" label="Treated area" suffix="ha" />
+            <TextField<ActivityInput> name="active_ingredient" label="Active ingredient" />
+            <TextField<ActivityInput> name="product_registration" label="Product registration" />
+            <NumberField<ActivityInput> name="pre_harvest_interval_days" label="Pre-harvest interval" suffix="days" step="1" />
+            <NumberField<ActivityInput> name="re_entry_interval_hours" label="Re-entry interval" suffix="hours" step="1" />
+            <SelectField<ActivityInput>
+              name="applicator_id"
+              label="Applicator"
+              emptyLabel="Not recorded"
+              options={(users.data ?? []).map((u) => ({ value: u.id, label: u.full_name }))}
+            />
+            <TextField<ActivityInput> name="safety_equipment" label="Safety equipment" placeholder="PPE, respirator…" />
+          </div>
         </section>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <NumberField<ActivityInput> name="other_cost" label="Other costs" suffix={currency} description="Fuel, transport, hire." />
-        <TextField<ActivityInput> name="weather" label="Weather" placeholder="Sunny, light wind" />
+        <div className="space-y-2">
+          <TextField<ActivityInput> name="weather" label="Weather" placeholder="Sunny, light wind" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={weatherLoading}
+              onClick={async () => {
+                const blockId = form.getValues('block_id');
+                const date = form.getValues('activity_date');
+                if (!blockId) {
+                  toast.error('Select a block first so we can use its GPS location');
+                  return;
+                }
+                setWeatherLoading(true);
+                try {
+                  const res = await farmFetch<{
+                    weather: {
+                      summary: string;
+                      tempC: number | null;
+                      windKmh: number | null;
+                      precipMm: number | null;
+                      humidityPct: number | null;
+                      weatherCode: number | null;
+                      source: string;
+                      sprayScore: number;
+                      sprayLabel: string;
+                      sprayReasons: string[];
+                    };
+                  }>(`/api/farm/weather?block_id=${blockId}${date ? `&date=${date}` : ''}`);
+                  if (form.getValues('block_id') !== blockId || form.getValues('activity_date') !== date) return;
+                  const w = res.weather;
+                  form.setValue('weather', w.summary, { shouldDirty: true });
+                  form.setValue('weather_temp_c', w.tempC, { shouldDirty: true });
+                  form.setValue('weather_wind_kmh', w.windKmh, { shouldDirty: true });
+                  form.setValue('weather_precip_mm', w.precipMm, { shouldDirty: true });
+                  form.setValue('weather_humidity_pct', w.humidityPct, { shouldDirty: true });
+                  form.setValue('weather_code', w.weatherCode, { shouldDirty: true });
+                  form.setValue('weather_source', w.source, { shouldDirty: true });
+                  form.setValue('spray_window_score', w.sprayScore, { shouldDirty: true });
+                  form.setValue('spray_window_label', w.sprayLabel, { shouldDirty: true });
+                  form.setValue('spray_window_ok', w.sprayScore >= 55, { shouldDirty: true });
+                  if (w.sprayLabel === 'No forecast') {
+                    toast.message('No complete forecast is available for this date');
+                    return;
+                  }
+                  toast.success(`${w.sprayLabel} — ${w.sprayReasons.join('; ') || w.summary}`);
+                } catch (err) {
+                  toast.error(errorMessage(err));
+                } finally {
+                  setWeatherLoading(false);
+                }
+              }}
+            >
+              <CloudSun className="size-4" />
+              {weatherLoading ? 'Fetching…' : 'Fill from forecast'}
+            </Button>
+            {form.watch('spray_window_label') ? (
+              <span className="text-xs text-muted-foreground">{form.watch('spray_window_label')}</span>
+            ) : null}
+          </div>
+        </div>
       </div>
       <TextareaField<ActivityInput> name="notes" label="Notes" />
 

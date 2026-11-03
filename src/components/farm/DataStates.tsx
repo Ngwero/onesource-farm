@@ -1,7 +1,23 @@
 import type { ReactNode } from 'react';
-import { AlertTriangle, Inbox } from 'lucide-react';
+import { AlertTriangle, Inbox, MoveHorizontal } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TableCell, TableRow } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
+
+/** Shown above wide tables on small screens. */
+export function MobileTableHint({ className }: { className?: string }) {
+  return (
+    <p
+      className={cn(
+        'mb-2 flex items-center gap-1.5 text-xs text-muted-foreground md:hidden',
+        className
+      )}
+    >
+      <MoveHorizontal className="size-3.5 shrink-0" aria-hidden />
+      Swipe sideways for more columns
+    </p>
+  );
+}
 
 export function LoadingRows({ columns, rows = 5 }: { columns: number; rows?: number }) {
   return (

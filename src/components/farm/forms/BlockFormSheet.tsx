@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { BlockMapEditor } from '@/components/farm/BlockMapEditor';
 import { FormSheet } from '@/components/farm/FormSheet';
 import { NumberField, SelectField, TextareaField, TextField } from '@/components/farm/fields';
 import { farmKeys, useFarmUsers } from '@/hooks/farm';
@@ -21,6 +22,9 @@ const EMPTY: BlockInput = {
   status: 'active',
   supervisor_id: null,
   notes: '',
+  centroid_lat: null,
+  centroid_lng: null,
+  boundary_geojson: null,
 };
 
 function toValues(block?: BlockRow | null): BlockInput {
@@ -35,6 +39,9 @@ function toValues(block?: BlockRow | null): BlockInput {
     status: block.status,
     supervisor_id: block.supervisor_id,
     notes: block.notes ?? '',
+    centroid_lat: block.centroid_lat == null ? null : Number(block.centroid_lat),
+    centroid_lng: block.centroid_lng == null ? null : Number(block.centroid_lng),
+    boundary_geojson: block.boundary_geojson,
   };
 }
 
@@ -48,6 +55,10 @@ type Props = {
 export function BlockFormSheet({ open, onOpenChange, block, onSaved }: Props) {
   const users = useFarmUsers();
   const form = useForm<BlockInput>({ resolver: zodResolver(blockSchema), defaultValues: toValues(block) });
+  const geo = useWatch({
+    control: form.control,
+    name: ['centroid_lat', 'centroid_lng', 'boundary_geojson'],
+  });
 
   useEffect(() => {
     if (open) form.reset(toValues(block));
@@ -108,6 +119,18 @@ export function BlockFormSheet({ open, onOpenChange, block, onSaved }: Props) {
           options={(users.data ?? []).map((u) => ({ value: u.id, label: u.full_name }))}
         />
       </div>
+      <BlockMapEditor
+        value={{
+          centroid_lat: (geo?.[0] as number | null) ?? null,
+          centroid_lng: (geo?.[1] as number | null) ?? null,
+          boundary_geojson: (geo?.[2] as BlockInput['boundary_geojson']) ?? null,
+        }}
+        onChange={(next) => {
+          form.setValue('centroid_lat', next.centroid_lat, { shouldDirty: true });
+          form.setValue('centroid_lng', next.centroid_lng, { shouldDirty: true });
+          form.setValue('boundary_geojson', next.boundary_geojson, { shouldDirty: true });
+        }}
+      />
       <TextareaField<BlockInput> name="notes" label="Notes" />
     </FormSheet>
   );

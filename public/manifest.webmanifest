@@ -1,0 +1,26 @@
+{
+  "name": "OneSource Farm",
+  "short_name": "OneSource",
+  "description": "Farm operations, harvests, quality, workforce, and exports",
+  "start_url": "/farm",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0c1a14",
+  "theme_color": "#2e5e4a",
+  "icons": [
+    {
+      "src": "/onesource-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/onesource-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"]
+}

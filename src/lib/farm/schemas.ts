@@ -1,3 +1,4 @@
+import { polygonCentroid } from './geometry';
 import { z } from 'zod';
 
 const requiredText = (max = 120) => z.string().trim().min(1, 'Required').max(max);
@@ -62,6 +63,26 @@ export const blockSchema = z.object({
   status: z.enum(BLOCK_STATUSES),
   supervisor_id: optionalId,
   notes: optionalText(),
+  centroid_lat: z.number().min(-90).max(90).nullable().optional(),
+  centroid_lng: z.number().min(-180).max(180).nullable().optional(),
+  boundary_geojson: z
+    .object({
+      type: z.literal('Polygon'),
+      coordinates: z.array(z.array(z.tuple([
+        z.number().min(-180).max(180), z.number().min(-90).max(90),
+      ])).min(4).refine((ring) => {
+        const first = ring[0];
+        const last = ring[ring.length - 1];
+        return Boolean(first && last && first[0] === last[0] && first[1] === last[1]);
+      }, 'Boundary rings must be closed')).min(1).max(100),
+    }).refine((polygon) => polygonCentroid(polygon) !== null, 'Boundary must enclose an area')
+    .nullable()
+    .optional(),
+}).refine((block) => (block.centroid_lat == null) === (block.centroid_lng == null), {
+  message: 'Provide both latitude and longitude', path: ['centroid_lat'],
+}).transform((block) => {
+  const centroid = block.boundary_geojson ? polygonCentroid(block.boundary_geojson) : null;
+  return centroid ? { ...block, centroid_lat: centroid.lat, centroid_lng: centroid.lng } : block;
 });
 export type BlockInput = z.infer<typeof blockSchema>;
 
@@ -322,7 +343,25 @@ export const activitySchema = z.object({
   other_labour_cost: nonNegative,
   other_cost: nonNegative,
   weather: optionalText(200),
+  weather_temp_c: z.number().nullable().optional(),
+  weather_wind_kmh: z.number().min(0).nullable().optional(),
+  weather_precip_mm: z.number().min(0).nullable().optional(),
+  weather_humidity_pct: z.number().min(0).max(100).nullable().optional(),
+  weather_code: z.number().int().nullable().optional(),
+  weather_source: optionalText(40),
+  spray_window_score: z.number().min(0).max(100).nullable().optional(),
+  spray_window_label: optionalText(80),
   notes: optionalText(),
+  application_rate_per_ha: positive.nullable().optional(),
+  treated_area_ha: positive.nullable().optional(),
+  active_ingredient: optionalText(200),
+  product_registration: optionalText(80),
+  pre_harvest_interval_days: z.number('Enter a number').int().min(0).nullable().optional(),
+  re_entry_interval_hours: z.number('Enter a number').int().min(0).nullable().optional(),
+  applicator_id: optionalId,
+  safety_equipment: optionalText(500),
+  spray_window_ok: z.boolean().nullable().optional(),
+  harvest_compliant: z.boolean().nullable().optional(),
   workers: z.array(workerHours),
   inputs: z.array(
     z.object({
@@ -330,10 +369,74 @@ export const activitySchema = z.object({
       quantity: positive,
       unit: requiredText(20),
       unit_cost: nonNegative.nullable().optional(),
+      product_id: optionalId,
+      lot_id: optionalId,
     })
   ),
 });
 export type ActivityInput = z.infer<typeof activitySchema>;
+
+// ——— Farm input store (seed, fertilizer, chemicals, fuel, packaging) ———
+
+export const INPUT_PRODUCT_CATEGORIES = [
+  'seed',
+  'fertilizer',
+  'crop_protection',
+  'fuel',
+  'packaging',
+  'other',
+] as const;
+export const INPUT_MOVEMENT_TYPES = ['receipt', 'issue', 'adjustment', 'return', 'waste'] as const;
+
+export const inputProductSchema = z.object({
+  sku: code(32, /^[A-Z0-9_-]+$/, 'Letters, numbers, dashes and underscores only'),
+  name: requiredText(),
+  category: z.enum(INPUT_PRODUCT_CATEGORIES),
+  unit: requiredText(20),
+  active_ingredient: optionalText(200),
+  registration_no: optionalText(80),
+  manufacturer: optionalText(120),
+  default_supplier: optionalText(120),
+  reorder_level: nonNegative,
+  status: activeStatus,
+  notes: optionalText(),
+});
+export type InputProductInput = z.infer<typeof inputProductSchema>;
+
+export const inputLotSchema = z
+  .object({
+    product_id: z.uuid('Select a product'),
+    lot_no: requiredText(60),
+    supplier: optionalText(120),
+    received_date: isoDate,
+    expiry_date: optionalDate,
+    quantity_received: positive,
+    quantity_remaining: nonNegative,
+    unit_cost: nonNegative.nullable().optional(),
+    location: optionalText(120),
+    notes: optionalText(),
+  })
+  .refine((v) => v.quantity_remaining <= v.quantity_received, {
+    path: ['quantity_remaining'],
+    message: 'Cannot exceed quantity received',
+  })
+  .refine((v) => !v.expiry_date || v.expiry_date >= v.received_date, {
+    path: ['expiry_date'],
+    message: 'Must be on or after the received date',
+  });
+export type InputLotInput = z.infer<typeof inputLotSchema>;
+
+export const inputMovementSchema = z.object({
+  product_id: z.uuid('Select a product'),
+  lot_id: optionalId,
+  movement_type: z.enum(INPUT_MOVEMENT_TYPES),
+  quantity: positive,
+  unit_cost: nonNegative.nullable().optional(),
+  activity_id: optionalId,
+  reference: optionalText(120),
+  notes: optionalText(),
+});
+export type InputMovementInput = z.infer<typeof inputMovementSchema>;
 
 export const INCIDENT_TYPES = ['pest', 'disease', 'other'] as const;
 export const SEVERITIES = ['low', 'medium', 'high', 'critical'] as const;
@@ -500,6 +603,92 @@ export const stockMovementSchema = z
   });
 export type StockMovementInput = z.infer<typeof stockMovementSchema>;
 
+// ——— Buyers, contracts & shipments ———
+
+export const CONTRACT_STATUSES = ['draft', 'active', 'completed', 'cancelled'] as const;
+export const SHIPMENT_STATUSES = ['planned', 'loading', 'dispatched', 'in_transit', 'delivered', 'cancelled'] as const;
+export const PAYMENT_STATUSES = ['unpaid', 'partial', 'paid', 'overdue'] as const;
+
+export const buyerSchema = z
+  .object({
+    code: code(16, /^[A-Z0-9_-]+$/, 'Letters, numbers, dashes and underscores only'),
+    name: requiredText(),
+    contact_name: optionalText(120),
+    email: optionalText(200),
+    phone: optionalText(40),
+    country: optionalText(80),
+    destination: optionalText(120),
+    address: optionalText(500),
+    payment_terms: optionalText(200),
+    status: activeStatus,
+    notes: optionalText(),
+  })
+  .refine((v) => !v.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email), {
+    path: ['email'],
+    message: 'Enter a valid email',
+  });
+export type BuyerInput = z.infer<typeof buyerSchema>;
+
+export const contractSchema = z
+  .object({
+    buyer_id: z.uuid('Select a buyer'),
+    contract_no: requiredText(40),
+    crop_id: optionalId,
+    grade_id: optionalId,
+    title: requiredText(200),
+    start_date: isoDate,
+    end_date: optionalDate,
+    agreed_quantity: positive,
+    quantity_unit: requiredText(20),
+    unit_price: nonNegative,
+    currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, 'Use a 3-letter code, e.g. USD'),
+    specifications: optionalText(),
+    status: z.enum(CONTRACT_STATUSES),
+    notes: optionalText(),
+  })
+  .refine((v) => !v.end_date || v.end_date >= v.start_date, {
+    path: ['end_date'],
+    message: 'Must be on or after the start date',
+  });
+export type ContractInput = z.infer<typeof contractSchema>;
+
+export const shipmentSchema = z
+  .object({
+    shipment_no: requiredText(40),
+    buyer_id: z.uuid('Select a buyer'),
+    contract_id: optionalId,
+    destination: optionalText(200),
+    carrier: optionalText(120),
+    booking_ref: optionalText(80),
+    awb_bl_number: optionalText(80),
+    etd: optionalDate,
+    eta: optionalDate,
+    dispatched_at: z.string().nullable().optional(),
+    status: z.enum(SHIPMENT_STATUSES),
+    invoice_no: optionalText(80),
+    invoice_amount: nonNegative.nullable().optional(),
+    invoice_currency: optionalText(3),
+    payment_status: z.enum(PAYMENT_STATUSES),
+    notes: optionalText(),
+  })
+  .refine((v) => !v.etd || !v.eta || v.eta >= v.etd, {
+    path: ['eta'],
+    message: 'Must be on or after the ETD',
+  })
+  .refine((v) => !v.invoice_currency || /^[A-Z]{3}$/.test(v.invoice_currency), {
+    path: ['invoice_currency'],
+    message: 'Use a 3-letter code',
+  });
+export type ShipmentInput = z.infer<typeof shipmentSchema>;
+
+export const shipmentLineSchema = z.object({
+  packing_batch_id: z.uuid('Select a packing batch'),
+  package_count: z.number('Enter a number').int('Whole packages only').positive('Must be greater than 0'),
+  net_weight: positive,
+  notes: optionalText(500),
+});
+export type ShipmentLineInput = z.infer<typeof shipmentLineSchema>;
+
 // ——— Access ———
 
 export const rolePermissionsSchema = z.object({
@@ -563,6 +752,16 @@ export const SYSTEM_SETTINGS = {
   'workforce.working_days_per_month': {
     label: 'Working days per month (for costing salaried staff)',
     schema: z.number().positive().max(31),
+    kind: 'number',
+  },
+  'finance.monthly_payroll_budget': {
+    label: 'Monthly payroll budget (executive dashboard)',
+    schema: z.number().min(0),
+    kind: 'number',
+  },
+  'finance.monthly_input_budget': {
+    label: 'Monthly farm-input budget (executive dashboard)',
+    schema: z.number().min(0),
     kind: 'number',
   },
 } as const;
