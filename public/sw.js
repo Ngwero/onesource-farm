@@ -1,5 +1,6 @@
 /* OneSource Farm service worker — shell cache + offline outbox flush signal */
-const CACHE = 'onesource-shell-v1';
+const CACHE = 'onesource-shell-v2';
+const DEVELOPMENT = ['localhost', '127.0.0.1', '[::1]'].includes(self.location.hostname);
 const PRECACHE = [
   '/',
   '/login',
@@ -10,6 +11,7 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', (event) => {
+  if (DEVELOPMENT) { self.skipWaiting(); return; }
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting())
   );
@@ -18,14 +20,14 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k.startsWith('onesource-shell-') && (DEVELOPMENT || k !== CACHE)).map((k) => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  if (req.method !== 'GET') return;
+  if (req.method !== 'GET' || DEVELOPMENT) return;
 
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { NextRequest } from 'next/server';
 import { polygonCentroid, type BlockPolygon } from '../src/lib/farm/geometry';
 import { blockSchema } from '../src/lib/farm/schemas';
-import { scoreSprayWindow, fetchWeatherSnapshot } from '../src/lib/farm/weather';
+import { scoreSprayWindow, fetchWeatherSnapshot, fetchWeatherForecast, dailySprayOutlook, type HourlyForecast } from '../src/lib/farm/weather';
 import { processFarmReportDigests, shouldSendNow, type DigestSubscription } from '../src/lib/farm/digests';
 import { canExportReport } from '../src/lib/farm/reportTypes';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -117,4 +117,66 @@ test('an overlapping digest job skips delivery when another job holds the lease'
   assert.equal(claimed, true);
   assert.ok(conditions.some(([column]) => column === 'last_sent_at'));
   assert.ok(conditions.some(([column]) => column === 'updated_at'));
+});
+
+
+function forecastHours(date = '2026-11-03'): HourlyForecast[] {
+  return Array.from({ length: 24 }, (_, hour) => ({
+    time: `${date}T${String(hour).padStart(2, '0')}:00`, tempC: 24, windKmh: 6,
+    precipMm: hour >= 16 ? 3 : 0, weatherCode: hour >= 16 ? 61 : 1,
+    isDay: hour >= 6 && hour < 18,
+  }));
+}
+
+test('hourly windows find dry morning hours on an otherwise rainy day', () => {
+  const result = dailySprayOutlook('2026-11-03', forecastHours());
+  assert.equal(result.sprayLabel, 'Favorable window');
+  assert.equal(result.sprayWindows[0].start, '2026-11-03T06:00');
+  assert.equal(result.sprayWindows[0].end, '2026-11-03T14:00');
+  assert.equal(result.sprayScore, 100);
+  const sunset = dailySprayOutlook('2026-11-03', forecastHours().map(h => ({ ...h, precipMm: 0, weatherCode: 1 })), undefined, '2026-11-03T17:30');
+  assert.equal(sunset.sprayWindows[0].end, '2026-11-03T17:00');
+});
+
+test('outlook excludes past hours and explains why rain prevents upcoming windows', () => {
+  const result = dailySprayOutlook('2026-11-03', forecastHours(), '2026-11-03T14:15');
+  assert.equal(result.sprayWindows.length, 0);
+  assert.equal(result.sprayLabel, 'No suitable window');
+  assert.ok(result.sprayReasons.some((reason) => /rain|precipitation/i.test(reason)));
+  assert.equal(dailySprayOutlook('2026-11-03', forecastHours(), '2026-11-03T19:00').sprayLabel, 'No daylight hours left');
+});
+
+test('missing hourly values and gaps never create a favorable window', () => {
+  assert.equal(dailySprayOutlook('2026-11-03', []).sprayLabel, 'Data unavailable');
+  const missing = forecastHours().map((hour) => ({ ...hour, windKmh: null }));
+  assert.equal(dailySprayOutlook('2026-11-03', missing).sprayLabel, 'Data unavailable');
+  const isolated = forecastHours().filter((_, index) => index % 2 === 0);
+  assert.equal(dailySprayOutlook('2026-11-03', isolated).sprayWindows.length, 0);
+  assert.equal(scoreSprayWindow({ tempC: 24, windKmh: 5, precipMm: 0, weatherCode: 61 }).label, 'Poor spray window');
+});
+
+test('daily forecast keeps total rainfall separate from hourly spray suitability', async () => {
+  const original = globalThis.fetch;
+  const hours = forecastHours();
+  try {
+    globalThis.fetch = async (url) => {
+      assert.ok(new URL(String(url)).searchParams.has('hourly'));
+      return Response.json({ timezone: 'Africa/Kampala', current: {
+        time: '2026-11-03T05:00', temperature_2m: 22, relative_humidity_2m: 70,
+        precipitation: 0, wind_speed_10m: 5, weather_code: 1,
+      }, hourly: {
+        time: hours.map((h) => h.time), temperature_2m: hours.map((h) => h.tempC),
+        wind_speed_10m: hours.map((h) => h.windKmh), precipitation: hours.map((h) => h.precipMm),
+        weather_code: hours.map((h) => h.weatherCode), is_day: hours.map((h) => Number(h.isDay)),
+      }, daily: {
+        time: ['2026-11-03'], weather_code: [61], temperature_2m_max: [27], temperature_2m_min: [19],
+        precipitation_sum: [24], wind_speed_10m_max: [10],
+      } });
+    };
+    const result = await fetchWeatherForecast(0.3, 32.5);
+    assert.equal(result.days[0].precipMm, 24);
+    assert.equal(result.days[0].label, 'Slight rain');
+    assert.equal(result.days[0].sprayLabel, 'Favorable window');
+    assert.equal(result.timezone, 'Africa/Kampala');
+  } finally { globalThis.fetch = original; }
 });

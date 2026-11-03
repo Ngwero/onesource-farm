@@ -24,6 +24,7 @@ import {
   QualityTimesCard,
   WorkforceLoadCard,
 } from '@/components/farm/FarmOpsDashboard';
+import { FarmWeatherStrip } from '@/components/farm/FarmWeatherStrip';
 import { FarmProfileSheet } from '@/components/farm/forms/FarmProfileSheet';
 import { useAuth } from '@/context/AuthContext';
 import { farmKeys, useCurrency } from '@/hooks/farm';
@@ -73,6 +74,7 @@ function FarmDashboardPage() {
 
   return (
     <div className="space-y-5">
+      <FarmWeatherStrip />
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-slate-500">
