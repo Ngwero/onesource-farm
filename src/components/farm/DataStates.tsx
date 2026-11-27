@@ -86,7 +86,7 @@ export function EmptyState({
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div className="empty-state">
+    <div className="empty-state rounded-[0.95rem] border border-[rgb(46_94_74/0.12)] bg-[linear-gradient(180deg,#ffffff_0%,#f7faf8_100%)] shadow-[var(--shadow-soft)]">
       <div className="empty-state__icon empty-state__icon--danger">
         <AlertTriangle size={22} strokeWidth={1.75} />
       </div>

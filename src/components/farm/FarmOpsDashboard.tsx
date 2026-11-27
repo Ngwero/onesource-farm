@@ -37,15 +37,15 @@ export function OpsCard({
   return (
     <section
       className={cn(
-        'rounded-xl border border-border/80 bg-white/95 p-4 shadow-[var(--shadow-soft)] backdrop-blur-sm sm:rounded-2xl sm:p-5',
+        'relative overflow-hidden rounded-[0.95rem] border border-[rgb(46_94_74/0.12)] bg-[linear-gradient(180deg,#ffffff_0%,#fbfcfb_48%,#f7faf8_100%)] p-4 shadow-[var(--shadow-soft)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-[linear-gradient(90deg,rgb(46_94_74/0.35),rgb(180_207_94/0.4),transparent_78%)] sm:rounded-[1.1rem] sm:p-5',
         className
       )}
     >
-      <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4">
+      <div className="relative mb-3 flex items-start justify-between gap-3 border-b border-[rgb(46_94_74/0.07)] pb-3 sm:mb-4">
         <h2 className="font-display text-base font-semibold tracking-tight text-foreground sm:text-[1.05rem]">{title}</h2>
         {action}
       </div>
-      {children}
+      <div className="relative">{children}</div>
     </section>
   );
 }

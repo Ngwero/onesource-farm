@@ -35,19 +35,21 @@ import { fmtDate } from '@/lib/farm/format';
 import type { FarmOverview } from '@/lib/farm/types';
 
 function SkeletonPanels() {
+  const panel =
+    'animate-pulse rounded-[0.95rem] border border-[rgb(46_94_74/0.1)] bg-[linear-gradient(180deg,#ffffff_0%,#f1f5f3_100%)] shadow-[var(--shadow-soft)]';
   return (
     <div className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="h-40 animate-pulse rounded-2xl bg-brand-100/60" />
-        <div className="h-40 animate-pulse rounded-2xl bg-brand-100/60" />
+        <div className={`h-40 ${panel}`} />
+        <div className={`h-40 ${panel}`} />
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]">
-        <div className="h-72 animate-pulse rounded-2xl bg-brand-100/60" />
-        <div className="h-72 animate-pulse rounded-2xl bg-brand-100/60" />
+        <div className={`h-72 ${panel}`} />
+        <div className={`h-72 ${panel}`} />
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-56 animate-pulse rounded-2xl bg-brand-100/60" />
+          <div key={i} className={`h-56 ${panel}`} />
         ))}
       </div>
     </div>
@@ -163,7 +165,7 @@ function FarmDashboardPage() {
             {data.operations.harvest ? (
               <HarvestVolumeCard harvest={data.operations.harvest} />
             ) : (
-              <section className="flex min-h-[280px] flex-col justify-center rounded-2xl border border-dashed border-brand-200 bg-white/80 p-6 text-center shadow-[var(--shadow-soft)]">
+              <section className="relative flex min-h-[280px] flex-col justify-center overflow-hidden rounded-[1.1rem] border border-[rgb(46_94_74/0.12)] bg-[linear-gradient(180deg,#ffffff_0%,#f7faf8_100%)] p-6 text-center shadow-[var(--shadow-soft)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-[linear-gradient(90deg,rgb(46_94_74/0.3),rgb(180_207_94/0.4),transparent_75%)]">
                 <p className="font-display text-lg font-semibold text-foreground">Harvest volume</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Record harvest batches to see the 30-day volume chart here.
