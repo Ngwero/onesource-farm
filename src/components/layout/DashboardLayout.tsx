@@ -93,7 +93,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-4 sm:p-5 md:p-6 xl:p-8">
+        <main className="app-content flex-1 overflow-auto">
           <div className="app-main animate-[fade-in_280ms_ease-out]">{children}</div>
         </main>
       </div>

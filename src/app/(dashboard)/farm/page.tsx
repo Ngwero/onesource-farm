@@ -78,7 +78,7 @@ function FarmDashboardPage() {
       <FarmWeatherStrip />
 
       <header className="overflow-hidden rounded-2xl border border-brand-800/20 bg-[linear-gradient(135deg,#152c23_0%,#1e3e31_42%,#2e5e4a_78%,#377256_100%)] text-white shadow-[var(--shadow-card)]">
-        <div className="relative px-5 py-6 sm:px-7 sm:py-7">
+        <div className="relative px-4 py-5 sm:px-7 sm:py-7">
           <div
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_18%,rgb(180_207_94/0.28),transparent_42%)]"
             aria-hidden
@@ -88,16 +88,16 @@ function FarmDashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent-400/90">
                 {firstName ? `Welcome back, ${firstName}` : 'Farm operations'}
               </p>
-              <h1 className="font-display mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+              <h1 className="font-display mt-2 text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">
                 {farm?.name ?? 'Farm overview'}
               </h1>
               <p className="mt-2 max-w-xl text-sm text-white/70">
                 {[place, fmtDate(new Date().toISOString().slice(0, 10))].filter(Boolean).join(' · ')}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
               {can('farm.view') || can('profitability.view') ? (
-                <Button asChild variant="secondary" className="border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white">
+                <Button asChild size="sm" variant="secondary" className="flex-1 border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white sm:flex-none">
                   <Link href="/farm/executive">
                     <BarChart3 className="size-4" />
                     Executive
@@ -107,36 +107,37 @@ function FarmDashboardPage() {
               {can('farm.manage') && data ? (
                 <Button
                   type="button"
+                  size="sm"
                   variant="secondary"
-                  className="border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white"
+                  className="flex-1 border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white sm:flex-none"
                   onClick={() => setEditing(true)}
                 >
                   <Pencil className="size-4" /> Edit farm
                 </Button>
               ) : null}
               {can('activities.record') ? (
-                <Button asChild variant="secondary" className="border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white">
+                <Button asChild size="sm" variant="secondary" className="flex-1 border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white sm:flex-none">
                   <Link href="/farm/activities?new=1">
                     <Tractor className="size-4" /> Activity
                   </Link>
                 </Button>
               ) : null}
               {can('pest.record') ? (
-                <Button asChild variant="secondary" className="border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white">
+                <Button asChild size="sm" variant="secondary" className="flex-1 border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white sm:flex-none">
                   <Link href="/farm/incidents?new=1">
                     <Bug className="size-4" /> Pest
                   </Link>
                 </Button>
               ) : null}
               {can('attendance.record') ? (
-                <Button asChild variant="secondary" className="border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white">
+                <Button asChild size="sm" variant="secondary" className="flex-1 border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white sm:flex-none">
                   <Link href="/workforce/attendance">
                     <HardHat className="size-4" /> Attendance
                   </Link>
                 </Button>
               ) : null}
               {can('harvest.record') ? (
-                <Button asChild className="bg-accent-500 text-brand-950 shadow-none hover:bg-accent-400 hover:brightness-100">
+                <Button asChild size="sm" className="min-w-[calc(50%-0.25rem)] flex-1 bg-accent-500 text-brand-950 shadow-none hover:bg-accent-400 hover:brightness-100 sm:flex-none">
                   <Link href="/harvest/batches?new=1">
                     <Plus className="size-4" /> Record harvest
                   </Link>

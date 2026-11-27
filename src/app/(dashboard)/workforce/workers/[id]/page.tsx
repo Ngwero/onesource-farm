@@ -282,7 +282,7 @@ function WorkerDetailPage() {
         </div>
       </div>
 
-      <PhotoGallery entityType="worker" entityId={w.id} canEdit={canManage} title="Documents & photos" />
+      <PhotoGallery entityType="worker" entityId={w.id} canEdit={canManage} title="Photos & documents" />
 
       <WorkerFormSheet open={editing} onOpenChange={setEditing} worker={w} />
       <ConfirmDialog

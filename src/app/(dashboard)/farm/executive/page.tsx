@@ -71,7 +71,7 @@ function ExecutivePage() {
     <div className="space-y-5">
       <PageHeader
         title="Executive overview"
-        subtitle="Yield, field cost, quality, payroll, stock and export revenue — last 30 days."
+        subtitle="Key farm numbers for the last 30 days."
         actions={
           can('reports.export') ? (
             <Button asChild variant="outline" size="sm">
@@ -83,7 +83,7 @@ function ExecutivePage() {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-3 2xl:grid-cols-6">
         <KpiCard
           label="Yield per hectare"
           loading={loading}

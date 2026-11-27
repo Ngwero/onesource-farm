@@ -37,12 +37,12 @@ export function OpsCard({
   return (
     <section
       className={cn(
-        'rounded-2xl border border-border/80 bg-white/95 p-5 shadow-[var(--shadow-soft)] backdrop-blur-sm',
+        'rounded-xl border border-border/80 bg-white/95 p-4 shadow-[var(--shadow-soft)] backdrop-blur-sm sm:rounded-2xl sm:p-5',
         className
       )}
     >
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <h2 className="font-display text-[1.05rem] font-semibold tracking-tight text-foreground">{title}</h2>
+      <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4">
+        <h2 className="font-display text-base font-semibold tracking-tight text-foreground sm:text-[1.05rem]">{title}</h2>
         {action}
       </div>
       {children}
@@ -90,18 +90,18 @@ export function FarmHealthCard({
 
   return (
     <OpsCard title="Farm health">
-      <div className="grid grid-cols-3 gap-4">
-        <div>
+      <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-3">
+        <div className="min-w-0">
           <p className="text-xs font-medium text-slate-500">Planted area</p>
-          <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{fmtHa(t.plantedAreaHa)}</p>
+          <p className="mt-1 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{fmtHa(t.plantedAreaHa)}</p>
           <p className="mt-0.5 text-[11px] text-slate-500">
             {plantedPct != null ? `${fmtNumber(plantedPct, 0)}% of ${fmtHa(t.totalAreaHa)}` : `${t.blocks} blocks`}
           </p>
           <MiniBars values={sparkA.length ? sparkA : [1, 2, 1, 3, 2]} tone="brand" />
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-medium text-slate-500">Exportable</p>
-          <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+          <p className="mt-1 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
             {harvest?.exportablePct != null ? fmtPct(harvest.exportablePct, 1) : '—'}
           </p>
           <p className="mt-0.5 text-[11px] text-slate-500">
@@ -109,9 +109,9 @@ export function FarmHealthCard({
           </p>
           <MiniBars values={sparkB.length ? sparkB : [2, 1, 3, 2, 4]} tone="accent" />
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-medium text-slate-500">Cost / unit</p>
-          <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+          <p className="mt-1 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
             {costPerUnit != null ? fmtMoney(costPerUnit, currency) : '—'}
           </p>
           <p className="mt-0.5 text-[11px] text-slate-500">

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { EmptyRow, ErrorState, LoadingRows } from '@/components/farm/DataStates';
+import { EmptyRow, ErrorState, LoadingRows, MobileTableHint } from '@/components/farm/DataStates';
 import { RequirePermission } from '@/components/farm/RequirePermission';
 import { StatusChip } from '@/components/farm/StatusChip';
 import { BlockFormSheet } from '@/components/farm/forms/BlockFormSheet';
@@ -55,7 +55,7 @@ function BlocksPage() {
     <div className="space-y-5">
       <PageHeader
         title="Blocks"
-        subtitle="Plots on the farm, what is planted in each, and expected harvest."
+        subtitle="Farm plots, what is planted, and when harvest is due."
         actions={
           can('farm.manage') ? (
             <Button onClick={() => setCreating(true)}>
@@ -66,7 +66,7 @@ function BlocksPage() {
       />
 
       <div className="farm-toolbar">
-        <div className="relative w-full sm:w-72">
+        <div className="relative w-full min-[640px]:max-w-72 min-[640px]:flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
@@ -76,7 +76,7 @@ function BlocksPage() {
           />
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-full sm:w-40">
+          <SelectTrigger className="w-full min-[640px]:w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -89,7 +89,7 @@ function BlocksPage() {
           </SelectContent>
         </Select>
         <Select value={cropId} onValueChange={setCropId}>
-          <SelectTrigger className="w-full sm:w-40">
+          <SelectTrigger className="w-full min-[640px]:w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -101,7 +101,7 @@ function BlocksPage() {
             ))}
           </SelectContent>
         </Select>
-        <p className="text-sm tabular-nums text-muted-foreground sm:ml-auto">
+        <p className="text-sm tabular-nums text-muted-foreground min-[640px]:ml-auto">
           {filtered.length} block{filtered.length === 1 ? '' : 's'} · {fmtHa(totalArea)}
         </p>
       </div>
@@ -110,6 +110,7 @@ function BlocksPage() {
         <ErrorState message={errorMessage(blocks.error)} onRetry={() => blocks.refetch()} />
       ) : (
         <div className="data-table">
+          <MobileTableHint className="px-3 pt-3" />
           <Table>
             <TableHeader>
               <TableRow>

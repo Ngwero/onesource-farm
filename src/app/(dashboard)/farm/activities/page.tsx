@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { EmptyRow, ErrorState, LoadingRows } from '@/components/farm/DataStates';
+import { EmptyRow, ErrorState, LoadingRows, MobileTableHint } from '@/components/farm/DataStates';
 import { KpiCard } from '@/components/farm/KpiCard';
 import { RequirePermission } from '@/components/farm/RequirePermission';
 import { ActivityFormSheet } from '@/components/farm/forms/ActivityFormSheet';
@@ -90,8 +90,8 @@ function ActivitiesPage() {
         title={landPrepMode ? 'Land preparation' : 'Activities'}
         subtitle={
           landPrepMode
-            ? 'Clearing, tillage, bed prep, ridging and soil work before planting.'
-            : 'Field work by block and planting, with labour, inputs and cost.'
+            ? 'Work done on the land before planting.'
+            : 'Field work logged by block, with labour and cost.'
         }
         actions={
           can('activities.record') ? (
@@ -103,7 +103,7 @@ function ActivitiesPage() {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
         <KpiCard
           label="Activities"
           value={filtered.length}
@@ -116,13 +116,13 @@ function ActivitiesPage() {
       </div>
 
       <div className="farm-toolbar">
-        <div className="flex items-center gap-2">
-          <Input type="date" className="w-40" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} aria-label="From" />
-          <span className="text-sm text-muted-foreground">to</span>
-          <Input type="date" className="w-40" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} aria-label="To" />
+        <div className="flex w-full flex-col gap-2 min-[480px]:flex-row min-[480px]:items-center sm:w-auto">
+          <Input type="date" className="w-full min-[480px]:w-40" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} aria-label="From" />
+          <span className="hidden text-sm text-muted-foreground min-[480px]:inline">to</span>
+          <Input type="date" className="w-full min-[480px]:w-40" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} aria-label="To" />
         </div>
         <Select value={blockId} onValueChange={setBlockId}>
-          <SelectTrigger className="w-full sm:w-44">
+          <SelectTrigger className="w-full min-[640px]:w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -135,7 +135,7 @@ function ActivitiesPage() {
           </SelectContent>
         </Select>
         <Select value={typeId} onValueChange={setTypeId}>
-          <SelectTrigger className="w-full sm:w-52">
+          <SelectTrigger className="w-full min-[640px]:w-52">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -153,6 +153,7 @@ function ActivitiesPage() {
         <ErrorState message={errorMessage(activities.error)} onRetry={() => activities.refetch()} />
       ) : (
         <div className="data-table">
+          <MobileTableHint className="px-3 pt-3" />
           <Table>
             <TableHeader>
               <TableRow>

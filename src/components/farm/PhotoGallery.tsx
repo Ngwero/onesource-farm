@@ -7,6 +7,11 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/farm/ConfirmDialog';
+import {
+  detectDocumentKind,
+  DocumentViewerModal,
+  type DocumentViewerKind,
+} from '@/components/shared/DocumentViewerModal';
 import { farmKeys } from '@/hooks/farm';
 import { useActionMutation } from '@/hooks/useFormMutation';
 import { errorMessage, farmFetch } from '@/lib/farm/client';
@@ -39,13 +44,18 @@ function readDeviceGps(): Promise<{ lat: number; lng: number; accuracy: number |
   });
 }
 
-export function PhotoGallery({ entityType, entityId, canEdit, title = 'Photos' }: Props) {
+export function PhotoGallery({ entityType, entityId, canEdit, title = 'Photos & documents' }: Props) {
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(0);
   const [deleting, setDeleting] = useState<AttachmentRow | null>(null);
   const [attachGps, setAttachGps] = useState(true);
+  const [preview, setPreview] = useState<{
+    attachment: AttachmentRow;
+    kind: DocumentViewerKind;
+    url: string;
+  } | null>(null);
   const key = farmKeys.attachments(entityType, entityId);
 
   const files = useQuery({
@@ -165,20 +175,24 @@ export function PhotoGallery({ entityType, entityId, canEdit, title = 'Photos' }
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : items.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No photos yet.
-            {canEdit
-              ? ' Take a field photo (camera) or upload evidence — GPS is tagged when permission allows.'
-              : ''}
+            No files yet.
+            {canEdit ? ' Take a photo or upload a PDF. GPS is added when location is allowed.' : ''}
           </p>
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {items.map((a) => {
               const url = `/api/farm/attachments/${a.id}`;
-              const isImage = a.mime_type?.startsWith('image/');
+              const kind = detectDocumentKind(a.mime_type, a.file_name);
+              const isImage = kind === 'image';
               const hasGps = a.captured_lat != null && a.captured_lng != null;
               return (
                 <li key={a.id} className="group relative overflow-hidden rounded-lg border bg-muted/30">
-                  <a href={url} target="_blank" rel="noreferrer" className="block aspect-square">
+                  <button
+                    type="button"
+                    className="block aspect-square w-full text-left"
+                    onClick={() => setPreview({ attachment: a, kind, url })}
+                    aria-label={`View ${a.file_name}`}
+                  >
                     {isImage ? (
                       // eslint-disable-next-line @next/next/no-img-element -- authenticated API stream
                       <img src={url} alt={a.caption ?? a.file_name} className="size-full object-cover" loading="lazy" />
@@ -188,7 +202,7 @@ export function PhotoGallery({ entityType, entityId, canEdit, title = 'Photos' }
                         <span className="line-clamp-2 break-all">{a.file_name}</span>
                       </span>
                     )}
-                  </a>
+                  </button>
                   <div className="border-t bg-background px-2 py-1.5 text-[11px] text-muted-foreground">
                     <p>
                       {a.uploaded_by_user?.full_name ?? 'Unknown'} · {fmtDateTime(a.created_at)}
@@ -217,6 +231,15 @@ export function PhotoGallery({ entityType, entityId, canEdit, title = 'Photos' }
           </ul>
         )}
       </CardContent>
+      <DocumentViewerModal
+        open={Boolean(preview)}
+        onOpenChange={(open) => !open && setPreview(null)}
+        title={preview?.attachment.file_name ?? 'Document'}
+        src={preview?.url ?? null}
+        kind={preview?.kind ?? 'other'}
+        downloadHref={preview?.url ?? null}
+        downloadName={preview?.attachment.file_name}
+      />
       <ConfirmDialog
         open={Boolean(deleting)}
         onOpenChange={(open) => !open && setDeleting(null)}

@@ -166,18 +166,18 @@ export function FarmWeatherStrip() {
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_20%,rgb(180_207_94/0.18),transparent_40%)]"
           aria-hidden
         />
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
           <div className="flex min-w-0 items-start gap-3">
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-white/10 text-lime-300">
-              <CloudSun className="size-6" />
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-lime-300 sm:size-11">
+              <CloudSun className="size-5 sm:size-6" />
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-lime-300/90">
                 Weather forecast
               </p>
-              <p className="font-display mt-1 text-2xl font-semibold tracking-tight">
+              <p className="font-display mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
                 {current.tempC != null ? `${Math.round(current.tempC)}°C` : '—'}
-                <span className="ml-2 text-base font-medium text-white/70">{current.summary.split(',')[0]}</span>
+                <span className="ml-2 text-sm font-medium text-white/70 sm:text-base">{current.summary.split(',')[0]}</span>
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/65">
                 <span className="inline-flex items-center gap-1">
@@ -199,7 +199,7 @@ export function FarmWeatherStrip() {
               </div>
             </div>
           </div>
-          <div className="text-right text-xs text-white/50">
+          <div className="text-left text-xs text-white/50 sm:text-right">
             <p className="inline-flex items-center gap-1">
               {source === 'device' ? (
                 <Navigation className="size-3.5" />
@@ -221,9 +221,11 @@ export function FarmWeatherStrip() {
         </div>
 
         {days.length ? (
-          <div className="relative mt-4 flex gap-2 overflow-x-auto pb-1">
+          <div className="relative -mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1 [-webkit-overflow-scrolling:touch] snap-x snap-mandatory">
             {days.map((day) => (
-              <DayCell key={day.date} day={day} active={day.date === selected?.date} onSelect={() => setSelectedDate(day.date)} />
+              <div key={day.date} className="snap-start">
+                <DayCell day={day} active={day.date === selected?.date} onSelect={() => setSelectedDate(day.date)} />
+              </div>
             ))}
           </div>
         ) : null}

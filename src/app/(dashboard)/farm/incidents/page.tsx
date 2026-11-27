@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { EmptyRow, ErrorState, LoadingRows } from '@/components/farm/DataStates';
+import { EmptyRow, ErrorState, LoadingRows, MobileTableHint } from '@/components/farm/DataStates';
 import { KpiCard } from '@/components/farm/KpiCard';
 import { RequirePermission } from '@/components/farm/RequirePermission';
 import { StatusChip } from '@/components/farm/StatusChip';
@@ -60,7 +60,7 @@ function IncidentsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Pest & Disease"
-        subtitle="Outbreaks found in the field, treatment and follow-up."
+        subtitle="Pests and diseases found in the field."
         actions={
           can('pest.record') ? (
             <Button onClick={() => setCreating(true)}>
@@ -70,15 +70,15 @@ function IncidentsPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3">
         <KpiCard label="Unresolved" value={stats.unresolved} />
         <KpiCard label="High or critical" value={stats.severe} hint="Unresolved" />
-        <KpiCard label="Follow-up due" value={stats.followUpDue} hint="On or before today" />
+        <KpiCard label="Follow-up due" value={stats.followUpDue} hint="On or before today" className="col-span-2 sm:col-span-1" />
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="farm-toolbar">
         <Select value={scope} onValueChange={(v) => setScope(v as 'open' | 'all')}>
-          <SelectTrigger className="w-full sm:w-44">
+          <SelectTrigger className="w-full min-[640px]:w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -87,7 +87,7 @@ function IncidentsPage() {
           </SelectContent>
         </Select>
         <Select value={blockId} onValueChange={setBlockId}>
-          <SelectTrigger className="w-full sm:w-44">
+          <SelectTrigger className="w-full min-[640px]:w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -100,7 +100,7 @@ function IncidentsPage() {
           </SelectContent>
         </Select>
         <Select value={type} onValueChange={setType}>
-          <SelectTrigger className="w-full sm:w-36">
+          <SelectTrigger className="w-full min-[640px]:w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -118,6 +118,7 @@ function IncidentsPage() {
         <ErrorState message={errorMessage(incidents.error)} onRetry={() => incidents.refetch()} />
       ) : (
         <div className="data-table">
+          <MobileTableHint className="px-3 pt-3" />
           <Table>
             <TableHeader>
               <TableRow>

@@ -107,6 +107,33 @@ body {
   max-width: 90rem;
   margin-inline: auto;
   width: 100%;
+  min-width: 0;
+}
+
+.app-content {
+  padding:
+    max(0.85rem, env(safe-area-inset-top, 0px))
+    max(0.85rem, env(safe-area-inset-right, 0px))
+    max(1rem, env(safe-area-inset-bottom, 0px))
+    max(0.85rem, env(safe-area-inset-left, 0px));
+}
+
+@media (min-width: 640px) {
+  .app-content {
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .app-content {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .app-content {
+    padding: 2rem;
+  }
 }
 
 .app-topbar {
@@ -125,7 +152,10 @@ body {
   align-items: center;
   justify-content: flex-start;
   gap: 0.5rem;
-  padding: 0.7rem 1rem;
+  padding-top: max(0.7rem, env(safe-area-inset-top, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  padding-bottom: 0.7rem;
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
   min-height: 3.4rem;
 }
 
@@ -420,13 +450,20 @@ body {
 }
 
 .stat-card-value {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   color: #14201b;
   margin-top: 0.4rem;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+
+@media (min-width: 640px) {
+  .stat-card-value {
+    font-size: 1.5rem;
+  }
 }
 
 .stat-card-hint {
@@ -434,6 +471,17 @@ body {
   font-size: 0.75rem;
   line-height: 1.35;
   color: #7b8a82;
+}
+
+@media (max-width: 639px) {
+  .stat-card {
+    padding: 0.85rem 0.9rem;
+  }
+
+  .stat-card-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
 }
 
 .dashboard-hero {
@@ -673,6 +721,19 @@ body {
   border: 1px solid rgb(46 94 74 / 0.1);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.data-table table {
+  min-width: 36rem;
+}
+
+@media (max-width: 639px) {
+  .data-table th,
+  .data-table td {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.78125rem;
+  }
 }
 
 .data-table thead {
@@ -728,6 +789,25 @@ body {
   border-radius: 0.75rem;
 }
 
+.farm-toolbar > * {
+  min-width: 0;
+}
+
+@media (max-width: 639px) {
+  .farm-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+
+  .farm-toolbar .relative,
+  .farm-toolbar [data-slot='select-trigger'],
+  .farm-toolbar input,
+  .farm-toolbar button {
+    width: 100%;
+  }
+}
+
 .farm-panel {
   background: #fff;
   border: 1px solid rgb(46 94 74 / 0.1);
@@ -737,11 +817,18 @@ body {
 
 .farm-panel__header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.85rem 1.05rem;
   border-bottom: 1px solid #eef2ef;
+}
+
+@media (max-width: 639px) {
+  .farm-panel__header {
+    padding: 0.75rem 0.9rem;
+  }
 }
 
 .farm-panel__title {
@@ -785,17 +872,30 @@ body {
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: 0.85rem 1.25rem;
+  margin-bottom: 1.15rem;
+}
+
+@media (min-width: 640px) {
+  .page-header {
+    gap: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+.page-header__main {
+  min-width: 0;
+  flex: 1 1 12rem;
 }
 
 .page-header__title {
   font-family: var(--font-display), Fraunces, ui-serif, Georgia, serif;
-  font-size: 1.75rem;
+  font-size: clamp(1.35rem, 4.5vw, 1.75rem);
   font-weight: 600;
   letter-spacing: -0.03em;
   color: #14201b;
   line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .page-header__title--mono {
@@ -825,7 +925,22 @@ body {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  shrink: 0;
+  flex-shrink: 0;
+}
+
+@media (max-width: 639px) {
+  .page-header__actions {
+    width: 100%;
+  }
+
+  .page-header__actions > * {
+    flex: 1 1 auto;
+    min-width: calc(50% - 0.25rem);
+  }
+
+  .page-header__subtitle {
+    font-size: 0.875rem;
+  }
 }
 
 /* ——— Filter tabs ——— */
@@ -1021,6 +1136,10 @@ body {
     inset: 0 auto 0 0;
     height: 100dvh;
     min-height: 100dvh;
+    width: min(var(--sidebar-width), calc(100vw - 3rem));
+    max-width: 20rem;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     transform: translateX(-105%);
     transition: transform 0.22s ease;
     box-shadow: none;

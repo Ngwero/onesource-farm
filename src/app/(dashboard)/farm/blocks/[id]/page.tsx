@@ -114,18 +114,18 @@ function BlockDetailPage() {
         actions={
           canManage ? (
             <>
-              <Button variant="outline" onClick={() => setEditingBlock(true)}>
+              <Button variant="outline" size="sm" onClick={() => setEditingBlock(true)}>
                 <Pencil className="size-4" /> Edit
               </Button>
-              <Button variant="outline" onClick={() => setDeletingBlock(true)}>
+              <Button variant="outline" size="sm" onClick={() => setDeletingBlock(true)}>
                 <Trash2 className="size-4" /> Delete
               </Button>
               {can('activities.record') ? (
-                <Button variant="outline" onClick={() => setLandPrepOpen(true)} disabled={b.status === 'inactive'}>
+                <Button variant="outline" size="sm" onClick={() => setLandPrepOpen(true)} disabled={b.status === 'inactive'}>
                   <Shovel className="size-4" /> Land prep
                 </Button>
               ) : null}
-              <Button onClick={() => setCycleSheet({ open: true, cycle: null })} disabled={b.status === 'inactive'}>
+              <Button size="sm" onClick={() => setCycleSheet({ open: true, cycle: null })} disabled={b.status === 'inactive'}>
                 <Plus className="size-4" /> New planting
               </Button>
             </>
@@ -225,7 +225,7 @@ function BlockDetailPage() {
         />
       ) : null}
 
-      <PhotoGallery entityType="block" entityId={b.id} canEdit={canManage} title="Block photos" />
+      <PhotoGallery entityType="block" entityId={b.id} canEdit={canManage} title="Photos & documents" />
 
       <Card>
         <CardHeader>

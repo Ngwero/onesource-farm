@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { StatusBadge } from '../ui/StatusBadge';
 import { PaymentStatusBadge } from '@/components/memo/PaymentStatusBadge';
+import { DocumentViewerModal } from '@/components/shared/DocumentViewerModal';
 import { canViewMemoPaymentStatus } from '@/lib/memo/paymentStatus';
 import type { PaymentStatus } from '@/types';
-import { FileText, Eye, Pencil, Download } from 'lucide-react';
-import { downloadMemoPdf } from '@/lib/memo/downloadMemoPdf';
+import { FileText, Eye, Pencil } from 'lucide-react';
+import { fetchMemoPdf, triggerBlobDownload } from '@/lib/memo/downloadMemoPdf';
 
 const PDF_EXPORT_STATUSES = new Set(['draft', 'deleted']);
 
@@ -62,15 +63,58 @@ export function MemoList({
   showPaymentColumn?: boolean;
 }) {
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerLoading, setViewerLoading] = useState(false);
+  const [viewerDownloading, setViewerDownloading] = useState(false);
+  const [viewerError, setViewerError] = useState<string | null>(null);
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+  const [viewerFilename, setViewerFilename] = useState('memo.pdf');
+  const [viewerRef, setViewerRef] = useState('');
 
-  async function handleDownload(memo: MemoListItem) {
+  useEffect(() => {
+    return () => {
+      if (viewerUrl) URL.revokeObjectURL(viewerUrl);
+    };
+  }, [viewerUrl]);
+
+  async function handleViewDocument(memo: MemoListItem) {
     setExportingId(memo.id);
+    setViewerOpen(true);
+    setViewerLoading(true);
+    setViewerError(null);
+    setViewerRef(memo.reference_number);
+    if (viewerUrl) {
+      URL.revokeObjectURL(viewerUrl);
+      setViewerUrl(null);
+    }
     try {
-      await downloadMemoPdf(memo.id, memo.reference_number);
+      const pdf = await fetchMemoPdf(memo.id, memo.reference_number);
+      setViewerUrl(pdf.url);
+      setViewerFilename(pdf.filename);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Export failed');
+      setViewerError(err instanceof Error ? err.message : 'Could not open document');
     } finally {
+      setViewerLoading(false);
       setExportingId(null);
+    }
+  }
+
+  function handleViewerOpenChange(open: boolean) {
+    setViewerOpen(open);
+    if (!open && viewerUrl) {
+      URL.revokeObjectURL(viewerUrl);
+      setViewerUrl(null);
+      setViewerError(null);
+    }
+  }
+
+  async function handleViewerDownload() {
+    if (!viewerUrl) return;
+    setViewerDownloading(true);
+    try {
+      triggerBlobDownload(viewerUrl, viewerFilename);
+    } finally {
+      setViewerDownloading(false);
     }
   }
 
@@ -147,19 +191,19 @@ export function MemoList({
                   {!PDF_EXPORT_STATUSES.has(memo.memo_statuses?.slug || '') ? (
                     <button
                       type="button"
-                      onClick={() => handleDownload(memo)}
+                      onClick={() => void handleViewDocument(memo)}
                       disabled={exportingId === memo.id}
                       className="table-action"
                     >
-                      <Download size={15} />
+                      <FileText size={15} />
                       <span className="hidden sm:inline">
-                        {exportingId === memo.id ? 'PDF…' : 'PDF'}
+                        {exportingId === memo.id ? 'Opening…' : 'Document'}
                       </span>
                     </button>
                   ) : null}
                   <Link href={`/memos/${memo.id}`} className="table-action">
                     <Eye size={15} />
-                    <span className="hidden sm:inline">View</span>
+                    <span className="hidden sm:inline">Open</span>
                   </Link>
                 </div>
               </td>
@@ -167,6 +211,18 @@ export function MemoList({
           ))}
         </tbody>
       </table>
+      <DocumentViewerModal
+        open={viewerOpen}
+        onOpenChange={handleViewerOpenChange}
+        title={viewerFilename}
+        subtitle={viewerRef}
+        src={viewerUrl}
+        kind="pdf"
+        loading={viewerLoading}
+        error={viewerError}
+        onDownload={handleViewerDownload}
+        downloading={viewerDownloading}
+      />
     </div>
   );
 }

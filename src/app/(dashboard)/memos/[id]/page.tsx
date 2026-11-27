@@ -467,7 +467,7 @@ export default function MemoDetailPage({ params }: { params: Promise<{ id: strin
         <div className="xl:col-span-2 space-y-5 order-2 xl:order-1">
           <MemoDocumentExport memoId={id} referenceNumber={memo.reference_number} />
           <div className="memo-doc-view">
-            <p className="memo-doc-view__label">Memo preview</p>
+            <p className="memo-doc-view__label">Document</p>
             <MemoTemplate
               memo={memo}
               branding={branding || undefined}
