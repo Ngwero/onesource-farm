@@ -1,7 +1,7 @@
 import type { WorkflowStep } from '@/lib/workflow/engine';
 
 /** Optional designated IT memo creator — empty until assigned. */
-export const IT_MEMO_CREATOR_EMAIL = '';
+export const IT_MEMO_CREATOR_EMAIL: string = '';
 
 /** IT Request: 1st check → 2nd check → finance → CEO. */
 export const IT_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [

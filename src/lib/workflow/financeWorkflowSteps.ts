@@ -21,9 +21,9 @@ export const FINANCE_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
 ];
 
 /** Optional designated finance creator / approver emails — empty until assigned. */
-export const FINANCE_MEMO_CREATOR_EMAIL = '';
-export const FINANCE_MEMO_APPROVER_EMAIL = '';
-export const FINANCE_DEPT_HEAD_EMAIL = '';
+export const FINANCE_MEMO_CREATOR_EMAIL: string = '';
+export const FINANCE_MEMO_APPROVER_EMAIL: string = '';
+export const FINANCE_DEPT_HEAD_EMAIL: string = '';
 
 export function isFinanceRequestCreator(
   user: { email?: string | null } | null | undefined

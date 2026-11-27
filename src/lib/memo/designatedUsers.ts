@@ -12,16 +12,16 @@ import { IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL } from '@/lib/workflow/
  * Assign people via Admin → Users (role) or set these emails when known.
  * Empty strings mean "no hardcoded person"; routing falls back to role holders.
  */
-export const CEO_APPROVER_EMAIL = '';
+export const CEO_APPROVER_EMAIL: string = '';
 
 /** CEO memos use chairman when a CEO email is designated and matches the creator. */
 export const CEO_MEMO_CREATOR_EMAIL = CEO_APPROVER_EMAIL;
 
 /** Chairman — final approver for memos created by the designated CEO. */
-export const CHAIRMAN_APPROVER_EMAIL = '';
+export const CHAIRMAN_APPROVER_EMAIL: string = '';
 
 /** Finance department head / CFO. */
-export const CFO_EMAIL = '';
+export const CFO_EMAIL: string = '';
 
 /** IT department heads (optional designated emails). */
 export const IT_DEPT_HEAD_EMAILS = [IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL].filter(

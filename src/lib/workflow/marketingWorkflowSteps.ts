@@ -28,5 +28,5 @@ export const MARKETING_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
 ];
 
 /** Optional designated emails — empty until assigned. */
-export const MARKETING_HEAD_EMAIL = '';
-export const BUSINESS_HEAD_EMAIL = '';
+export const MARKETING_HEAD_EMAIL: string = '';
+export const BUSINESS_HEAD_EMAIL: string = '';

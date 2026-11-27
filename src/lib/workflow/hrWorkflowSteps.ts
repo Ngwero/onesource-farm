@@ -19,4 +19,4 @@ export const HR_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
 ];
 
 /** Optional designated HR memo creator — empty until assigned. */
-export const HR_MEMO_CREATOR_EMAIL = '';
+export const HR_MEMO_CREATOR_EMAIL: string = '';
