@@ -26,12 +26,12 @@ type WorkflowRow = {
 
 const ROLE_OPTIONS = [
   { slug: 'department_head', label: 'Department Head' },
-  { slug: 'business_head', label: 'Business Head (Norman)' },
-  { slug: 'it_checker_first', label: 'IT Checker — 1st (Emmanuel)' },
-  { slug: 'it_checker_second', label: 'IT Checker — 2nd (Jim)' },
-  { slug: 'finance_reviewer', label: 'Finance Reviewer (Christine)' },
+  { slug: 'business_head', label: 'Business Head' },
+  { slug: 'it_checker_first', label: 'IT Checker — 1st' },
+  { slug: 'it_checker_second', label: 'IT Checker — 2nd' },
+  { slug: 'finance_reviewer', label: 'Finance Reviewer' },
   { slug: 'hr_reviewer', label: 'HR Reviewer' },
-  { slug: 'ceo', label: 'CEO' },
+  { slug: 'ceo', label: 'CEO / Final Approver' },
   { slug: 'exco_member', label: 'EXCO Member' },
 ];
 

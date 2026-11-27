@@ -31,6 +31,7 @@ async function approverIdsForEmail(
   supabase: ReturnType<typeof createServiceClient>,
   email: string
 ): Promise<string[]> {
+  if (!email?.trim()) return [];
   const { data } = await supabase
     .from('users')
     .select('id')
@@ -50,6 +51,24 @@ async function approverIdsForEmails(
     ids.push(...(await approverIdsForEmail(supabase, email)));
   }
   return appendDelegations(supabase, [...new Set(ids)]);
+}
+
+async function approverIdsForRole(
+  supabase: ReturnType<typeof createServiceClient>,
+  roleSlug: string,
+  departmentId?: string | null
+): Promise<string[]> {
+  let query = supabase
+    .from('users')
+    .select('id, roles!inner(slug)')
+    .eq('is_active', true)
+    .eq('roles.slug', roleSlug);
+  if (departmentId) {
+    query = query.eq('department_id', departmentId);
+  }
+  const { data } = await query;
+  const ids = (data || []).map((h) => h.id as string);
+  return appendDelegations(supabase, ids);
 }
 
 async function deptCodeForId(
@@ -75,26 +94,34 @@ export async function findApproversForStep(
   const type = memoTypeSlug as MemoTypeSlug | undefined;
 
   if (roleSlug === 'ceo') {
-    return approverIdsForEmail(supabase, resolveCeoApproverEmail(creatorEmail));
+    const email = resolveCeoApproverEmail(creatorEmail);
+    if (email) return approverIdsForEmail(supabase, email);
+    return approverIdsForRole(supabase, 'ceo');
   }
 
   if (roleSlug === 'business_head') {
-    return approverIdsForEmail(supabase, BUSINESS_HEAD_EMAIL);
+    if (BUSINESS_HEAD_EMAIL) return approverIdsForEmail(supabase, BUSINESS_HEAD_EMAIL);
+    return approverIdsForRole(supabase, 'business_head');
   }
 
   if (roleSlug === 'it_checker_first') {
-    return approverIdsForEmail(supabase, IT_FIRST_CHECKER_EMAIL);
+    if (IT_FIRST_CHECKER_EMAIL) return approverIdsForEmail(supabase, IT_FIRST_CHECKER_EMAIL);
+    return approverIdsForRole(supabase, 'it_checker_first');
   }
 
   if (roleSlug === 'it_checker_second') {
-    return approverIdsForEmail(supabase, IT_SECOND_CHECKER_EMAIL);
+    if (IT_SECOND_CHECKER_EMAIL) return approverIdsForEmail(supabase, IT_SECOND_CHECKER_EMAIL);
+    return approverIdsForRole(supabase, 'it_checker_second');
   }
 
   if (roleSlug === 'finance_reviewer') {
-    return approverIdsForEmails(
-      supabase,
-      resolveFinanceReviewerEmails(memoTypeSlug, creatorEmail)
-    );
+    const emails = resolveFinanceReviewerEmails(type, creatorEmail);
+    if (emails.length) return approverIdsForEmails(supabase, emails);
+    return approverIdsForRole(supabase, 'finance_reviewer');
+  }
+
+  if (roleSlug === 'hr_reviewer') {
+    return approverIdsForRole(supabase, 'hr_reviewer');
   }
 
   if (roleSlug === 'department_head') {
@@ -104,16 +131,10 @@ export async function findApproversForStep(
       const others = creatorEmail
         ? headEmails.filter((e) => e.toLowerCase() !== creatorEmail.toLowerCase())
         : headEmails;
-      return approverIdsForEmails(supabase, others.length ? others : headEmails);
+      const fromEmails = await approverIdsForEmails(supabase, others.length ? others : headEmails);
+      if (fromEmails.length) return fromEmails;
     }
-    const { data: heads } = await supabase
-      .from('users')
-      .select('id, roles!inner(slug)')
-      .eq('department_id', departmentId)
-      .eq('is_active', true)
-      .eq('roles.slug', 'department_head');
-    const ids = (heads || []).map((h) => h.id as string);
-    return appendDelegations(supabase, ids);
+    return approverIdsForRole(supabase, 'department_head', departmentId);
   }
 
   if (roleSlug === 'exco_member') {

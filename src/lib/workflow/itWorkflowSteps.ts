@@ -1,27 +1,28 @@
 import type { WorkflowStep } from '@/lib/workflow/engine';
 
-export const IT_MEMO_CREATOR_EMAIL = 'doreen.kembabazi@onesourcefresh.com';
+/** Optional designated IT memo creator — empty until assigned. */
+export const IT_MEMO_CREATOR_EMAIL = '';
 
-/** IT Request: Emmanuel → Jim → Christine (finance) → CEO */
+/** IT Request: 1st check → 2nd check → finance → CEO. */
 export const IT_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
   {
     step_order: 1,
     role_slug: 'it_checker_first',
-    step_name: 'IT Check — 1st (Emmanuel)',
+    step_name: 'IT Check — 1st',
     is_parallel: false,
     sla_hours: 24,
   },
   {
     step_order: 2,
     role_slug: 'it_checker_second',
-    step_name: 'IT Check — 2nd (Jim)',
+    step_name: 'IT Check — 2nd',
     is_parallel: false,
     sla_hours: 24,
   },
   {
     step_order: 3,
     role_slug: 'finance_reviewer',
-    step_name: 'Finance Review (Christine)',
+    step_name: 'Finance Review',
     is_parallel: false,
     sla_hours: 48,
   },

@@ -6,7 +6,7 @@ import {
 import type { WorkflowDefinition, WorkflowStep } from '@/lib/workflow/engine';
 import { resolveFinanceRequestSubmitStep } from '@/lib/workflow/financeWorkflowSteps';
 
-/** CEO memos: Rowena creates → Douglas (Chairman) approves. */
+/** CEO-authored memos: chairman approval when a CEO creator is designated. */
 export const CEO_MEMO_APPROVAL_STEPS: WorkflowStep[] = [
   {
     step_order: 1,
@@ -18,7 +18,7 @@ export const CEO_MEMO_APPROVAL_STEPS: WorkflowStep[] = [
 ];
 
 export function resolveCeoApproverEmail(creatorEmail?: string | null): string {
-  if (isCeoMemoCreator({ email: creatorEmail })) {
+  if (isCeoMemoCreator({ email: creatorEmail }) && CHAIRMAN_APPROVER_EMAIL) {
     return CHAIRMAN_APPROVER_EMAIL;
   }
   return CEO_APPROVER_EMAIL;

@@ -18,9 +18,8 @@ export function isFinanceRequestMemo(memoTypeSlug: string | undefined): boolean 
 export function isInterdeptFinanceReviewer(
   user: Pick<User, 'email'> | null | undefined
 ): boolean {
-  return Boolean(
-    user?.email?.toLowerCase() === INTERDEPT_FINANCE_REVIEWER_EMAIL.toLowerCase()
-  );
+  if (!INTERDEPT_FINANCE_REVIEWER_EMAIL || !user?.email) return false;
+  return user.email.toLowerCase() === INTERDEPT_FINANCE_REVIEWER_EMAIL.toLowerCase();
 }
 
 /** Christine or Amara — either may complete the finance step. */

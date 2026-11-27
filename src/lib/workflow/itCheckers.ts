@@ -1,12 +1,16 @@
-/** System admin (Emmanuel) — also acts as 1st IT checker while keeping the admin role. */
+/** System admin — used for admin identity checks, not as a hardcoded IT approver. */
 export const ADMIN_EMAIL = 'emmanuel.ngwero@onesourcefresh.com';
 
-/** Designated IT memo checkers (order matters). 1st checker may be admin (single role in DB). */
-export const IT_FIRST_CHECKER_EMAIL = ADMIN_EMAIL;
-export const IT_SECOND_CHECKER_EMAIL = 'jim.ntare@onesourcefresh.com';
+/**
+ * Designated IT memo checkers — cleared for reassignment.
+ * Assign via Admin → Users with roles it_checker_first / it_checker_second.
+ */
+export const IT_FIRST_CHECKER_EMAIL = '';
+export const IT_SECOND_CHECKER_EMAIL = '';
 
 export function isDesignatedItFirstChecker(
   user: { email?: string } | null | undefined
 ): boolean {
-  return Boolean(user?.email?.toLowerCase() === IT_FIRST_CHECKER_EMAIL.toLowerCase());
+  if (!IT_FIRST_CHECKER_EMAIL || !user?.email) return false;
+  return user.email.toLowerCase() === IT_FIRST_CHECKER_EMAIL.toLowerCase();
 }

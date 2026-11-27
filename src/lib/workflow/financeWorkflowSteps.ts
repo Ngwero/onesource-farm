@@ -2,12 +2,12 @@ import { emailsMatch } from '@/lib/memo/designatedUsers';
 import { INTERDEPT_FINANCE_REVIEWER_EMAIL } from '@/lib/workflow/interdeptFinanceReviewer';
 import type { WorkflowDefinition, WorkflowStep } from '@/lib/workflow/engine';
 
-/** Finance Request: finance review → CEO (Amara when Christine authors; Christine for other authors). */
+/** Finance Request: finance review → CEO. */
 export const FINANCE_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
   {
     step_order: 1,
     role_slug: 'finance_reviewer',
-    step_name: 'Finance Review (Amara - CFO)',
+    step_name: 'Finance Review',
     is_parallel: false,
     sla_hours: 48,
   },
@@ -20,9 +20,10 @@ export const FINANCE_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
   },
 ];
 
-export const FINANCE_MEMO_CREATOR_EMAIL = 'christine.kangume@onesourcefresh.com';
-export const FINANCE_MEMO_APPROVER_EMAIL = 'christine.kangume@onesourcefresh.com';
-export const FINANCE_DEPT_HEAD_EMAIL = 'amara.oto@onesourcefresh.com';
+/** Optional designated finance creator / approver emails — empty until assigned. */
+export const FINANCE_MEMO_CREATOR_EMAIL = '';
+export const FINANCE_MEMO_APPROVER_EMAIL = '';
+export const FINANCE_DEPT_HEAD_EMAIL = '';
 
 export function isFinanceRequestCreator(
   user: { email?: string | null } | null | undefined
@@ -32,19 +33,17 @@ export function isFinanceRequestCreator(
 
 /**
  * Primary finance reviewer email (used for display/SLA primary).
- * Christine's own Finance Requests go to Amara; otherwise Christine.
  */
 export function resolveFinanceReviewerEmail(
   memoTypeSlug?: string,
   creatorEmail?: string | null
 ): string {
-  return resolveFinanceReviewerEmails(memoTypeSlug, creatorEmail)[0];
+  return resolveFinanceReviewerEmails(memoTypeSlug, creatorEmail)[0] ?? '';
 }
 
 /**
- * Who may complete the finance step.
- * - Christine's Finance Request → Amara only (she cannot approve her own).
- * - All other finance steps → Christine and Amara (either may approve).
+ * Who may complete the finance step by designated email.
+ * Empty list → routing falls back to users with finance_reviewer role.
  */
 export function resolveFinanceReviewerEmails(
   memoTypeSlug?: string,
@@ -52,11 +51,13 @@ export function resolveFinanceReviewerEmails(
 ): string[] {
   if (
     memoTypeSlug === 'finance_request' &&
-    emailsMatch(creatorEmail ?? undefined, FINANCE_MEMO_CREATOR_EMAIL)
+    FINANCE_MEMO_CREATOR_EMAIL &&
+    emailsMatch(creatorEmail ?? undefined, FINANCE_MEMO_CREATOR_EMAIL) &&
+    FINANCE_DEPT_HEAD_EMAIL
   ) {
     return [FINANCE_DEPT_HEAD_EMAIL];
   }
-  return [INTERDEPT_FINANCE_REVIEWER_EMAIL, FINANCE_DEPT_HEAD_EMAIL];
+  return [INTERDEPT_FINANCE_REVIEWER_EMAIL, FINANCE_DEPT_HEAD_EMAIL].filter(Boolean);
 }
 
 export function workflowForFinanceCreator(

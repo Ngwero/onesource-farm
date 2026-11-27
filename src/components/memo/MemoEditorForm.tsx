@@ -46,12 +46,12 @@ interface LookupData {
 const WORKFLOW_HINTS: Record<MemoTypeSlug, string> = {
   payment_request: 'Route: You → Department Head → Finance → CEO',
   procurement_request: 'Route: You → Department Head → Finance → CEO',
-  hr_request: 'Route: You → Christine (finance) → CEO',
+  hr_request: 'Route: You → Finance → CEO',
   leave_request: 'Route: You → Department Head → CEO',
   it_request:
-    'Route: You → Department Head → Emmanuel (1st IT check) → Jim (2nd IT check) → CEO. Check “Budget involved” if Finance must review.',
-  marketing_request: 'Route: Norman (Business) → Christine → CEO',
-  finance_request: 'Route: You → Christine (finance) → CEO',
+    'Route: You → IT Check (1st) → IT Check (2nd) → Finance → CEO. Check “Budget involved” if Finance must review.',
+  marketing_request: 'Route: Business Head → Finance → CEO',
+  finance_request: 'Route: You → Finance → CEO',
   general_internal:
     'Route: You → Department Head → Finance Review → CEO or EXCO (set importance level below)',
 };
@@ -268,10 +268,10 @@ export function MemoEditorForm({
   const workflowHint = useMemo(() => {
     if (!typeSlug) return undefined;
     if (isCeoMemoCreator(user)) {
-      return 'Route: You → Douglas (Chairman)';
+      return 'Route: You → Chairman';
     }
     if (typeSlug === 'finance_request' && isFinanceRequestCreator(user)) {
-      return 'Route: You → Amara (CFO) → CEO';
+      return 'Route: You → Finance (CFO) → CEO';
     }
     return WORKFLOW_HINTS[typeSlug];
   }, [typeSlug, user]);
@@ -527,7 +527,7 @@ export function MemoEditorForm({
                 </option>
               ))}
             </select>
-            <FieldHint text="Routing uses this department (e.g. IT memos go to Emmanuel & Jim when IT is selected)." />
+            <FieldHint text="Routing uses this department to find the right department head and reviewers." />
           </div>
         )}
 
@@ -754,7 +754,7 @@ export function MemoEditorForm({
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
             <span className="font-medium text-slate-800">Approval route</span>
             <span className="block text-xs text-slate-500 mt-0.5">
-              IT requests always go to Emmanuel, then Jim, then Christine (Finance), then CEO.
+              IT requests go to IT Check (1st), then IT Check (2nd), then Finance, then CEO.
             </span>
           </div>
         )}

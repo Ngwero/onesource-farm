@@ -3,7 +3,11 @@ import {
   departmentHeadCanApproveMemo,
   departmentHeadCanViewMemo,
 } from '@/lib/memo/itRouting';
-import { isDesignatedItFirstChecker } from '@/lib/workflow/itCheckers';
+import {
+  IT_FIRST_CHECKER_EMAIL,
+  IT_SECOND_CHECKER_EMAIL,
+  isDesignatedItFirstChecker,
+} from '@/lib/workflow/itCheckers';
 import {
   designatedCfoFinanceRequestCanApprove,
   designatedCfoFinanceRequestCanView,
@@ -334,14 +338,6 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
     return false;
   }
 
-  if (role === 'it_checker_first') {
-    return (
-      memo.memo_type?.slug === 'it_request' &&
-      statusSlug === 'pending_it_checker_first' &&
-      isDesignatedItFirstChecker(user)
-    );
-  }
-
   if (statusSlug === 'pending_department_head') {
     const deptCode = memo.department?.code;
     if (deptCode && isDesignatedDeptHead(user, deptCode)) {
@@ -352,6 +348,7 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
     }
   }
 
+  type MemoStatusSlug = string;
   const roleStatusMap: Partial<Record<RoleSlug, MemoStatusSlug[]>> = {
     department_head: ['pending_department_head'],
     business_head: ['pending_business_head'],
@@ -363,8 +360,8 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
     exco_member: ['pending_exco'],
   };
 
-  type MemoStatusSlug = string;
   if (!roleStatusMap[role]?.includes(statusSlug || '')) return false;
+  if (memo.creator_id === user.id) return false;
 
   if (role === 'department_head') {
     if (memo.memo_type?.slug === 'marketing_request') {
@@ -377,27 +374,42 @@ export function canApproveMemo(user: User, memo: Memo): boolean {
     return businessHeadCanApproveMemo(user, memo);
   }
 
+  if (role === 'it_checker_first') {
+    if (memo.memo_type?.slug !== 'it_request' || statusSlug !== 'pending_it_checker_first') return false;
+    // If a designated first checker email is set, only that person; otherwise the role.
+    return !IT_FIRST_CHECKER_EMAIL || isDesignatedItFirstChecker(user);
+  }
+
   if (role === 'it_checker_second') {
-    return (
-      memo.memo_type?.slug === 'it_request' &&
-      statusSlug === 'pending_it_checker_second' &&
-      isDesignatedItSecondChecker(user)
-    );
+    if (memo.memo_type?.slug !== 'it_request' || statusSlug !== 'pending_it_checker_second') return false;
+    return !IT_SECOND_CHECKER_EMAIL || isDesignatedItSecondChecker(user);
   }
 
   if (role === 'ceo') {
-    return designatedChairmanCanApprove(user, memo) || designatedCeoCanApprove(user, memo);
+    if (designatedChairmanCanApprove(user, memo) || designatedCeoCanApprove(user, memo)) {
+      return true;
+    }
+    // No designated CEO/Chairman emails: anyone with the ceo role may approve.
+    return statusSlug === 'pending_ceo';
   }
 
   if (role === 'finance_reviewer') {
-    return (
+    if (
       designatedCfoFinanceRequestCanApprove(user, memo) ||
       designatedFinanceStepReviewerCanApprove(user, memo)
-    );
+    ) {
+      return true;
+    }
+    // No designated finance emails: finance_reviewer role holders may approve.
+    return statusSlug === 'pending_finance';
   }
 
   if (role === 'hr_reviewer') {
-    return false;
+    return statusSlug === 'pending_hr';
+  }
+
+  if (role === 'exco_member') {
+    return statusSlug === 'pending_exco';
   }
 
   return false;

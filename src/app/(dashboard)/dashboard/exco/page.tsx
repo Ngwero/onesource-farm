@@ -40,7 +40,7 @@ export default function EXCODashboard() {
           {
             href: '/memos?status=pending_finance',
             label: 'Pending finance',
-            description: 'Shared queue with Christine — either can approve',
+            description: 'Finance queue awaiting review',
             icon: <FileText size={20} />,
           },
           {

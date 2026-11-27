@@ -1,11 +1,11 @@
 import type { WorkflowStep } from '@/lib/workflow/engine';
 
-/** HR Request: Christine (finance step) → CEO */
+/** HR Request: finance review → CEO. */
 export const HR_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
   {
     step_order: 1,
     role_slug: 'finance_reviewer',
-    step_name: 'Finance Review (Christine)',
+    step_name: 'Finance Review',
     is_parallel: false,
     sla_hours: 48,
   },
@@ -18,4 +18,5 @@ export const HR_REQUEST_APPROVAL_STEPS: WorkflowStep[] = [
   },
 ];
 
-export const HR_MEMO_CREATOR_EMAIL = 'dorothy.kubakurungi@onesourcefresh.com';
+/** Optional designated HR memo creator — empty until assigned. */
+export const HR_MEMO_CREATOR_EMAIL = '';

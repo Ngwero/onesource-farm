@@ -7,35 +7,40 @@ import {
 } from '@/lib/workflow/marketingWorkflowSteps';
 import { IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL } from '@/lib/workflow/itCheckers';
 
-/** Final approver (CEO) for all memos except those authored by the CEO. */
-export const CEO_APPROVER_EMAIL = 'rowena.turinawe@onesourcefresh.com';
+/**
+ * Designated approver emails — cleared for reassignment.
+ * Assign people via Admin → Users (role) or set these emails when known.
+ * Empty strings mean "no hardcoded person"; routing falls back to role holders.
+ */
+export const CEO_APPROVER_EMAIL = '';
 
-/** CEO memos are authored by Rowena and approved by the Chairman. */
+/** CEO memos use chairman when a CEO email is designated and matches the creator. */
 export const CEO_MEMO_CREATOR_EMAIL = CEO_APPROVER_EMAIL;
 
-/** Chairman — final approver for memos created by the CEO. */
-export const CHAIRMAN_APPROVER_EMAIL = 'douglasrk@onesourcefresh.com';
+/** Chairman — final approver for memos created by the designated CEO. */
+export const CHAIRMAN_APPROVER_EMAIL = '';
 
-/** Finance department head (Amara). Reviews Finance Request memos from Christine. */
-export const CFO_EMAIL = 'amara.oto@onesourcefresh.com';
+/** Finance department head / CFO. */
+export const CFO_EMAIL = '';
 
-/** IT department heads. */
-export const IT_DEPT_HEAD_EMAILS = [IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL] as const;
+/** IT department heads (optional designated emails). */
+export const IT_DEPT_HEAD_EMAILS = [IT_FIRST_CHECKER_EMAIL, IT_SECOND_CHECKER_EMAIL].filter(
+  Boolean
+) as readonly string[];
 
-/** Department heads for payment / procurement / general / leave (by target department on form). */
+/** Department heads by dept code — empty until assigned. */
 export const DESIGNATED_DEPT_HEAD_EMAILS: Record<string, readonly string[]> = {
   IT: IT_DEPT_HEAD_EMAILS,
-  HR: [HR_MEMO_CREATOR_EMAIL],
-  FIN: [CFO_EMAIL],
-  OPS: [IT_FIRST_CHECKER_EMAIL],
-  /** Marketing department head (Margaret). */
-  MKT: [MARKETING_HEAD_EMAIL],
-  /** Business department — Norman; marketing_request workflow uses business_head step. */
-  BD: [BUSINESS_HEAD_EMAIL],
+  HR: [HR_MEMO_CREATOR_EMAIL].filter(Boolean),
+  FIN: [CFO_EMAIL].filter(Boolean),
+  OPS: [],
+  MKT: [MARKETING_HEAD_EMAIL].filter(Boolean),
+  BD: [BUSINESS_HEAD_EMAIL].filter(Boolean),
 };
 
 export function emailsMatch(a: string | undefined, b: string): boolean {
-  return Boolean(a?.toLowerCase() === b.toLowerCase());
+  if (!a || !b) return false;
+  return a.toLowerCase() === b.toLowerCase();
 }
 
 export function isDesignatedCfo(user: Pick<User, 'email'> | null | undefined): boolean {
@@ -59,7 +64,7 @@ export function isDesignatedChairman(
 }
 
 export function isDesignatedItDeptHead(user: Pick<User, 'email'> | null | undefined): boolean {
-  if (!user?.email) return false;
+  if (!user?.email || !IT_DEPT_HEAD_EMAILS.length) return false;
   return IT_DEPT_HEAD_EMAILS.some((e) => emailsMatch(user.email, e));
 }
 

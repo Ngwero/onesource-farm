@@ -89,7 +89,7 @@ export default function FinanceDashboard() {
         {
           href: '/memos?status=pending_finance',
           label: 'Pending finance',
-          description: 'All memos waiting for finance — you or Christine can approve',
+          description: 'All memos waiting for finance review',
           icon: <FileText size={20} />,
         },
         {
@@ -110,7 +110,7 @@ export default function FinanceDashboard() {
           {
             href: '/memos?status=pending_finance',
             label: 'Pending my review',
-            description: 'Inter-department memos waiting for finance sign-off (Amara can also approve)',
+            description: 'Inter-department memos waiting for finance sign-off',
             icon: <FileText size={20} />,
           },
           {
@@ -126,19 +126,11 @@ export default function FinanceDashboard() {
 
   return (
     <DashboardPage
-      title={
-        cfoFinanceChecker
-          ? 'Finance Review — Amara (CFO)'
-          : financeReviewer
-            ? 'Finance Review — Christine'
-            : 'Finance Dashboard'
-      }
+      title={cfoFinanceChecker || financeReviewer ? 'Finance Review' : 'Finance Dashboard'}
       banner={
-        cfoFinanceChecker
-          ? 'You and Christine share the finance queue — either of you can approve pending memos. You also see all finance-step memos.'
-          : financeReviewer
-            ? 'You and Amara share the finance queue — whoever reviews first can approve. Use My memos for everything you created.'
-            : undefined
+        cfoFinanceChecker || financeReviewer
+          ? 'Memos waiting for finance review. Assign finance reviewers under Admin → Users.'
+          : undefined
       }
       stats={stats}
       quickLinks={quickLinks}

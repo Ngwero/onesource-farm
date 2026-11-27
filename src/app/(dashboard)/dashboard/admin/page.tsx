@@ -55,7 +55,7 @@ export default function AdminDashboard() {
           {
             href: '/memos?status=pending_it_checker_first&memo_type=it_request',
             label: 'IT — my check queue',
-            description: '1st IT checker (Emmanuel)',
+            description: '1st IT checker queue',
             icon: <FileText size={20} />,
           },
         ]

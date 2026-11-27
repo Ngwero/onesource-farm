@@ -43,13 +43,16 @@ export function departmentHeadCanApproveMemo(
   memoDeptCode?: string
 ): boolean {
   if (memo.status?.slug !== 'pending_department_head') return false;
+  if (memo.creator_id === user.id) return false;
   if (memo.memo_type?.slug === 'marketing_request') {
     return false;
   }
   if (memo.memo_type?.slug === 'it_request') {
     return isItDepartmentHead(user) || isDesignatedItDeptHead(user);
   }
-  const code = memoDeptCode || user.department?.code;
+  const code = memoDeptCode || memo.department?.code;
   if (!code) return false;
-  return isDesignatedDeptHead(user, code);
+  if (isDesignatedDeptHead(user, code)) return true;
+  // No designated email: any department_head in that department may approve.
+  return user.role?.slug === 'department_head' && user.department?.code === code;
 }

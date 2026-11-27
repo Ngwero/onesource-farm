@@ -9,18 +9,20 @@ export function isMarketingMemo(memoTypeSlug: string | undefined): boolean {
   return memoTypeSlug === 'marketing_request';
 }
 
-/** Marketing department head (Margaret) — MKT dept memos, not marketing_request business step. */
+/** Marketing department head — MKT dept memos, not marketing_request business step. */
 export function isDesignatedMarketingHead(
-  user: Pick<User, 'email'> | null | undefined
+  user: Pick<User, 'email' | 'role' | 'department'> | null | undefined
 ): boolean {
-  return Boolean(user?.email?.toLowerCase() === MARKETING_HEAD_EMAIL.toLowerCase());
+  if (MARKETING_HEAD_EMAIL && user?.email?.toLowerCase() === MARKETING_HEAD_EMAIL.toLowerCase()) {
+    return true;
+  }
+  return user?.role?.slug === 'department_head' && user.department?.code === MARKETING_DEPARTMENT_CODE;
 }
 
 export function isBusinessHead(user: User): boolean {
-  return (
-    user.role?.slug === 'business_head' ||
-    Boolean(user.email?.toLowerCase() === BUSINESS_HEAD_EMAIL.toLowerCase())
-  );
+  if (user.role?.slug === 'business_head') return true;
+  if (!BUSINESS_HEAD_EMAIL || !user.email) return false;
+  return user.email.toLowerCase() === BUSINESS_HEAD_EMAIL.toLowerCase();
 }
 
 export function marketingWorkflowCanViewMemo(user: User, memo: Memo): boolean {
