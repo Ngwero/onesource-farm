@@ -221,11 +221,14 @@ export async function loadExecutiveOverview(
     const monthStart = format(now, 'yyyy-MM-01');
     const { data, error } = await supabase
       .from('payroll_periods')
-      .select('id, total_cost, status, period_start')
+      .select('id, status, period_start, lines:payroll_lines(amount_payable)')
       .eq('farm_id', farmId)
       .gte('period_start', monthStart);
     if (error) throw error;
-    const actual = (data ?? []).reduce((s, p) => s + Number(p.total_cost ?? 0), 0);
+    const actual = (data ?? []).reduce((sum, period) => {
+      const lines = (period.lines ?? []) as { amount_payable: number }[];
+      return sum + lines.reduce((s, line) => s + Number(line.amount_payable ?? 0), 0);
+    }, 0);
     result.payroll = {
       actual: round(actual),
       budget: payrollBudget && payrollBudget > 0 ? payrollBudget : null,

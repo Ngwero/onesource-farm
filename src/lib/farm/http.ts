@@ -62,22 +62,42 @@ function postgrestResponse(err: PostgrestLikeError): NextResponse {
     case 'PGRST116':
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     case '42P01':
-    case 'PGRST205':
+    case 'PGRST205': {
+      const missing = err.message ?? '';
+      const exportMissing = /buyers|buyer_contracts|shipments|shipment_lines/i.test(missing);
       return NextResponse.json(
         {
-          error:
-            'Export tables are not set up on this database yet. Apply migration 025 (buyers, contracts, shipments) and try again.',
+          error: exportMissing
+            ? 'Export tables are not set up on this database yet. Apply migration 025 (buyers, contracts, shipments) and try again.'
+            : `Database schema is incomplete (${missing}). Apply the latest farm migrations and try again.`,
         },
         { status: 503 }
       );
+    }
     default: {
       const msg = err.message ?? '';
-      if (/does not exist|schema cache/i.test(msg)) {
+      if (/relation .* does not exist|Could not find the table/i.test(msg)) {
+        const exportMissing = /buyers|buyer_contracts|shipments|shipment_lines/i.test(msg);
         return NextResponse.json(
           {
-            error:
-              'Export tables are not set up on this database yet. Apply migration 025 (buyers, contracts, shipments) and try again.',
+            error: exportMissing
+              ? 'Export tables are not set up on this database yet. Apply migration 025 (buyers, contracts, shipments) and try again.'
+              : `Database schema is incomplete (${msg}). Apply the latest farm migrations and try again.`,
           },
+          { status: 503 }
+        );
+      }
+      if (/column .* does not exist/i.test(msg)) {
+        console.error('Database column error:', err);
+        return NextResponse.json(
+          { error: `A required database column is missing: ${msg}` },
+          { status: 500 }
+        );
+      }
+      if (/schema cache/i.test(msg)) {
+        console.error('Database schema cache error:', err);
+        return NextResponse.json(
+          { error: 'Database schema cache is out of date. Refresh Supabase schema and try again.' },
           { status: 503 }
         );
       }
