@@ -237,7 +237,7 @@ function LoginForm() {
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
-  const { user, loading: authLoading, login, dashboardRoute } = useAuth();
+  const { user, loading: authLoading, login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -248,9 +248,9 @@ function LoginForm() {
       return;
     }
     if (user) {
-      router.replace(dashboardRoute);
+      router.replace('/farm');
     }
-  }, [user, authLoading, dashboardRoute, router]);
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     if (searchParams.get('reset') === '1') {
@@ -309,7 +309,7 @@ function LoginForm() {
     setLoading(true);
     try {
       const mustSetPassword = await login(email, password);
-      router.push(mustSetPassword ? '/set-password' : dashboardRoute);
+      router.push(mustSetPassword ? '/set-password' : '/farm');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

@@ -420,8 +420,13 @@ export const DASHBOARD_ROUTES: Record<RoleSlug, string> = {
   exco_member: '/dashboard/exco',
 };
 
-/** Home dashboard after login (Christine uses finance dashboard while role stays staff). */
-export function resolveDashboardRoute(user: User | null | undefined): string {
+/** Home after login — farm overview. Role eMemo dashboards remain under Requests. */
+export function resolveDashboardRoute(_user?: User | null): string {
+  return '/farm';
+}
+
+/** Role-specific eMemo dashboard (sidebar / Requests). */
+export function resolveMemoDashboardRoute(user: User | null | undefined): string {
   const roleSlug = user?.role?.slug as RoleSlug | undefined;
   if (!roleSlug) return '/dashboard/staff';
   if (roleSlug === 'staff' && isInterdeptFinanceReviewer(user)) {

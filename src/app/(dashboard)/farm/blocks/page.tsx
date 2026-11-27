@@ -55,7 +55,7 @@ function BlocksPage() {
     <div className="space-y-5">
       <PageHeader
         title="Blocks"
-        subtitle="Plots on the farm, what is planted in each and the expected harvest."
+        subtitle="Plots on the farm, what is planted in each, and expected harvest."
         actions={
           can('farm.manage') ? (
             <Button onClick={() => setCreating(true)}>
@@ -65,7 +65,7 @@ function BlocksPage() {
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="farm-toolbar">
         <div className="relative w-full sm:w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -76,7 +76,7 @@ function BlocksPage() {
           />
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-full sm:w-44">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -89,7 +89,7 @@ function BlocksPage() {
           </SelectContent>
         </Select>
         <Select value={cropId} onValueChange={setCropId}>
-          <SelectTrigger className="w-full sm:w-44">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -101,7 +101,7 @@ function BlocksPage() {
             ))}
           </SelectContent>
         </Select>
-        <p className="text-sm text-muted-foreground sm:ml-auto">
+        <p className="text-sm tabular-nums text-muted-foreground sm:ml-auto">
           {filtered.length} block{filtered.length === 1 ? '' : 's'} · {fmtHa(totalArea)}
         </p>
       </div>
@@ -163,12 +163,12 @@ function BlocksPage() {
                       <TableCell>
                         {c ? (
                           <>
-                            <span className="font-medium">{c.crop?.name}</span>
+                            <span className="font-medium text-foreground">{c.crop?.name}</span>
                             {c.variety ? <p className="text-xs text-muted-foreground">{c.variety.name}</p> : null}
                             {c.status === 'planned' ? <StatusChip status="planned" className="mt-1" /> : null}
                           </>
                         ) : (
-                          <span className="text-muted-foreground">Not planted</span>
+                          <span className="text-[13px] text-slate-400">Not planted</span>
                         )}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">{fmtDate(c?.planting_date)}</TableCell>

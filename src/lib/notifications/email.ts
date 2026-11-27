@@ -13,8 +13,17 @@ import {
 
 export type { EmailPayload };
 
+/** Public portal URL for email CTAs — never localhost when a live URL is available. */
 function appBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const emailOverride =
+    process.env.LAUNCH_EMAIL_APP_URL?.trim() || process.env.EMAIL_APP_URL?.trim();
+  if (emailOverride) return emailOverride.replace(/\/$/, '');
+
+  const app = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (app && !/localhost|127\.0\.0\.1/i.test(app)) return app.replace(/\/$/, '');
+
+  // Outbound mail always needs a reachable portal (local NEXT_PUBLIC_APP_URL is for the browser).
+  return 'https://onesourcefresh.com';
 }
 
 export function buildMemoEmailHtml(payload: EmailPayload): string {
@@ -256,32 +265,33 @@ export async function sendWelcomeSignInEmail(params: {
   fullName: string;
   roleName?: string;
 }): Promise<{ sent: boolean; reason?: string }> {
-  const dashboardUrl = appBaseUrl();
-  const roleNote = params.roleName ? ` Assigned role: ${params.roleName}.` : '';
+  const dashboardUrl = `${appBaseUrl()}/farm`;
+  const roleNote = params.roleName ? ` Your role: <strong>${params.roleName}</strong>.` : '';
 
   return sendTransactionalEmail({
     to: params.email,
     toName: params.fullName,
     subject: 'Your OneSource Farm account is ready',
-    title: 'Welcome to the paperless era',
+    title: 'Welcome to OneSource Farm',
     body: `<p style="margin:0;">
-        You have successfully signed in to the <strong>OneSource Farm</strong>.
-        Please use the portal link below to create, route, and approve internal memos digitally.${roleNote}
+        Your account for <strong>OneSource Farm</strong> is ready — the farm-to-export workspace for land, harvests, quality, workforce, sales, and approvals.${roleNote}
+        Open the portal below to start from Farm Overview.
       </p>`,
-    highlightText: 'Welcome to the paperless era',
-    highlightSubtext: 'Your secure digital memo workspace is ready.',
+    highlightText: 'Farm to export, in one place',
+    highlightSubtext: 'Operations, quality, people, and commercial — plus digital memos.',
     bullets: [
-      'Create and submit memos for approval through your department workflow.',
-      'Track status, comments, and approvals in real time from any device.',
-      'Export approved memos as a watermarked PDF (E-Copy) when processing is complete.',
-      'Please do not share your login credentials with anyone.',
-      'This is an automated message — please do not reply to this email.',
-      'For access issues, contact your system administrator.',
+      'Farm overview — weather, spray windows, blocks, crops, plantings, field activities, and pest & disease.',
+      'Harvest & quality — batches, grading, QC inspections, packhouse, and warehouse stock.',
+      'Workforce — workers, attendance, tasks, and payroll costing.',
+      'Export & sales — buyers, contracts, shipments, and batch-to-buyer traceability.',
+      'Inputs & reports — seed/fertilizer/chemical lots, executive KPIs, and scheduled digests.',
+      'eMemo — create, route, approve, and export watermarked PDF memos when you need internal requests.',
+      'Do not share your login. For access issues, contact your system administrator.',
     ],
     ctaLabel: 'Open the portal',
     ctaUrl: dashboardUrl,
     footerNote:
-      'This welcome message is sent once after your first successful sign-in.',
+      'This welcome message is sent once after your first successful sign-in. Please do not reply to this email.',
   });
 }
 

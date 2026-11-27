@@ -1,13 +1,19 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { SessionInactivityGuard } from '@/components/auth/SessionInactivityGuard';
 import { PwaRegister } from '@/components/pwa/PwaRegister';
 
-const inter = Inter({
+const sans = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+const display = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-display',
   display: 'swap',
 });
 
@@ -37,7 +43,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${inter.className} antialiased`}>
+      <body className={`${sans.variable} ${display.variable} font-sans antialiased`}>
         <AuthProvider>
           <SessionInactivityGuard />
           <PwaRegister />

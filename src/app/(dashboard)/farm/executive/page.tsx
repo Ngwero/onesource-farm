@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -16,7 +17,6 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyRow, ErrorState, LoadingRows, MobileTableHint } from '@/components/farm/DataStates';
 import { KpiCard } from '@/components/farm/KpiCard';
@@ -26,6 +26,31 @@ import { useFarmAccess } from '@/hooks/useFarmAccess';
 import { errorMessage, farmFetch } from '@/lib/farm/client';
 import { fmtDate, fmtMoney, fmtNumber, fmtPct } from '@/lib/farm/format';
 import type { ExecutiveOverview } from '@/lib/farm/types';
+
+function Panel({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="farm-panel">
+      <div className="farm-panel__header">
+        <h2 className="farm-panel__title">
+          {icon}
+          {title}
+        </h2>
+      </div>
+      <div className="farm-panel__body overflow-x-auto">
+        <MobileTableHint className="px-4 pt-3" />
+        {children}
+      </div>
+    </section>
+  );
+}
 
 function ExecutivePage() {
   const currency = useCurrency();
@@ -43,10 +68,10 @@ function ExecutivePage() {
   const loading = exec.isLoading;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
         title="Executive overview"
-        subtitle="Yield, field cost, quality, payroll, stock ageing, upcoming harvests, and export revenue — last 30 days."
+        subtitle="Yield, field cost, quality, payroll, stock and export revenue — last 30 days."
         actions={
           can('reports.export') ? (
             <Button asChild variant="outline" size="sm">
@@ -58,34 +83,39 @@ function ExecutivePage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <KpiCard
           label="Yield per hectare"
-          value={loading ? '…' : d?.yieldPerHa != null ? fmtNumber(d.yieldPerHa, 2) : '—'}
+          loading={loading}
+          value={d?.yieldPerHa != null ? fmtNumber(d.yieldPerHa, 2) : '—'}
           hint="Actual yield ÷ planted area"
           icon={<Wheat className="size-4" />}
         />
         <KpiCard
           label="Cost per kilogram"
-          value={loading ? '…' : d?.costPerKg != null ? fmtMoney(d.costPerKg, currency) : '—'}
+          loading={loading}
+          value={d?.costPerKg != null ? fmtMoney(d.costPerKg, currency) : '—'}
           hint="Field + harvest labour ÷ kg"
           icon={<Scale className="size-4" />}
         />
         <KpiCard
           label="Exportable"
-          value={loading ? '…' : d?.exportablePct != null ? fmtPct(d.exportablePct, 0) : '—'}
+          loading={loading}
+          value={d?.exportablePct != null ? fmtPct(d.exportablePct, 0) : '—'}
           hint="Graded harvest, 30 days"
           icon={<TrendingUp className="size-4" />}
         />
         <KpiCard
           label="Rejected"
-          value={loading ? '…' : d?.rejectionPct != null ? fmtPct(d.rejectionPct, 0) : '—'}
+          loading={loading}
+          value={d?.rejectionPct != null ? fmtPct(d.rejectionPct, 0) : '—'}
           hint="Graded harvest, 30 days"
           icon={<Package className="size-4" />}
         />
         <KpiCard
           label="Payroll this month"
-          value={loading ? '…' : fmtMoney(d?.payroll.actual ?? 0, currency)}
+          loading={loading}
+          value={fmtMoney(d?.payroll.actual ?? 0, currency)}
           hint={
             d?.payroll.budget != null
               ? `Budget ${fmtMoney(d.payroll.budget, currency)} · ${
@@ -97,217 +127,182 @@ function ExecutivePage() {
         />
         <KpiCard
           label="Harvests due"
-          value={loading ? '…' : String(d?.upcomingHarvests.length ?? 0)}
+          loading={loading}
+          value={String(d?.upcomingHarvests.length ?? 0)}
           hint="Next 30 days"
           icon={<CalendarClock className="size-4" />}
         />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Leaf className="size-4 text-brand-600" /> Costs by crop
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <MobileTableHint />
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="sticky left-0 z-10 bg-card">Crop</TableHead>
-                  <TableHead className="text-right">Labour</TableHead>
-                  <TableHead className="text-right">Inputs</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Cost/kg</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <LoadingRows columns={5} />
-                ) : d?.costsByCrop.length ? (
-                  d.costsByCrop.map((row) => (
-                    <TableRow key={row.crop}>
-                      <TableCell className="sticky left-0 z-10 bg-card font-medium">{row.crop}</TableCell>
-                      <TableCell className="text-right">{fmtMoney(row.labourCost, currency)}</TableCell>
-                      <TableCell className="text-right">{fmtMoney(row.inputCost, currency)}</TableCell>
-                      <TableCell className="text-right">{fmtMoney(row.totalCost, currency)}</TableCell>
-                      <TableCell className="text-right">
-                        {row.costPerKg != null ? fmtMoney(row.costPerKg, currency) : '—'}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <EmptyRow columns={5} title="No activity costs in the last 30 days." />
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <Panel title="Costs by crop" icon={<Leaf className="size-4" />}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Crop</TableHead>
+                <TableHead className="text-right">Labour</TableHead>
+                <TableHead className="text-right">Inputs</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-right">Cost/kg</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <LoadingRows columns={5} rows={3} />
+              ) : d?.costsByCrop.length ? (
+                d.costsByCrop.map((row) => (
+                  <TableRow key={row.crop}>
+                    <TableCell className="font-medium">{row.crop}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtMoney(row.labourCost, currency)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtMoney(row.inputCost, currency)}</TableCell>
+                    <TableCell className="text-right tabular-nums font-medium">{fmtMoney(row.totalCost, currency)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {row.costPerKg != null ? fmtMoney(row.costPerKg, currency) : '—'}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <EmptyRow columns={5} title="No crop costs in the last 30 days" description="Record field activities to see labour and input spend by crop." />
+              )}
+            </TableBody>
+          </Table>
+        </Panel>
 
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Tractor className="size-4 text-brand-600" /> Costs by block
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <MobileTableHint />
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="sticky left-0 z-10 bg-card">Block</TableHead>
-                  <TableHead className="text-right">Labour</TableHead>
-                  <TableHead className="text-right">Inputs</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Cost/kg</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <LoadingRows columns={5} />
-                ) : d?.costsByBlock.length ? (
-                  d.costsByBlock.map((row) => (
-                    <TableRow key={row.block}>
-                      <TableCell className="sticky left-0 z-10 bg-card font-medium">{row.block}</TableCell>
-                      <TableCell className="text-right">{fmtMoney(row.labourCost, currency)}</TableCell>
-                      <TableCell className="text-right">{fmtMoney(row.inputCost, currency)}</TableCell>
-                      <TableCell className="text-right">{fmtMoney(row.totalCost, currency)}</TableCell>
-                      <TableCell className="text-right">
-                        {row.costPerKg != null ? fmtMoney(row.costPerKg, currency) : '—'}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <EmptyRow columns={5} title="No block costs in the last 30 days." />
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <Panel title="Costs by block" icon={<Tractor className="size-4" />}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Block</TableHead>
+                <TableHead className="text-right">Labour</TableHead>
+                <TableHead className="text-right">Inputs</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-right">Cost/kg</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <LoadingRows columns={5} rows={3} />
+              ) : d?.costsByBlock.length ? (
+                d.costsByBlock.map((row) => (
+                  <TableRow key={row.block}>
+                    <TableCell className="font-medium">{row.block}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtMoney(row.labourCost, currency)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtMoney(row.inputCost, currency)}</TableCell>
+                    <TableCell className="text-right tabular-nums font-medium">{fmtMoney(row.totalCost, currency)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {row.costPerKg != null ? fmtMoney(row.costPerKg, currency) : '—'}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <EmptyRow columns={5} title="No block costs in the last 30 days" description="Costs appear here once activities are logged against blocks." />
+              )}
+            </TableBody>
+          </Table>
+        </Panel>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Package className="size-4 text-brand-600" /> Stock ageing
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <MobileTableHint />
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Age</TableHead>
-                  <TableHead className="text-right">Batches</TableHead>
-                  <TableHead className="text-right">Kg</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <LoadingRows columns={3} />
-                ) : d?.stockAgeing.some((b) => b.batches > 0) ? (
-                  d.stockAgeing.map((row) => (
-                    <TableRow key={row.bucket}>
-                      <TableCell>{row.bucket}</TableCell>
-                      <TableCell className="text-right">{row.batches}</TableCell>
-                      <TableCell className="text-right">{fmtNumber(row.kg)}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <EmptyRow columns={3} title="No packed stock received yet." />
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <Panel title="Stock ageing" icon={<Package className="size-4" />}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Age</TableHead>
+                <TableHead className="text-right">Batches</TableHead>
+                <TableHead className="text-right">Kg</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <LoadingRows columns={3} rows={3} />
+              ) : d?.stockAgeing.some((b) => b.batches > 0) ? (
+                d.stockAgeing.map((row) => (
+                  <TableRow key={row.bucket}>
+                    <TableCell>{row.bucket}</TableCell>
+                    <TableCell className="text-right tabular-nums">{row.batches}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtNumber(row.kg)}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <EmptyRow columns={3} title="No packed stock yet" description="Ageing buckets fill once packing batches are received into warehouse." />
+              )}
+            </TableBody>
+          </Table>
+        </Panel>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <CalendarClock className="size-4 text-brand-600" /> Upcoming harvests
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <MobileTableHint />
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>When</TableHead>
-                  <TableHead>Block</TableHead>
-                  <TableHead>Crop</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <LoadingRows columns={3} />
-                ) : d?.upcomingHarvests.length ? (
-                  d.upcomingHarvests.slice(0, 8).map((row, i) => (
-                    <TableRow key={`${row.block}-${row.expectedHarvestDate}-${i}`}>
-                      <TableCell>{fmtDate(row.expectedHarvestDate)}</TableCell>
-                      <TableCell>{row.block}</TableCell>
-                      <TableCell>
-                        {row.crop}
-                        {row.expectedYield != null
-                          ? ` · ${fmtNumber(row.expectedYield)} ${row.unit ?? ''}`
-                          : ''}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <EmptyRow columns={3} title="No harvests scheduled in the next 30 days." />
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <Panel title="Upcoming harvests" icon={<CalendarClock className="size-4" />}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>When</TableHead>
+                <TableHead>Block</TableHead>
+                <TableHead>Crop</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <LoadingRows columns={3} rows={3} />
+              ) : d?.upcomingHarvests.length ? (
+                d.upcomingHarvests.slice(0, 8).map((row, i) => (
+                  <TableRow key={`${row.block}-${row.expectedHarvestDate}-${i}`}>
+                    <TableCell className="whitespace-nowrap">{fmtDate(row.expectedHarvestDate)}</TableCell>
+                    <TableCell className="font-medium">{row.block}</TableCell>
+                    <TableCell>
+                      {row.crop}
+                      {row.expectedYield != null ? (
+                        <span className="text-muted-foreground">
+                          {' '}
+                          · {fmtNumber(row.expectedYield)} {row.unit ?? ''}
+                        </span>
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <EmptyRow columns={3} title="No harvests due in 30 days" description="Expected harvest dates from active plantings show here." />
+              )}
+            </TableBody>
+          </Table>
+        </Panel>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BarChart3 className="size-4 text-brand-600" /> Revenue by buyer
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <MobileTableHint />
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Buyer</TableHead>
-                  <TableHead className="text-right">Invoiced</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <LoadingRows columns={2} />
-                ) : d?.commercial.revenueByBuyer.length ? (
-                  d.commercial.revenueByBuyer.map((row) => (
-                    <TableRow key={row.buyer}>
-                      <TableCell>{row.buyer}</TableCell>
-                      <TableCell className="text-right">{fmtMoney(row.amount, currency)}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <EmptyRow
-                    columns={2}
-                    title="Add buyers and shipments to see revenue by buyer, crop, and shipment."
-                  />
-                )}
-              </TableBody>
-            </Table>
-            {d?.commercial.revenueByShipment.length ? (
-              <div className="mt-4 space-y-1 border-t border-border pt-3 text-xs text-muted-foreground">
-                <p className="font-medium text-foreground">Recent shipments</p>
-                {d.commercial.revenueByShipment.slice(0, 5).map((s) => (
-                  <p key={s.shipment}>
-                    {s.shipment} · {s.buyer} · {fmtMoney(s.amount, s.currency)} · {s.paymentStatus}
-                  </p>
-                ))}
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
+        <Panel title="Revenue by buyer" icon={<BarChart3 className="size-4" />}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Buyer</TableHead>
+                <TableHead className="text-right">Invoiced</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <LoadingRows columns={2} rows={3} />
+              ) : d?.commercial.revenueByBuyer.length ? (
+                d.commercial.revenueByBuyer.map((row) => (
+                  <TableRow key={row.buyer}>
+                    <TableCell className="font-medium">{row.buyer}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtMoney(row.amount, currency)}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <EmptyRow
+                  columns={2}
+                  title="No buyer revenue yet"
+                  description="Add buyers and shipments to track invoiced amounts."
+                />
+              )}
+            </TableBody>
+          </Table>
+          {d?.commercial.revenueByShipment.length ? (
+            <div className="space-y-1.5 border-t border-[#eef2ef] px-4 py-3 text-xs text-muted-foreground">
+              <p className="font-semibold text-foreground">Recent shipments</p>
+              {d.commercial.revenueByShipment.slice(0, 5).map((s) => (
+                <p key={s.shipment}>
+                  {s.shipment} · {s.buyer} · {fmtMoney(s.amount, s.currency)} · {s.paymentStatus}
+                </p>
+              ))}
+            </div>
+          ) : null}
+        </Panel>
       </div>
     </div>
   );

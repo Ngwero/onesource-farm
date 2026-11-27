@@ -11,12 +11,18 @@ export async function validatePlantingCycle(
 ): Promise<PlantingCycleInput> {
   const supabase = createServiceClient();
 
-  const [blockRes, cropRes] = await Promise.all([
+  const [blockRes, cropRes, varietyCountRes] = await Promise.all([
     supabase.from('blocks').select('id, status').eq('id', input.block_id).eq('farm_id', farmId).maybeSingle(),
     supabase.from('crops').select('id, status').eq('id', input.crop_id).maybeSingle(),
+    supabase
+      .from('crop_varieties')
+      .select('id', { count: 'exact', head: true })
+      .eq('crop_id', input.crop_id)
+      .eq('status', 'active'),
   ]);
   if (blockRes.error) throw blockRes.error;
   if (cropRes.error) throw cropRes.error;
+  if (varietyCountRes.error) throw varietyCountRes.error;
   if (!blockRes.data) throw new HttpError('Block not found on this farm', 400, { block_id: 'Block not found' });
   if (!cropRes.data) throw new HttpError('Crop not found', 400, { crop_id: 'Crop not found' });
   if (cropRes.data.status !== 'active' && cropRes.data.id !== existingCropId) {
@@ -24,6 +30,27 @@ export async function validatePlantingCycle(
   }
   if (blockRes.data.status === 'inactive' && ['active', 'harvesting'].includes(input.status)) {
     throw new HttpError('Reactivate the block before planting in it', 400, { status: 'Block is inactive' });
+  }
+
+  const activeVarietyCount = varietyCountRes.count ?? 0;
+  if (activeVarietyCount > 0 && !input.variety_id) {
+    throw new HttpError('Select a variety for this crop', 400, { variety_id: 'Variety is required' });
+  }
+
+  if (input.variety_id) {
+    const { data: variety, error: varietyErr } = await supabase
+      .from('crop_varieties')
+      .select('id, status')
+      .eq('id', input.variety_id)
+      .eq('crop_id', input.crop_id)
+      .maybeSingle();
+    if (varietyErr) throw varietyErr;
+    if (!variety) {
+      throw new HttpError('Variety does not belong to this crop', 400, { variety_id: 'Invalid variety for crop' });
+    }
+    if (variety.status !== 'active') {
+      throw new HttpError('This variety is inactive', 400, { variety_id: 'Variety is inactive' });
+    }
   }
 
   const closing = ['completed', 'abandoned'].includes(input.status);

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
-  const { user, loading, dashboardRoute } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -18,8 +18,8 @@ export default function Home() {
       router.replace('/set-password');
       return;
     }
-    router.replace(dashboardRoute);
-  }, [user, loading, dashboardRoute, router]);
+    router.replace('/farm');
+  }, [user, loading, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center page-shell">

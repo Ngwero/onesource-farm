@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { AlertTriangle, Inbox, MoveHorizontal } from 'lucide-react';
+import { AlertTriangle, MoveHorizontal, Sprout } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
@@ -19,14 +19,16 @@ export function MobileTableHint({ className }: { className?: string }) {
   );
 }
 
-export function LoadingRows({ columns, rows = 5 }: { columns: number; rows?: number }) {
+export function LoadingRows({ columns, rows = 4 }: { columns: number; rows?: number }) {
   return (
     <>
       {Array.from({ length: rows }, (_, r) => (
-        <TableRow key={r}>
+        <TableRow key={r} className="hover:bg-transparent">
           {Array.from({ length: columns }, (_, c) => (
-            <TableCell key={c}>
-              <Skeleton className="h-4 w-full max-w-40" />
+            <TableCell key={c} className="py-3.5">
+              <Skeleton
+                className={cn('h-3.5', c === 0 ? 'w-[72%]' : c === columns - 1 ? 'ml-auto w-14' : 'w-[55%]')}
+              />
             </TableCell>
           ))}
         </TableRow>
@@ -35,30 +37,49 @@ export function LoadingRows({ columns, rows = 5 }: { columns: number; rows?: num
   );
 }
 
-export function EmptyRow({ columns, title, description, action }: {
+export function EmptyRow({
+  columns,
+  title,
+  description,
+  action,
+  compact = true,
+}: {
   columns: number;
   title: string;
   description?: string;
   action?: ReactNode;
+  compact?: boolean;
 }) {
   return (
     <TableRow className="hover:bg-transparent">
-      <TableCell colSpan={columns}>
-        <EmptyState title={title} description={description} action={action} />
+      <TableCell colSpan={columns} className={compact ? 'py-10' : undefined}>
+        <EmptyState title={title} description={description} action={action} compact={compact} />
       </TableCell>
     </TableRow>
   );
 }
 
-export function EmptyState({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
+export function EmptyState({
+  title,
+  description,
+  action,
+  icon,
+  compact,
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+  icon?: ReactNode;
+  compact?: boolean;
+}) {
   return (
-    <div className="empty-state">
-      <div className="empty-state__icon">
-        <Inbox size={24} />
-      </div>
+    <div className={cn('empty-state', compact && 'empty-state--compact')}>
+      {!compact ? (
+        <div className="empty-state__icon">{icon ?? <Sprout size={22} strokeWidth={1.75} />}</div>
+      ) : null}
       <p className="empty-state__title">{title}</p>
       {description ? <p className="empty-state__desc">{description}</p> : null}
-      {action ? <div className="mt-4">{action}</div> : null}
+      {action ? <div className={cn(compact ? 'mt-3' : 'mt-4')}>{action}</div> : null}
     </div>
   );
 }
@@ -66,8 +87,8 @@ export function EmptyState({ title, description, action }: { title: string; desc
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <div className="empty-state">
-      <div className="empty-state__icon text-red-600">
-        <AlertTriangle size={24} />
+      <div className="empty-state__icon empty-state__icon--danger">
+        <AlertTriangle size={22} strokeWidth={1.75} />
       </div>
       <p className="empty-state__title">Couldn’t load this data</p>
       <p className="empty-state__desc">{message}</p>

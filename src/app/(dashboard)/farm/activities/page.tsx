@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { format, subDays } from 'date-fns';
-import { Plus } from 'lucide-react';
+import { Plus, Shovel } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import { farmKeys, useActivityTypes, useBlocks, useCurrency } from '@/hooks/farm
 import { useFarmAccess } from '@/hooks/useFarmAccess';
 import { errorMessage, farmFetch } from '@/lib/farm/client';
 import { fmtDate, fmtMoney, fmtNumber, todayIso } from '@/lib/farm/format';
+import { isLandPrepTypeCode } from '@/lib/farm/landPrep';
 import type { ActivityRow } from '@/lib/farm/types';
 
 const ALL = 'all';
@@ -31,11 +32,22 @@ function ActivitiesPage() {
   const currency = useCurrency();
   const blocks = useBlocks();
   const types = useActivityTypes();
+  const landPrepMode = searchParams.get('land_prep') === '1';
   const [creating, setCreating] = useState(searchParams.get('new') === '1');
   const [from, setFrom] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [to, setTo] = useState(todayIso());
   const [blockId, setBlockId] = useState(searchParams.get('block_id') ?? ALL);
   const [typeId, setTypeId] = useState(ALL);
+
+  const landPrepTypeIds = useMemo(
+    () => new Set((types.data ?? []).filter((t) => isLandPrepTypeCode(t.code)).map((t) => t.id)),
+    [types.data]
+  );
+  const typeOptions = useMemo(
+    () =>
+      (types.data ?? []).filter((t) => (landPrepMode ? isLandPrepTypeCode(t.code) : true)),
+    [types.data, landPrepMode]
+  );
 
   const params = new URLSearchParams();
   if (from) params.set('from', from);
@@ -49,8 +61,12 @@ function ActivitiesPage() {
   });
 
   const filtered = useMemo(
-    () => (activities.data ?? []).filter((a) => typeId === ALL || a.activity_type_id === typeId),
-    [activities.data, typeId]
+    () =>
+      (activities.data ?? []).filter((a) => {
+        if (landPrepMode && !landPrepTypeIds.has(a.activity_type_id)) return false;
+        return typeId === ALL || a.activity_type_id === typeId;
+      }),
+    [activities.data, typeId, landPrepMode, landPrepTypeIds]
   );
   const totals = useMemo(() => {
     const labour = filtered.reduce((s, a) => s + Number(a.worker_labour_cost) + Number(a.other_labour_cost), 0);
@@ -60,30 +76,46 @@ function ActivitiesPage() {
     return { labour, inputs, total, hours };
   }, [filtered]);
 
-  const createDefaults = useMemo(() => (blockId !== ALL ? { block_id: blockId } : undefined), [blockId]);
+  const createDefaults = useMemo(() => {
+    const landPrepTypeId = (types.data ?? []).find((t) => t.code === 'LAND_PREP' && t.status === 'active')?.id;
+    return {
+      ...(blockId !== ALL ? { block_id: blockId } : {}),
+      ...(landPrepMode && landPrepTypeId ? { activity_type_id: landPrepTypeId } : {}),
+    };
+  }, [blockId, landPrepMode, types.data]);
 
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Activities"
-        subtitle="Field work by block and planting, with labour, inputs and cost."
+        title={landPrepMode ? 'Land preparation' : 'Activities'}
+        subtitle={
+          landPrepMode
+            ? 'Clearing, tillage, bed prep, ridging and soil work before planting.'
+            : 'Field work by block and planting, with labour, inputs and cost.'
+        }
         actions={
           can('activities.record') ? (
             <Button onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> Record activity
+              {landPrepMode ? <Shovel className="size-4" /> : <Plus className="size-4" />}
+              {landPrepMode ? 'Record land prep' : 'Record activity'}
             </Button>
           ) : null
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="Activities" value={filtered.length} hint={`${fmtNumber(totals.hours)} worker hours`} />
-        <KpiCard label="Labour cost" value={fmtMoney(totals.labour, currency)} />
-        <KpiCard label="Input cost" value={fmtMoney(totals.inputs, currency)} />
-        <KpiCard label="Total cost" value={fmtMoney(totals.total, currency)} />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          label="Activities"
+          value={filtered.length}
+          hint={`${fmtNumber(totals.hours)} worker hours`}
+          loading={activities.isLoading}
+        />
+        <KpiCard label="Labour cost" value={fmtMoney(totals.labour, currency)} loading={activities.isLoading} />
+        <KpiCard label="Input cost" value={fmtMoney(totals.inputs, currency)} loading={activities.isLoading} />
+        <KpiCard label="Total cost" value={fmtMoney(totals.total, currency)} loading={activities.isLoading} />
       </div>
 
-      <div className="flex flex-wrap items-end gap-3">
+      <div className="farm-toolbar">
         <div className="flex items-center gap-2">
           <Input type="date" className="w-40" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} aria-label="From" />
           <span className="text-sm text-muted-foreground">to</span>
@@ -107,8 +139,8 @@ function ActivitiesPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>All activities</SelectItem>
-            {(types.data ?? []).map((t) => (
+            <SelectItem value={ALL}>{landPrepMode ? 'All land prep' : 'All activities'}</SelectItem>
+            {typeOptions.map((t) => (
               <SelectItem key={t.id} value={t.id}>
                 {t.name}
               </SelectItem>
@@ -140,12 +172,17 @@ function ActivitiesPage() {
               ) : filtered.length === 0 ? (
                 <EmptyRow
                   columns={COLUMNS}
-                  title="No activities in this range"
-                  description="Record spraying, fertilizer, weeding and other field work to track cost per block."
+                  title={landPrepMode ? 'No land preparation recorded' : 'No activities in this range'}
+                  description={
+                    landPrepMode
+                      ? 'Record clearing, tillage, bed prep or ridging before planting a block.'
+                      : 'Record spraying, fertilizer, weeding and other field work to track cost per block.'
+                  }
                   action={
                     can('activities.record') ? (
                       <Button onClick={() => setCreating(true)}>
-                        <Plus className="size-4" /> Record activity
+                        {landPrepMode ? <Shovel className="size-4" /> : <Plus className="size-4" />}
+                        {landPrepMode ? 'Record land prep' : 'Record activity'}
                       </Button>
                     ) : undefined
                   }

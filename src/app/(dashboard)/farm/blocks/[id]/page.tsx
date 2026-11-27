@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Pencil, Plus, Shovel, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,9 +15,10 @@ import { RequirePermission } from '@/components/farm/RequirePermission';
 import { StatusChip } from '@/components/farm/StatusChip';
 import { BlockMapEditor } from '@/components/farm/BlockMapEditor';
 import { PhotoGallery } from '@/components/farm/PhotoGallery';
+import { ActivityFormSheet } from '@/components/farm/forms/ActivityFormSheet';
 import { BlockFormSheet } from '@/components/farm/forms/BlockFormSheet';
 import { PlantingCycleSheet } from '@/components/farm/forms/PlantingCycleSheet';
-import { farmKeys } from '@/hooks/farm';
+import { farmKeys, useActivityTypes } from '@/hooks/farm';
 import { useFarmAccess } from '@/hooks/useFarmAccess';
 import { useActionMutation } from '@/hooks/useFormMutation';
 import { errorMessage, farmFetch } from '@/lib/farm/client';
@@ -57,10 +58,20 @@ function BlockDetailPage() {
   const { can } = useFarmAccess();
   const canManage = can('farm.manage');
 
+  const activityTypes = useActivityTypes();
   const [editingBlock, setEditingBlock] = useState(false);
   const [deletingBlock, setDeletingBlock] = useState(false);
   const [cycleSheet, setCycleSheet] = useState<{ open: boolean; cycle: PlantingCycleRow | null }>({ open: false, cycle: null });
   const [deletingCycle, setDeletingCycle] = useState<PlantingCycleRow | null>(null);
+  const [landPrepOpen, setLandPrepOpen] = useState(false);
+
+  const landPrepDefaults = useMemo(() => {
+    const typeId = (activityTypes.data ?? []).find((t) => t.code === 'LAND_PREP' && t.status === 'active')?.id;
+    return {
+      block_id: id,
+      ...(typeId ? { activity_type_id: typeId } : {}),
+    };
+  }, [activityTypes.data, id]);
 
   const block = useQuery({
     queryKey: farmKeys.block(id),
@@ -109,6 +120,11 @@ function BlockDetailPage() {
               <Button variant="outline" onClick={() => setDeletingBlock(true)}>
                 <Trash2 className="size-4" /> Delete
               </Button>
+              {can('activities.record') ? (
+                <Button variant="outline" onClick={() => setLandPrepOpen(true)} disabled={b.status === 'inactive'}>
+                  <Shovel className="size-4" /> Land prep
+                </Button>
+              ) : null}
               <Button onClick={() => setCycleSheet({ open: true, cycle: null })} disabled={b.status === 'inactive'}>
                 <Plus className="size-4" /> New planting
               </Button>
@@ -133,6 +149,16 @@ function BlockDetailPage() {
             </dl>
             {b.notes ? <p className="mt-4 whitespace-pre-wrap text-sm text-muted-foreground">{b.notes}</p> : null}
             <div className="mt-5 flex flex-wrap gap-2 border-t pt-4">
+              {can('activities.record') ? (
+                <Button variant="outline" size="sm" onClick={() => setLandPrepOpen(true)} disabled={b.status === 'inactive'}>
+                  <Shovel className="size-4" /> Record land prep
+                </Button>
+              ) : null}
+              {can('activities.view') ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/farm/activities?block_id=${b.id}&land_prep=1`}>Land prep history</Link>
+                </Button>
+              ) : null}
               {can('activities.view') ? (
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/farm/activities?block_id=${b.id}`}>Activities</Link>
@@ -271,6 +297,12 @@ function BlockDetailPage() {
         onOpenChange={(open) => setCycleSheet((s) => ({ ...s, open }))}
         block={b}
         cycle={cycleSheet.cycle}
+      />
+      <ActivityFormSheet
+        open={landPrepOpen}
+        onOpenChange={setLandPrepOpen}
+        defaults={landPrepDefaults}
+        onSaved={(activityId) => router.push(`/farm/activities/${activityId}`)}
       />
       <ConfirmDialog
         open={deletingBlock}

@@ -45,6 +45,7 @@ import {
   GitBranch,
   Truck,
   FileUp,
+  Shovel,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -241,6 +242,7 @@ const FARM_NAV_GROUPS: (Omit<NavGroup, 'items'> & { items: FarmNavItem[] })[] = 
       { label: 'Farm Overview', href: '/farm', icon: <MapIcon size={18} />, permission: 'farm.view', exact: true },
       { label: 'Executive', href: '/farm/executive', icon: <BarChart3 size={18} />, permission: 'farm.view' },
       { label: 'Blocks', href: '/farm/blocks', icon: <LayoutGrid size={18} />, permission: 'farm.view' },
+      { label: 'Land preparation', href: '/farm/activities?land_prep=1', icon: <Shovel size={18} />, permission: 'activities.view' },
       { label: 'Crops', href: '/farm/crops', icon: <Leaf size={18} />, permission: 'crops.view' },
       { label: 'Activities', href: '/farm/activities', icon: <Tractor size={18} />, permission: 'activities.view' },
       { label: 'Pest & Disease', href: '/farm/incidents', icon: <Bug size={18} />, permission: 'pest.view' },
@@ -444,16 +446,26 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
     roleSlug.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
   const dashboardItem = navItems.find((i) => i.href.startsWith('/dashboard'));
+  const requestItems = navItems.filter((i) => i !== dashboardItem);
+  const farmHome: NavItem & { exact?: boolean } = {
+    label: 'Farm Overview',
+    href: '/farm',
+    icon: <MapIcon size={18} />,
+    exact: true,
+  };
   const groups: NavGroup[] = [
     ...FARM_NAV_GROUPS.map((g) => ({
       ...g,
-      items: g.items.filter((i) => access.can(i.permission)),
+      // Farm Overview is pinned at the top of the nav; keep the rest of the Farm group.
+      items: g.items
+        .filter((i) => !(g.id === 'farm' && i.href === '/farm'))
+        .filter((i) => access.can(i.permission)),
     })),
     {
       id: 'requests',
       label: 'Requests',
       icon: <FileText size={18} />,
-      items: navItems.filter((i) => i !== dashboardItem),
+      items: dashboardItem ? [dashboardItem, ...requestItems] : requestItems,
     },
     {
       ...FARM_ADMIN_GROUP,
@@ -480,19 +492,21 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   return (
     <aside className={`app-sidebar${open ? ' app-sidebar--open' : ''}`}>
       <div className="app-sidebar__brand">
-        <OneSourceLogo width={168} variant="full" priority centered />
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 text-center mt-3">
+        <Link href="/farm" onClick={onClose} className="block" aria-label="Farm Overview">
+          <OneSourceLogo width={168} variant="full" priority centered />
+        </Link>
+        <p className="mt-3 text-center text-[10px] font-bold uppercase tracking-[0.22em] text-accent-500/70">
           Farm to Export
         </p>
       </div>
 
       <div className="app-sidebar__user">
-        <p className="text-sm font-semibold truncate">{user?.full_name}</p>
-        <p className="text-[11px] text-white/55 mt-0.5">{roleLabel}</p>
+        <p className="truncate text-sm font-semibold tracking-tight">{user?.full_name}</p>
+        <p className="mt-0.5 text-[11px] text-white/55">{roleLabel}</p>
       </div>
 
       <nav className="app-sidebar__nav" data-tour-id="tour-sidebar">
-        {dashboardItem ? renderLink(dashboardItem) : null}
+        {access.can('farm.view') ? renderLink(farmHome) : null}
         {groups.map((group) => {
           const containsActive = group.items.some((i) =>
             'exact' in i && i.exact ? pathname === i.href : isNavActive(pathname, fullPath, i.href)

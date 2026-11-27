@@ -26,6 +26,7 @@ import {
 } from '@/components/farm/FarmOpsDashboard';
 import { FarmWeatherStrip } from '@/components/farm/FarmWeatherStrip';
 import { FarmProfileSheet } from '@/components/farm/forms/FarmProfileSheet';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { farmKeys, useCurrency } from '@/hooks/farm';
 import { useFarmAccess } from '@/hooks/useFarmAccess';
@@ -37,16 +38,16 @@ function SkeletonPanels() {
   return (
     <div className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="h-40 animate-pulse rounded-2xl bg-slate-200/70" />
-        <div className="h-40 animate-pulse rounded-2xl bg-slate-200/70" />
+        <div className="h-40 animate-pulse rounded-2xl bg-brand-100/60" />
+        <div className="h-40 animate-pulse rounded-2xl bg-brand-100/60" />
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]">
-        <div className="h-72 animate-pulse rounded-2xl bg-slate-200/70" />
-        <div className="h-72 animate-pulse rounded-2xl bg-slate-200/70" />
+        <div className="h-72 animate-pulse rounded-2xl bg-brand-100/60" />
+        <div className="h-72 animate-pulse rounded-2xl bg-brand-100/60" />
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-56 animate-pulse rounded-2xl bg-slate-200/70" />
+          <div key={i} className="h-56 animate-pulse rounded-2xl bg-brand-100/60" />
         ))}
       </div>
     </div>
@@ -75,69 +76,74 @@ function FarmDashboardPage() {
   return (
     <div className="space-y-5">
       <FarmWeatherStrip />
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm text-slate-500">
-            {firstName ? `Welcome back, ${firstName}` : 'Farm operations'}
-          </p>
-          <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-            {farm?.name ?? 'Farm overview'}
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {[place, fmtDate(new Date().toISOString().slice(0, 10))].filter(Boolean).join(' · ')}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {can('farm.view') || can('profitability.view') ? (
-            <Link
-              href="/farm/executive"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <BarChart3 className="size-4 text-brand-600" />
-              Executive
-            </Link>
-          ) : null}
-          {can('farm.manage') && data ? (
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <Pencil className="size-4" /> Edit farm
-            </button>
-          ) : null}
-          {can('activities.record') ? (
-            <Link
-              href="/farm/activities?new=1"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <Tractor className="size-4" /> Activity
-            </Link>
-          ) : null}
-          {can('pest.record') ? (
-            <Link
-              href="/farm/incidents?new=1"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <Bug className="size-4" /> Pest
-            </Link>
-          ) : null}
-          {can('attendance.record') ? (
-            <Link
-              href="/workforce/attendance"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <HardHat className="size-4" /> Attendance
-            </Link>
-          ) : null}
-          {can('harvest.record') ? (
-            <Link
-              href="/harvest/batches?new=1"
-              className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-700"
-            >
-              <Plus className="size-4" /> Record harvest
-            </Link>
-          ) : null}
+
+      <header className="overflow-hidden rounded-2xl border border-brand-800/20 bg-[linear-gradient(135deg,#152c23_0%,#1e3e31_42%,#2e5e4a_78%,#377256_100%)] text-white shadow-[var(--shadow-card)]">
+        <div className="relative px-5 py-6 sm:px-7 sm:py-7">
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_18%,rgb(180_207_94/0.28),transparent_42%)]"
+            aria-hidden
+          />
+          <div className="relative flex flex-wrap items-end justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent-400/90">
+                {firstName ? `Welcome back, ${firstName}` : 'Farm operations'}
+              </p>
+              <h1 className="font-display mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+                {farm?.name ?? 'Farm overview'}
+              </h1>
+              <p className="mt-2 max-w-xl text-sm text-white/70">
+                {[place, fmtDate(new Date().toISOString().slice(0, 10))].filter(Boolean).join(' · ')}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {can('farm.view') || can('profitability.view') ? (
+                <Button asChild variant="secondary" className="border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white">
+                  <Link href="/farm/executive">
+                    <BarChart3 className="size-4" />
+                    Executive
+                  </Link>
+                </Button>
+              ) : null}
+              {can('farm.manage') && data ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white"
+                  onClick={() => setEditing(true)}
+                >
+                  <Pencil className="size-4" /> Edit farm
+                </Button>
+              ) : null}
+              {can('activities.record') ? (
+                <Button asChild variant="secondary" className="border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white">
+                  <Link href="/farm/activities?new=1">
+                    <Tractor className="size-4" /> Activity
+                  </Link>
+                </Button>
+              ) : null}
+              {can('pest.record') ? (
+                <Button asChild variant="secondary" className="border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white">
+                  <Link href="/farm/incidents?new=1">
+                    <Bug className="size-4" /> Pest
+                  </Link>
+                </Button>
+              ) : null}
+              {can('attendance.record') ? (
+                <Button asChild variant="secondary" className="border-white/15 bg-white/10 text-white hover:bg-white/18 hover:text-white">
+                  <Link href="/workforce/attendance">
+                    <HardHat className="size-4" /> Attendance
+                  </Link>
+                </Button>
+              ) : null}
+              {can('harvest.record') ? (
+                <Button asChild className="bg-accent-500 text-brand-950 shadow-none hover:bg-accent-400 hover:brightness-100">
+                  <Link href="/harvest/batches?new=1">
+                    <Plus className="size-4" /> Record harvest
+                  </Link>
+                </Button>
+              ) : null}
+            </div>
+          </div>
         </div>
       </header>
 
@@ -156,16 +162,17 @@ function FarmDashboardPage() {
             {data.operations.harvest ? (
               <HarvestVolumeCard harvest={data.operations.harvest} />
             ) : (
-              <section className="flex min-h-[280px] flex-col justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center">
-                <p className="font-semibold text-slate-900">Harvest volume</p>
-                <p className="mt-1 text-sm text-slate-500">Record harvest batches to see the 30-day volume chart here.</p>
+              <section className="flex min-h-[280px] flex-col justify-center rounded-2xl border border-dashed border-brand-200 bg-white/80 p-6 text-center shadow-[var(--shadow-soft)]">
+                <p className="font-display text-lg font-semibold text-foreground">Harvest volume</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Record harvest batches to see the 30-day volume chart here.
+                </p>
                 {can('harvest.record') ? (
-                  <Link
-                    href="/harvest/batches?new=1"
-                    className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
-                  >
-                    <Plus className="size-4" /> Record harvest
-                  </Link>
+                  <Button asChild className="mx-auto mt-4">
+                    <Link href="/harvest/batches?new=1">
+                      <Plus className="size-4" /> Record harvest
+                    </Link>
+                  </Button>
                 ) : null}
               </section>
             )}

@@ -11,7 +11,7 @@ type PageHeaderProps = {
 export function PageHeader({ title, subtitle, meta, actions, titleMono }: PageHeaderProps) {
   return (
     <header className="page-header">
-      <div className="page-header__main">
+      <div className="page-header__main min-w-0">
         {meta ? <div className="page-header__meta">{meta}</div> : null}
         <h1 className={`page-header__title${titleMono ? ' page-header__title--mono' : ''}`}>
           {title}

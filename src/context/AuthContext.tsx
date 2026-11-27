@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, RoleSlug } from '@/types';
-import { resolveDashboardRoute } from '@/lib/auth/rbac';
 import { mergeUserProfile, normalizeUserProfile } from '@/lib/auth/profile';
 import { apiFetch } from '@/lib/api/client';
 import { createClient } from '@/lib/supabase/client';
@@ -154,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
-  const dashboardRoute = resolveDashboardRoute(user);
+  const dashboardRoute = '/farm';
 
   return (
     <AuthContext.Provider

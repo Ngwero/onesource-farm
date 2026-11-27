@@ -111,11 +111,16 @@ export function PlantingCycleSheet({ open, onOpenChange, block, cycle }: Props) 
 
   const save = useFormMutation(
     form,
-    (values) =>
-      farmFetch(cycle ? `/api/farm/planting-cycles/${cycle.id}` : '/api/farm/planting-cycles', {
+    async (values) => {
+      if (varietyOptions.length > 0 && !values.variety_id) {
+        form.setError('variety_id', { type: 'manual', message: 'Select a variety' });
+        throw new Error('Select a variety');
+      }
+      return farmFetch(cycle ? `/api/farm/planting-cycles/${cycle.id}` : '/api/farm/planting-cycles', {
         method: cycle ? 'PATCH' : 'POST',
         body: values,
-      }),
+      });
+    },
     {
       success: cycle ? 'Planting updated' : 'Planting recorded',
       invalidate: [farmKeys.blocks, farmKeys.overview, farmKeys.crops, farmKeys.cycles],
@@ -141,9 +146,11 @@ export function PlantingCycleSheet({ open, onOpenChange, block, cycle }: Props) 
         <SelectField<PlantingCycleInput>
           name="variety_id"
           label="Variety"
-          emptyLabel={varietyOptions.length ? 'Not specified' : 'No varieties set up'}
+          required={varietyOptions.length > 0}
+          emptyLabel={varietyOptions.length ? undefined : 'No varieties set up'}
+          placeholder={varietyOptions.length ? 'Select variety…' : 'No varieties set up'}
           options={varietyOptions}
-          disabled={!selectedCrop}
+          disabled={!selectedCrop || varietyOptions.length === 0}
         />
         <DateField<PlantingCycleInput> name="planting_date" label="Planting date" required />
         <DateField<PlantingCycleInput>
