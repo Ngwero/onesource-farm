@@ -332,7 +332,7 @@ const FARM_ADMIN_GROUP: Omit<NavGroup, 'items'> & { items: FarmNavItem[] } = {
     { label: 'Warehouse Locations', href: '/admin/master/warehouse-locations', icon: <Warehouse size={18} />, permission: 'admin.settings' },
     { label: 'Document Types', href: '/admin/master/document-types', icon: <FileCheck size={18} />, permission: 'admin.settings' },
     { label: 'System Settings', href: '/admin/system-settings', icon: <SlidersHorizontal size={18} />, permission: 'admin.settings' },
-    { label: 'CSV Import', href: '/admin/import', icon: <FileUp size={18} />, permission: 'admin.settings' },
+    { label: 'Bulk upload', href: '/admin/import', icon: <FileUp size={18} />, permission: 'admin.settings' },
   ],
 };
 

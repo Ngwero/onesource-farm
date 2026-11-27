@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { FileUp, Upload } from 'lucide-react';
+import { Download, FileSpreadsheet, FileUp, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -9,14 +9,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RequirePermission } from '@/components/farm/RequirePermission';
 import { useFarmAccess } from '@/hooks/useFarmAccess';
 import { farmFetch, errorMessage } from '@/lib/farm/client';
-import { parseCsv } from '@/lib/farm/csv';
+import { downloadImportTemplate, parseSpreadsheetFile } from '@/lib/farm/spreadsheet';
 
 type ImportKind = 'workers' | 'blocks' | 'crops';
 
-const SPECS: Record<
-  ImportKind,
-  { title: string; required: string[]; optional: string[]; description: string }
-> = {
+type ImportSpec = {
+  title: string;
+  required: string[];
+  optional: string[];
+  description: string;
+  permission: 'workforce.manage' | 'farm.manage' | 'crops.manage';
+  endpoint: string;
+  sample: (string | number | null)[];
+};
+
+const SPECS: Record<ImportKind, ImportSpec> = {
   workers: {
     title: 'Workers',
     required: ['worker_code', 'full_name', 'category', 'pay_basis'],
@@ -31,25 +38,30 @@ const SPECS: Record<
       'overtime_rate',
       'notes',
     ],
-    description: 'Imports permanent/casual workers. daily_rate or monthly_salary must match pay_basis.',
+    description: 'Add many workers at once. Use daily_rate for daily pay, or monthly_salary for monthly pay.',
+    permission: 'workforce.manage',
+    endpoint: '/api/farm/import/workers',
+    sample: ['W-001', 'Jane Okello', 'casual', 'daily', '0700000000', '', 'Picker', 'active', '2026-01-15', 25000, '', 0, ''],
   },
   blocks: {
     title: 'Blocks',
     required: ['code', 'name', 'size_value', 'size_unit', 'status'],
     optional: ['soil_type', 'irrigation_type', 'notes'],
-    description: 'Header validation only for now — block import API comes next.',
+    description: 'Upload farm plots in one file. size_unit must be acres or hectares.',
+    permission: 'farm.manage',
+    endpoint: '/api/farm/import/blocks',
+    sample: ['B01', 'North Block', 2.5, 'acres', 'active', 'loam', 'drip', ''],
   },
   crops: {
     title: 'Crops',
     required: ['code', 'name', 'production_cycle', 'default_unit', 'status'],
     optional: ['scientific_name', 'maturity_days', 'description'],
-    description: 'Header validation only for now — crop import API comes next.',
+    description: 'Upload crops in bulk. production_cycle: seasonal, annual, perennial, or continuous.',
+    permission: 'crops.manage',
+    endpoint: '/api/farm/import/crops',
+    sample: ['CHILLI', 'Chilies', 'seasonal', 'kg', 'active', 'Capsicum annuum', 90, 'Hot pepper'],
   },
 };
-
-function normalizeHeader(h: string) {
-  return h.trim().toLowerCase().replace(/\s+/g, '_');
-}
 
 function ImportPage() {
   const { can } = useFarmAccess();
@@ -64,10 +76,20 @@ function ImportPage() {
   );
 
   const spec = SPECS[kind];
+  const columns = useMemo(() => [...spec.required, ...spec.optional], [spec]);
   const missing = useMemo(
     () => spec.required.filter((h) => !headers.includes(h)),
     [headers, spec.required]
   );
+  const canImport = can(spec.permission);
+
+  const resetFile = () => {
+    setFileName(null);
+    setHeaders([]);
+    setRows([]);
+    setHeaderError(null);
+    setResult(null);
+  };
 
   const onFile = async (file: File | null) => {
     setResult(null);
@@ -76,35 +98,27 @@ function ImportPage() {
     setHeaders([]);
     setFileName(null);
     if (!file) return;
-    const text = await file.text();
-    const parsed = parseCsv(text);
-    if (parsed.length < 2) {
-      setHeaderError('CSV needs a header row and at least one data row.');
-      return;
-    }
-    const hdrs = parsed[0].map(normalizeHeader);
-    setHeaders(hdrs);
-    setFileName(file.name);
-    const data = parsed.slice(1).map((cells) => {
-      const obj: Record<string, string> = {};
-      hdrs.forEach((h, i) => {
-        obj[h] = cells[i] ?? '';
-      });
-      return obj;
-    });
-    setRows(data);
-    const miss = SPECS[kind].required.filter((h) => !hdrs.includes(h));
-    if (miss.length) {
-      setHeaderError(`Missing required columns: ${miss.join(', ')}`);
+    try {
+      const parsed = await parseSpreadsheetFile(file);
+      if (!parsed.headers.length || parsed.rows.length === 0) {
+        setHeaderError('File needs a header row and at least one data row.');
+        return;
+      }
+      setHeaders(parsed.headers);
+      setFileName(file.name);
+      setRows(parsed.rows);
+      const miss = SPECS[kind].required.filter((h) => !parsed.headers.includes(h));
+      if (miss.length) {
+        setHeaderError(`Missing required columns: ${miss.join(', ')}`);
+      }
+    } catch (err) {
+      setHeaderError(err instanceof Error ? err.message : 'Could not read this file.');
     }
   };
 
-  const importWorkers = async () => {
-    if (missing.length || rows.length === 0) return;
-    setBusy(true);
-    setResult(null);
-    try {
-      const payload = rows.map((r) => {
+  const buildPayload = () => {
+    if (kind === 'workers') {
+      return rows.map((r) => {
         const pay_basis = r.pay_basis as 'daily' | 'monthly';
         const daily = r.daily_rate ? Number(r.daily_rate) : null;
         const monthly = r.monthly_salary ? Number(r.monthly_salary) : null;
@@ -124,12 +138,42 @@ function ImportPage() {
           notes: r.notes || null,
         };
       });
-      const res = await farmFetch<{ created: number; errors: { row: number; error: string }[] }>(
-        '/api/farm/import/workers',
-        { method: 'POST', body: { rows: payload } }
-      );
+    }
+    if (kind === 'blocks') {
+      return rows.map((r) => ({
+        code: r.code,
+        name: r.name,
+        size_value: Number(r.size_value),
+        size_unit: r.size_unit as 'acres' | 'hectares',
+        status: r.status as 'active' | 'preparation' | 'fallow' | 'inactive',
+        soil_type: r.soil_type || null,
+        irrigation_type: r.irrigation_type || null,
+        notes: r.notes || null,
+      }));
+    }
+    return rows.map((r) => ({
+      code: r.code,
+      name: r.name,
+      scientific_name: r.scientific_name || null,
+      production_cycle: r.production_cycle as 'seasonal' | 'annual' | 'perennial' | 'continuous',
+      default_unit: r.default_unit as 'kg' | 'tonne' | 'crate' | 'bunch' | 'piece',
+      maturity_days: r.maturity_days ? Number(r.maturity_days) : null,
+      description: r.description || null,
+      status: (r.status || 'active') as 'active' | 'inactive',
+    }));
+  };
+
+  const runImport = async () => {
+    if (missing.length || rows.length === 0 || !canImport) return;
+    setBusy(true);
+    setResult(null);
+    try {
+      const res = await farmFetch<{ created: number; errors: { row: number; error: string }[] }>(spec.endpoint, {
+        method: 'POST',
+        body: { rows: buildPayload() },
+      });
       setResult(res);
-      toast.success(`Imported ${res.created} worker${res.created === 1 ? '' : 's'}`);
+      toast.success(`Imported ${res.created} ${spec.title.toLowerCase()}`);
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -140,9 +184,23 @@ function ImportPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="CSV import"
-        subtitle="Upload CSV files for blocks, crops, or workers. Headers are validated before import."
+        title="Bulk upload"
+        subtitle="Upload an Excel or CSV file to add many workers, blocks, or crops at once."
       />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileSpreadsheet className="size-4 text-brand-600" />
+            How it works
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>1. Download the Excel template for the data you want to add.</p>
+          <p>2. Fill in the rows in Excel, then save the file.</p>
+          <p>3. Upload the file here and import.</p>
+        </CardContent>
+      </Card>
 
       <div className="flex flex-wrap gap-2">
         {(Object.keys(SPECS) as ImportKind[]).map((k) => (
@@ -153,11 +211,7 @@ function ImportPage() {
             variant={kind === k ? 'default' : 'outline'}
             onClick={() => {
               setKind(k);
-              setFileName(null);
-              setHeaders([]);
-              setRows([]);
-              setHeaderError(null);
-              setResult(null);
+              resetFile();
             }}
           >
             {SPECS[k].title}
@@ -183,13 +237,34 @@ function ImportPage() {
             ) : null}
           </p>
 
-          <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center hover:bg-slate-50">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => downloadImportTemplate(`${kind}-import-template`, columns, spec.sample, 'xlsx')}
+            >
+              <Download className="size-4" />
+              Download Excel template
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => downloadImportTemplate(`${kind}-import-template`, columns, spec.sample, 'csv')}
+            >
+              <Download className="size-4" />
+              Download CSV template
+            </Button>
+          </div>
+
+          <label className="flex cursor-pointer flex-col items-center gap-2 rounded-[0.95rem] border border-dashed border-[rgb(46_94_74/0.25)] bg-[linear-gradient(180deg,#ffffff_0%,#f7faf8_100%)] px-4 py-8 text-center shadow-[var(--shadow-soft)] hover:border-[rgb(46_94_74/0.4)]">
             <Upload className="size-6 text-brand-700" />
-            <span className="text-sm font-medium">{fileName ?? 'Choose a CSV file'}</span>
-            <span className="text-xs text-muted-foreground">UTF-8, comma-separated</span>
+            <span className="text-sm font-medium">{fileName ?? 'Choose an Excel or CSV file'}</span>
+            <span className="text-xs text-muted-foreground">.xlsx, .xls, or .csv · up to 500 rows</span>
             <input
               type="file"
-              accept=".csv,text/csv"
+              accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
               className="sr-only"
               onChange={(e) => void onFile(e.target.files?.[0] ?? null)}
             />
@@ -202,21 +277,26 @@ function ImportPage() {
             </p>
           ) : null}
 
-          {kind === 'workers' ? (
+          <div className="flex flex-wrap gap-2">
             <Button
-              disabled={busy || !!headerError || rows.length === 0 || !can('workforce.manage')}
-              onClick={() => void importWorkers()}
+              disabled={busy || !!headerError || rows.length === 0 || !canImport}
+              onClick={() => void runImport()}
             >
-              {busy ? 'Importing…' : 'Import workers'}
+              {busy ? 'Importing…' : `Import ${spec.title.toLowerCase()}`}
             </Button>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Header check only — POST import for {spec.title.toLowerCase()} is not wired yet.
-            </p>
-          )}
+            {fileName ? (
+              <Button type="button" variant="outline" disabled={busy} onClick={resetFile}>
+                Clear file
+              </Button>
+            ) : null}
+          </div>
+
+          {!canImport ? (
+            <p className="text-sm text-amber-700">You need permission to import {spec.title.toLowerCase()}.</p>
+          ) : null}
 
           {result ? (
-            <div className="rounded-lg border bg-slate-50 px-3 py-2 text-sm">
+            <div className="rounded-lg border border-[rgb(46_94_74/0.12)] bg-[linear-gradient(180deg,#ffffff_0%,#f7faf8_100%)] px-3 py-2 text-sm shadow-[var(--shadow-soft)]">
               <p>
                 Created <strong>{result.created}</strong>
                 {result.errors.length ? ` · ${result.errors.length} row error(s)` : ''}
@@ -240,7 +320,7 @@ function ImportPage() {
 
 export default function Page() {
   return (
-    <RequirePermission permission={['admin.settings', 'workforce.manage', 'farm.manage']}>
+    <RequirePermission permission={['admin.settings', 'workforce.manage', 'farm.manage', 'crops.manage']}>
       <ImportPage />
     </RequirePermission>
   );
