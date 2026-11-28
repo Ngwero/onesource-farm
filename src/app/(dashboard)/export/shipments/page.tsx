@@ -79,7 +79,7 @@ function ShipmentsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Shipments"
-        subtitle="Export shipments, AWBs and allocated packing batches."
+        subtitle="Shipments going out to buyers."
         actions={
           canManage ? (
             <Button onClick={() => setCreating(true)}>

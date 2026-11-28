@@ -135,53 +135,56 @@ export function PlantingCycleSheet({ open, onOpenChange, block, cycle }: Props) 
       open={open}
       onOpenChange={onOpenChange}
       title={cycle ? 'Edit planting' : `New planting in ${block.code}`}
-      description="What is planted in this block, when, and the yield you expect."
+      description="Tell us what you planted, when you planted it, and how much you expect to harvest."
       form={form}
       onSubmit={(v) => save.mutate(v)}
       pending={save.isPending}
       submitLabel={cycle ? 'Save changes' : 'Record planting'}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField<PlantingCycleInput> name="crop_id" label="Crop" required options={cropOptions} />
+        <SelectField<PlantingCycleInput> name="crop_id" label="Crop" required placeholder="Choose crop" options={cropOptions} />
         <SelectField<PlantingCycleInput>
           name="variety_id"
           label="Variety"
           required={varietyOptions.length > 0}
           emptyLabel={varietyOptions.length ? undefined : 'No varieties set up'}
-          placeholder={varietyOptions.length ? 'Select variety…' : 'No varieties set up'}
+          placeholder={varietyOptions.length ? 'Choose variety' : 'No varieties set up'}
           options={varietyOptions}
           disabled={!selectedCrop || varietyOptions.length === 0}
         />
         <DateField<PlantingCycleInput> name="planting_date" label="Planting date" required />
         <DateField<PlantingCycleInput>
           name="expected_harvest_date"
-          label="Expected harvest date"
-          description={selectedCrop?.maturity_days ? `Suggested from ${selectedCrop.maturity_days}-day maturity` : undefined}
+          label="When do you expect to harvest?"
+          description={selectedCrop?.maturity_days ? `Suggested from ${selectedCrop.maturity_days} days to harvest` : undefined}
         />
-        <NumberField<PlantingCycleInput> name="planted_area_ha" label="Planted area" suffix="ha" />
-        <TextField<PlantingCycleInput> name="season_label" label="Season" placeholder="2026 Season A" />
-        <NumberField<PlantingCycleInput> name="expected_yield" label="Expected yield" />
+        <NumberField<PlantingCycleInput> name="planted_area_ha" label="Area planted" suffix="ha" placeholder="e.g. 1.2" />
+        <TextField<PlantingCycleInput> name="season_label" label="Season name" placeholder="e.g. 2026 Season A" />
+        <NumberField<PlantingCycleInput> name="expected_yield" label="Expected harvest amount" placeholder="e.g. 800" />
         <SelectField<PlantingCycleInput>
           name="yield_unit"
-          label="Yield unit"
+          label="Unit"
           required
+          placeholder="e.g. kg"
           options={CROP_UNITS.map((u) => ({ value: u, label: u }))}
         />
         <SelectField<PlantingCycleInput>
           name="status"
           label="Status"
           required
+          placeholder="Choose status"
           options={CYCLE_STATUSES.map((s) => ({ value: s, label: optionLabel(s) }))}
         />
-        {closing ? <DateField<PlantingCycleInput> name="closed_at" label="Closed on" description="Defaults to today" /> : null}
+        {closing ? <DateField<PlantingCycleInput> name="closed_at" label="Closed on" description="Leave blank to use today" /> : null}
         <SelectField<PlantingCycleInput>
           name="supervisor_id"
           label="Supervisor"
-          emptyLabel="Not assigned"
+          emptyLabel="Not assigned yet"
+          placeholder="Choose a person"
           options={(users.data ?? []).map((u) => ({ value: u.id, label: u.full_name }))}
         />
       </div>
-      <TextareaField<PlantingCycleInput> name="notes" label="Notes" />
+      <TextareaField<PlantingCycleInput> name="notes" label="Notes" placeholder="Optional notes about this planting" />
     </FormSheet>
   );
 }

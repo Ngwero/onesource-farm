@@ -79,7 +79,7 @@ function HarvestBatchesPage() {
     <div className="space-y-5">
       <PageHeader
         title="Harvest Batches"
-        subtitle="Every harvest gets a batch number that follows the produce through grading, packing and shipment."
+        subtitle="Each harvest gets a batch number that follows it through grading, packing, and shipping."
         actions={
           can('harvest.record') ? (
             <Button onClick={() => setCreating(true)}>

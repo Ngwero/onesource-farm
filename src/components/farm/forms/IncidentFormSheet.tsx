@@ -101,7 +101,7 @@ export function IncidentFormSheet({ open, onOpenChange, incident, defaults, onSa
       open={open}
       onOpenChange={onOpenChange}
       title={incident ? `Edit ${incident.name}` : 'Report pest or disease'}
-      description="Record what was found, how severe it is and the action taken, then follow it up until resolved."
+      description="Write what you found in the field, how bad it is, and what you did about it."
       form={form}
       onSubmit={(v) => save.mutate(v)}
       pending={save.isPending}
@@ -119,35 +119,39 @@ export function IncidentFormSheet({ open, onOpenChange, incident, defaults, onSa
           name="incident_type"
           label="Type"
           required
+          placeholder="Pest or disease?"
           options={INCIDENT_TYPES.map((t) => ({ value: t, label: optionLabel(t) }))}
         />
-        <TextField<IncidentInput> name="name" label="Pest / disease" required placeholder="Aphids" className="sm:col-span-2" />
+        <TextField<IncidentInput> name="name" label="Pest / disease name" required placeholder="e.g. Aphids" className="sm:col-span-2" />
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        <DateField<IncidentInput> name="date_identified" label="Identified on" required />
+        <DateField<IncidentInput> name="date_identified" label="Date found" required />
         <SelectField<IncidentInput>
           name="severity"
-          label="Severity"
+          label="How bad is it?"
           required
+          placeholder="Choose level"
           options={SEVERITIES.map((s) => ({ value: s, label: optionLabel(s) }))}
         />
-        <NumberField<IncidentInput> name="area_affected_ha" label="Area affected" suffix="ha" />
+        <NumberField<IncidentInput> name="area_affected_ha" label="Area affected" suffix="ha" placeholder="e.g. 0.5" />
       </div>
-      <TextareaField<IncidentInput> name="description" label="What was observed" />
-      <TextareaField<IncidentInput> name="action_taken" label="Action taken" />
-      <TextareaField<IncidentInput> name="treatment" label="Treatment applied" placeholder="Product, rate and date" rows={2} />
+      <TextareaField<IncidentInput> name="description" label="What did you see?" placeholder="Describe what you found on the plants" />
+      <TextareaField<IncidentInput> name="action_taken" label="What did you do?" placeholder="e.g. Removed leaves, sprayed, or reported" />
+      <TextareaField<IncidentInput> name="treatment" label="Treatment used" placeholder="e.g. Product name, how much, and date" rows={2} />
       <div className="grid gap-4 sm:grid-cols-2">
         <SelectField<IncidentInput>
           name="supervisor_id"
-          label="Responsible"
-          emptyLabel="Not assigned"
+          label="Who is following this up?"
+          emptyLabel="Not assigned yet"
+          placeholder="Choose a person"
           options={(users.data ?? []).map((u) => ({ value: u.id, label: u.full_name }))}
         />
-        <DateField<IncidentInput> name="follow_up_date" label="Follow up on" />
+        <DateField<IncidentInput> name="follow_up_date" label="Check again on" />
         <SelectField<IncidentInput>
           name="status"
           label="Status"
           required
+          placeholder="Open or resolved?"
           options={INCIDENT_STATUSES.map((s) => ({ value: s, label: optionLabel(s) }))}
           onValueChange={(v) => {
             if (v === 'resolved' && !form.getValues('resolved_date')) form.setValue('resolved_date', todayIso());

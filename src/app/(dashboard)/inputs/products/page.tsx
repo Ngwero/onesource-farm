@@ -45,7 +45,7 @@ function ProductsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Input store"
-        subtitle="Products held for field use — seed, fertilizer, crop protection, fuel and packaging."
+        subtitle="Items kept for farm use, like seed, fertilizer, and spray."
         actions={
           can('procurement.manage') ? (
             <Button onClick={() => setCreating(true)}>

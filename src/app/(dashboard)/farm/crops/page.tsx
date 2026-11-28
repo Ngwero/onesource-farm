@@ -34,7 +34,7 @@ function CropsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Crops"
-        subtitle="Crops grown on the farm, their varieties, grades and quality checks."
+        subtitle="Crops grown on the farm, plus varieties and quality checks."
         actions={newButton}
       />
 

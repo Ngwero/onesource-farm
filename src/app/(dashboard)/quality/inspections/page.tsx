@@ -69,7 +69,7 @@ function InspectionsPage() {
     <div className="space-y-5">
       <PageHeader
         title="QC Inspections"
-        subtitle="Inspect harvest and packed batches against each crop's quality criteria. A supervisor approves, sends back for rework, or asks for reinspection."
+        subtitle="Check harvest and packed batches for quality. A supervisor can approve or send them back."
         actions={
           can('qc.inspect') ? (
             <Button onClick={() => setCreating(true)}>

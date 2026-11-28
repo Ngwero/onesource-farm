@@ -196,7 +196,7 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
       open={open}
       onOpenChange={onOpenChange}
       title={activity ? 'Edit activity' : 'Record activity'}
-      description="Field work on a block: who did it, inputs applied and what it cost. Labour is costed at each worker's hourly rate."
+      description="Write down the field work done on a block — who worked, what was used, and the cost."
       form={form}
       onSubmit={(v) => save.mutate(v)}
       pending={save.isPending}
@@ -289,15 +289,17 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
         <div className="grid gap-4 sm:grid-cols-2">
           <NumberField<ActivityInput>
             name="casual_labour_days"
-            label="Unregistered casual labour"
+            label="Extra day workers (not on the list)"
             suffix="days"
-            description="Person-days of casuals not on the worker list."
+            placeholder="e.g. 3"
+            description="How many day-worker days were hired."
           />
           <NumberField<ActivityInput>
             name="other_labour_cost"
-            label="Their labour cost"
+            label="Pay for those day workers"
             suffix={currency}
-            description="What was paid for that casual labour."
+            placeholder="e.g. 75000"
+            description="Total money paid to them."
           />
         </div>
       </section>
@@ -305,7 +307,7 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
       {showInputs ? (
         <section className="space-y-3 rounded-lg border p-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">Inputs applied</p>
+            <p className="text-sm font-semibold">Products used</p>
             <Button
               type="button"
               variant="outline"
@@ -325,7 +327,7 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
             </Button>
           </div>
           {inputRows.fields.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Add fertilizer, chemicals or seed used.</p>
+            <p className="text-sm text-muted-foreground">Add fertilizer, spray, or seed used.</p>
           ) : (
             inputRows.fields.map((f, i) => {
               const productId = watchedInputs?.[i]?.product_id;
@@ -335,10 +337,10 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
               return (
                 <div key={f.id} className="space-y-2 rounded-md border border-dashed p-2">
                   <div className="grid grid-cols-12 items-start gap-2">
-                    <TextField<ActivityInput> name={`inputs.${i}.input_name`} label="Product" required className="col-span-12 sm:col-span-4" />
-                    <NumberField<ActivityInput> name={`inputs.${i}.quantity`} label="Qty" required className="col-span-4 sm:col-span-2" />
-                    <TextField<ActivityInput> name={`inputs.${i}.unit`} label="Unit" required className="col-span-4 sm:col-span-2" />
-                    <NumberField<ActivityInput> name={`inputs.${i}.unit_cost`} label="Unit cost" className="col-span-4 sm:col-span-3" />
+                    <TextField<ActivityInput> name={`inputs.${i}.input_name`} label="Product" required placeholder="e.g. Fertilizer" className="col-span-12 sm:col-span-4" />
+                    <NumberField<ActivityInput> name={`inputs.${i}.quantity`} label="Qty" required placeholder="e.g. 2" className="col-span-4 sm:col-span-2" />
+                    <TextField<ActivityInput> name={`inputs.${i}.unit`} label="Unit" required placeholder="kg" className="col-span-4 sm:col-span-2" />
+                    <NumberField<ActivityInput> name={`inputs.${i}.unit_cost`} label="Cost each" placeholder="e.g. 5000" className="col-span-4 sm:col-span-3" />
                     <div className="col-span-12 flex justify-end sm:col-span-1 sm:pt-6">
                       <Button type="button" variant="ghost" size="icon" onClick={() => inputRows.remove(i)} aria-label="Remove input">
                         <X className="size-4" />
@@ -349,10 +351,11 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
                     <div className="grid gap-2 sm:grid-cols-2">
                       <SelectField<ActivityInput>
                         name={`inputs.${i}.product_id`}
-                        label="Store product"
-                        emptyLabel="Not linked"
+                        label="From store?"
+                        emptyLabel="Not from store"
+                        placeholder="Choose product"
                         options={activeProducts.map((p) => ({ value: p.id, label: `${p.name} (${p.sku})` }))}
-                        description="Link to issue stock from a lot."
+                        description="Choose a product if this came from farm stock."
                         onValueChange={(id) => {
                           form.setValue(`inputs.${i}.lot_id`, null);
                           const p = activeProducts.find((x) => x.id === id);
@@ -370,8 +373,9 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
                       />
                       <SelectField<ActivityInput>
                         name={`inputs.${i}.lot_id`}
-                        label="Lot"
-                        emptyLabel="No lot"
+                        label="Stock batch"
+                        emptyLabel="No batch"
+                        placeholder="Choose batch"
                         options={productLots.map((l) => ({
                           value: l.id,
                           label: `${l.lot_no} · ${Number(l.quantity_remaining)} left`,
@@ -394,30 +398,31 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
 
       {showSpray ? (
         <section className="space-y-3 rounded-lg border p-3">
-          <p className="text-sm font-semibold">Chemical / spray</p>
-          <p className="text-xs text-muted-foreground">Rate, treated area and intervals for spray compliance.</p>
+          <p className="text-sm font-semibold">Spray details</p>
+          <p className="text-xs text-muted-foreground">Fill this when you spray chemicals on the field.</p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <NumberField<ActivityInput> name="application_rate_per_ha" label="Application rate" suffix="/ha" />
-            <NumberField<ActivityInput> name="treated_area_ha" label="Treated area" suffix="ha" />
-            <TextField<ActivityInput> name="active_ingredient" label="Active ingredient" />
-            <TextField<ActivityInput> name="product_registration" label="Product registration" />
-            <NumberField<ActivityInput> name="pre_harvest_interval_days" label="Pre-harvest interval" suffix="days" step="1" />
-            <NumberField<ActivityInput> name="re_entry_interval_hours" label="Re-entry interval" suffix="hours" step="1" />
+            <NumberField<ActivityInput> name="application_rate_per_ha" label="How much per hectare" suffix="/ha" placeholder="e.g. 2" />
+            <NumberField<ActivityInput> name="treated_area_ha" label="Area sprayed" suffix="ha" placeholder="e.g. 1.5" />
+            <TextField<ActivityInput> name="active_ingredient" label="Main chemical" placeholder="e.g. Copper" />
+            <TextField<ActivityInput> name="product_registration" label="Product number" placeholder="Optional registration no." />
+            <NumberField<ActivityInput> name="pre_harvest_interval_days" label="Days before harvest" suffix="days" step="1" placeholder="e.g. 7" description="Wait this many days before picking." />
+            <NumberField<ActivityInput> name="re_entry_interval_hours" label="Hours before re-entry" suffix="hours" step="1" placeholder="e.g. 24" description="Wait before people go back into the field." />
             <SelectField<ActivityInput>
               name="applicator_id"
-              label="Applicator"
+              label="Who sprayed?"
               emptyLabel="Not recorded"
+              placeholder="Choose person"
               options={(users.data ?? []).map((u) => ({ value: u.id, label: u.full_name }))}
             />
-            <TextField<ActivityInput> name="safety_equipment" label="Safety equipment" placeholder="PPE, respirator…" />
+            <TextField<ActivityInput> name="safety_equipment" label="Safety gear used" placeholder="e.g. Gloves, mask, boots" />
           </div>
         </section>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <NumberField<ActivityInput> name="other_cost" label="Other costs" suffix={currency} description="Fuel, transport, hire." />
+        <NumberField<ActivityInput> name="other_cost" label="Other costs" suffix={currency} placeholder="e.g. 20000" description="Fuel, transport, or hire." />
         <div className="space-y-2">
-          <TextField<ActivityInput> name="weather" label="Weather" placeholder="Sunny, light wind" />
+          <TextField<ActivityInput> name="weather" label="Weather" placeholder="e.g. Sunny, light wind" />
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
@@ -480,7 +485,7 @@ export function ActivityFormSheet({ open, onOpenChange, activity, defaults, onSa
           </div>
         </div>
       </div>
-      <TextareaField<ActivityInput> name="notes" label="Notes" />
+      <TextareaField<ActivityInput> name="notes" label="Notes" placeholder="Optional notes about this work" />
 
       <div className="rounded-lg bg-muted/50 p-3 text-sm">
         <div className="flex justify-between">

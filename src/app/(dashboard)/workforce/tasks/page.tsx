@@ -85,7 +85,7 @@ function TasksPage() {
     <div className="space-y-5">
       <PageHeader
         title="Tasks"
-        subtitle="Work assigned to individual workers, with targets to measure productivity."
+        subtitle="Jobs given to workers, with targets if you need them."
         actions={
           canManage ? (
             <Button onClick={() => setSheet({ open: true, task: null })}>

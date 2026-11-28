@@ -63,7 +63,7 @@ function BuyersPage() {
     <div className="space-y-5">
       <PageHeader
         title="Buyers"
-        subtitle="Export customers, destinations and payment terms."
+        subtitle="Customers who buy your produce."
         actions={
           canManage ? (
             <Button onClick={() => setCreating(true)}>

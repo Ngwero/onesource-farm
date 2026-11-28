@@ -162,7 +162,7 @@ function ExecutivePage() {
                   </TableRow>
                 ))
               ) : (
-                <EmptyRow columns={5} title="No crop costs in the last 30 days" description="Record field activities to see labour and input spend by crop." />
+                <EmptyRow columns={5} title="No crop costs yet" description="Record field work to see labour and product costs by crop." />
               )}
             </TableBody>
           </Table>
@@ -195,7 +195,7 @@ function ExecutivePage() {
                   </TableRow>
                 ))
               ) : (
-                <EmptyRow columns={5} title="No block costs in the last 30 days" description="Costs appear here once activities are logged against blocks." />
+                <EmptyRow columns={5} title="No block costs yet" description="Costs show here after field work is recorded on blocks." />
               )}
             </TableBody>
           </Table>
@@ -203,7 +203,7 @@ function ExecutivePage() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Panel title="Stock ageing" icon={<Package className="size-4" />}>
+        <Panel title="How old is packed stock?" icon={<Package className="size-4" />}>
           <Table>
             <TableHeader>
               <TableRow>
@@ -224,7 +224,7 @@ function ExecutivePage() {
                   </TableRow>
                 ))
               ) : (
-                <EmptyRow columns={3} title="No packed stock yet" description="Ageing buckets fill once packing batches are received into warehouse." />
+                <EmptyRow columns={3} title="No packed stock yet" description="This fills after packed produce is put into the warehouse." />
               )}
             </TableBody>
           </Table>
@@ -259,7 +259,7 @@ function ExecutivePage() {
                   </TableRow>
                 ))
               ) : (
-                <EmptyRow columns={3} title="No harvests due in 30 days" description="Expected harvest dates from active plantings show here." />
+                <EmptyRow columns={3} title="No harvests due in 30 days" description="When plantings have a harvest date, they show here." />
               )}
             </TableBody>
           </Table>

@@ -45,27 +45,29 @@ export function FarmProfileSheet({ open, onOpenChange, farm }: { open: boolean; 
       open={open}
       onOpenChange={onOpenChange}
       title="Edit farm details"
+      description="Basic information about the farm."
       form={form}
       onSubmit={(v) => save.mutate(v)}
       pending={save.isPending}
     >
-      <TextField<FarmInput> name="name" label="Farm name" required />
-      <TextField<FarmInput> name="legal_name" label="Legal / registered name" />
+      <TextField<FarmInput> name="name" label="Farm name" required placeholder="e.g. OneSource Farm" />
+      <TextField<FarmInput> name="legal_name" label="Official / company name" placeholder="Optional registered name" />
       <div className="grid gap-4 sm:grid-cols-2">
-        <TextField<FarmInput> name="location" label="Location" placeholder="Village, sub-county" />
-        <TextField<FarmInput> name="district" label="District" />
-        <TextField<FarmInput> name="country" label="Country" required />
-        <NumberField<FarmInput> name="total_area_ha" label="Total farm area" suffix="ha" />
-        <TextField<FarmInput> name="default_currency" label="Default currency" required uppercase />
-        <TextField<FarmInput> name="timezone" label="Timezone" required />
+        <TextField<FarmInput> name="location" label="Location" placeholder="e.g. Village or parish" />
+        <TextField<FarmInput> name="district" label="District" placeholder="e.g. Wakiso" />
+        <TextField<FarmInput> name="country" label="Country" required placeholder="e.g. Uganda" />
+        <NumberField<FarmInput> name="total_area_ha" label="Total farm size" suffix="ha" placeholder="e.g. 40" />
+        <TextField<FarmInput> name="default_currency" label="Money currency" required uppercase placeholder="UGX" />
+        <TextField<FarmInput> name="timezone" label="Timezone" required placeholder="e.g. Africa/Kampala" />
       </div>
       <SelectField<FarmInput>
         name="manager_id"
         label="Farm manager"
-        emptyLabel="Not assigned"
+        emptyLabel="Not assigned yet"
+        placeholder="Choose the farm manager"
         options={(users.data ?? []).map((u) => ({ value: u.id, label: u.full_name }))}
       />
-      <TextareaField<FarmInput> name="notes" label="Notes" />
+      <TextareaField<FarmInput> name="notes" label="Notes" placeholder="Optional notes about the farm" />
     </FormSheet>
   );
 }

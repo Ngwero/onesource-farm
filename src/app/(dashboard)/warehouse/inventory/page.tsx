@@ -102,7 +102,7 @@ function InventoryPage() {
     <div className="space-y-5">
       <PageHeader
         title="Warehouse Inventory"
-        subtitle="Packed stock by batch and location. Every receipt, move, loss and dispatch is kept in the stock movement ledger."
+        subtitle="Packed stock by batch and where it is stored."
         actions={
           <Button variant="outline" asChild>
             <Link href="/warehouse/movements">

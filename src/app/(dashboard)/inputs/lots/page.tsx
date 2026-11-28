@@ -46,7 +46,7 @@ function LotsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Lots & stock"
-        subtitle="Received batches with remaining quantity. Field activities can issue from a lot."
+        subtitle="Product batches in store and how much is left."
         actions={
           can('procurement.manage') ? (
             <Button onClick={() => setCreating(true)}>

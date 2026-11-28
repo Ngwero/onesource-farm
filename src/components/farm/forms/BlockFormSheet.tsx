@@ -86,36 +86,39 @@ export function BlockFormSheet({ open, onOpenChange, block, onSaved }: Props) {
       open={open}
       onOpenChange={onOpenChange}
       title={block ? `Edit block ${block.code}` : 'New block'}
-      description="A block or plot is a fixed area of the farm. Record what is planted in it as a planting."
+      description="Add a plot of land on the farm. You can plant crops on it later."
       form={form}
       onSubmit={(v) => save.mutate(v)}
       pending={save.isPending}
       submitLabel={block ? 'Save changes' : 'Create block'}
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <TextField<BlockInput> name="code" label="Block ID" required uppercase placeholder="A" />
-        <TextField<BlockInput> name="name" label="Block name" required placeholder="Block A — North" className="sm:col-span-2" />
+        <TextField<BlockInput> name="code" label="Block ID" required uppercase placeholder="e.g. A or B01" />
+        <TextField<BlockInput> name="name" label="Block name" required placeholder="e.g. North field" className="sm:col-span-2" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <NumberField<BlockInput> name="size_value" label="Size" required />
+        <NumberField<BlockInput> name="size_value" label="Size" required placeholder="e.g. 2.5" />
         <SelectField<BlockInput>
           name="size_unit"
-          label="Unit"
+          label="Size unit"
           required
+          placeholder="Choose acres or hectares"
           options={SIZE_UNITS.map((u) => ({ value: u, label: optionLabel(u) }))}
         />
-        <TextField<BlockInput> name="soil_type" label="Soil type" placeholder="Loam" />
-        <TextField<BlockInput> name="irrigation_type" label="Irrigation" placeholder="Drip" />
+        <TextField<BlockInput> name="soil_type" label="Soil type" placeholder="e.g. Loam, clay, sandy" />
+        <TextField<BlockInput> name="irrigation_type" label="Watering method" placeholder="e.g. Drip, sprinkler, rainfed" />
         <SelectField<BlockInput>
           name="status"
           label="Status"
           required
+          placeholder="Choose status"
           options={BLOCK_STATUSES.map((s) => ({ value: s, label: optionLabel(s) }))}
         />
         <SelectField<BlockInput>
           name="supervisor_id"
-          label="Supervisor"
-          emptyLabel="Not assigned"
+          label="Who looks after this block?"
+          emptyLabel="Not assigned yet"
+          placeholder="Choose a person"
           options={(users.data ?? []).map((u) => ({ value: u.id, label: u.full_name }))}
         />
       </div>
@@ -131,7 +134,7 @@ export function BlockFormSheet({ open, onOpenChange, block, onSaved }: Props) {
           form.setValue('boundary_geojson', next.boundary_geojson, { shouldDirty: true });
         }}
       />
-      <TextareaField<BlockInput> name="notes" label="Notes" />
+      <TextareaField<BlockInput> name="notes" label="Notes" placeholder="Anything else to remember about this block" />
     </FormSheet>
   );
 }

@@ -78,32 +78,33 @@ export function BuyerFormSheet({ open, onOpenChange, buyer, onSaved }: Props) {
       open={open}
       onOpenChange={onOpenChange}
       title={buyer ? `Edit ${buyer.name}` : 'New buyer'}
-      description="Export customers and destinations used on contracts and shipments."
+      description="Add a customer who buys your produce."
       form={form}
       onSubmit={(v) => save.mutate(v)}
       pending={save.isPending}
       submitLabel={buyer ? 'Save changes' : 'Create buyer'}
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <TextField<BuyerInput> name="code" label="Buyer code" required uppercase placeholder="EU-01" />
-        <TextField<BuyerInput> name="name" label="Buyer name" required className="sm:col-span-2" placeholder="Nordic Fresh BV" />
+        <TextField<BuyerInput> name="code" label="Buyer code" required uppercase placeholder="e.g. EU-01" />
+        <TextField<BuyerInput> name="name" label="Buyer name" required className="sm:col-span-2" placeholder="e.g. Nordic Fresh BV" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <TextField<BuyerInput> name="contact_name" label="Contact name" />
-        <TextField<BuyerInput> name="email" label="Email" placeholder="orders@buyer.com" />
-        <TextField<BuyerInput> name="phone" label="Phone" />
-        <TextField<BuyerInput> name="country" label="Country" />
-        <TextField<BuyerInput> name="destination" label="Default destination" placeholder="Rotterdam" />
+        <TextField<BuyerInput> name="contact_name" label="Contact person" placeholder="e.g. Anna de Vries" />
+        <TextField<BuyerInput> name="email" label="Email" placeholder="e.g. orders@buyer.com" />
+        <TextField<BuyerInput> name="phone" label="Phone" placeholder="e.g. +31…" />
+        <TextField<BuyerInput> name="country" label="Country" placeholder="e.g. Netherlands" />
+        <TextField<BuyerInput> name="destination" label="Usual destination" placeholder="e.g. Rotterdam" />
         <SelectField<BuyerInput>
           name="status"
           label="Status"
           required
+          placeholder="Active or inactive?"
           options={(['active', 'inactive'] as const).map((s) => ({ value: s, label: optionLabel(s) }))}
         />
       </div>
-      <TextField<BuyerInput> name="payment_terms" label="Payment terms" placeholder="Net 30" />
-      <TextareaField<BuyerInput> name="address" label="Address" />
-      <TextareaField<BuyerInput> name="notes" label="Notes" />
+      <TextField<BuyerInput> name="payment_terms" label="Payment terms" placeholder="e.g. Pay in 30 days" />
+      <TextareaField<BuyerInput> name="address" label="Address" placeholder="Full postal address" />
+      <TextareaField<BuyerInput> name="notes" label="Notes" placeholder="Optional notes about this buyer" />
     </FormSheet>
   );
 }

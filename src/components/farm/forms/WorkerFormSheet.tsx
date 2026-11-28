@@ -100,36 +100,39 @@ export function WorkerFormSheet({ open, onOpenChange, worker, onSaved }: Props) 
       open={open}
       onOpenChange={onOpenChange}
       title={worker ? `Edit ${worker.full_name}` : 'New worker'}
-      description="Permanent staff and casual labourers. Pay rates are used to cost labour on activities and harvests."
+      description="Add a farm worker. Their pay is used when you record field work and harvest."
       form={form}
       onSubmit={(v) => save.mutate(v)}
       pending={save.isPending}
       submitLabel={worker ? 'Save changes' : 'Add worker'}
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <TextField<WorkerInput> name="worker_code" label="Worker ID" required uppercase placeholder="W-001" />
-        <TextField<WorkerInput> name="full_name" label="Full name" required className="sm:col-span-2" />
+        <TextField<WorkerInput> name="worker_code" label="Worker ID" required uppercase placeholder="e.g. W-001" />
+        <TextField<WorkerInput> name="full_name" label="Full name" required placeholder="e.g. Jane Okello" className="sm:col-span-2" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <TextField<WorkerInput> name="phone" label="Phone" placeholder="+256…" />
-        <TextField<WorkerInput> name="national_id" label="National ID" />
+        <TextField<WorkerInput> name="phone" label="Phone" placeholder="e.g. 0700 000000" />
+        <TextField<WorkerInput> name="national_id" label="National ID" placeholder="Optional ID number" />
         <SelectField<WorkerInput>
           name="category"
-          label="Category"
+          label="Worker type"
           required
+          placeholder="Permanent or casual?"
           options={WORKER_CATEGORIES.map((c) => ({ value: c, label: optionLabel(c) }))}
         />
-        <TextField<WorkerInput> name="job_role" label="Job role" placeholder="Picker, sprayer…" />
+        <TextField<WorkerInput> name="job_role" label="Job" placeholder="e.g. Picker, sprayer, weeder" />
         <SelectField<WorkerInput>
           name="supervisor_id"
           label="Supervisor"
-          emptyLabel="Not assigned"
+          emptyLabel="Not assigned yet"
+          placeholder="Choose a supervisor"
           options={(users.data ?? []).map((u) => ({ value: u.id, label: u.full_name }))}
         />
         <SelectField<WorkerInput>
           name="status"
           label="Status"
           required
+          placeholder="Choose status"
           options={WORKER_STATUSES.map((s) => ({ value: s, label: optionLabel(s) }))}
         />
         <DateField<WorkerInput> name="start_date" label="Start date" />
@@ -141,25 +144,27 @@ export function WorkerFormSheet({ open, onOpenChange, worker, onSaved }: Props) 
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectField<WorkerInput>
             name="pay_basis"
-            label="Paid"
+            label="How are they paid?"
             required
+            placeholder="Per day or monthly?"
             options={PAY_BASES.map((p) => ({ value: p, label: p === 'daily' ? 'Per day worked' : 'Monthly salary' }))}
           />
           {payBasis === 'daily' ? (
-            <NumberField<WorkerInput> name="daily_rate" label="Daily rate" required suffix={currency} />
+            <NumberField<WorkerInput> name="daily_rate" label="Pay per day" required suffix={currency} placeholder="e.g. 25000" />
           ) : (
-            <NumberField<WorkerInput> name="monthly_salary" label="Monthly salary" required suffix={currency} />
+            <NumberField<WorkerInput> name="monthly_salary" label="Monthly pay" required suffix={currency} placeholder="e.g. 500000" />
           )}
           <NumberField<WorkerInput>
             name="overtime_rate"
-            label="Overtime rate per hour"
+            label="Extra pay per hour"
             required
             suffix={currency}
-            description="Use 0 if overtime is not paid."
+            placeholder="0 if none"
+            description="Type 0 if they do not get overtime pay."
           />
         </div>
       </div>
-      <TextareaField<WorkerInput> name="notes" label="Notes" />
+      <TextareaField<WorkerInput> name="notes" label="Notes" placeholder="Optional notes about this worker" />
     </FormSheet>
   );
 }

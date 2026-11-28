@@ -54,33 +54,36 @@ export function VarietySheet({ open, onOpenChange, cropId, variety }: Props) {
       open={open}
       onOpenChange={onOpenChange}
       title={variety ? `Edit ${variety.name}` : 'New variety'}
+      description="Add a type or brand of this crop, like a seed variety."
       form={form}
       onSubmit={(v) => save.mutate(v)}
       pending={save.isPending}
       submitLabel={variety ? 'Save changes' : 'Add variety'}
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <TextField<VarietyInput> name="code" label="Code" required uppercase />
-        <TextField<VarietyInput> name="name" label="Variety name" required className="sm:col-span-2" />
+        <TextField<VarietyInput> name="code" label="Short code" required uppercase placeholder="e.g. CAYENNE" />
+        <TextField<VarietyInput> name="name" label="Variety name" required placeholder="e.g. Cayenne" className="sm:col-span-2" />
         <NumberField<VarietyInput>
           name="maturity_days"
-          label="Maturity"
+          label="Days to harvest"
           step="1"
           suffix="days"
+          placeholder="e.g. 90"
           className="sm:col-span-2"
-          description="Leave blank to use the crop's maturity period"
+          description="Leave blank to use the crop’s usual days."
         />
         <SelectField<VarietyInput>
           name="status"
           label="Status"
           required
+          placeholder="Active or inactive?"
           options={[
             { value: 'active', label: 'Active' },
             { value: 'inactive', label: 'Inactive' },
           ]}
         />
       </div>
-      <TextareaField<VarietyInput> name="description" label="Description" />
+      <TextareaField<VarietyInput> name="description" label="Description" placeholder="Optional notes about this variety" />
     </FormSheet>
   );
 }

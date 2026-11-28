@@ -384,7 +384,7 @@ function AccessPage() {
     <div className="space-y-5">
       <PageHeader
         title="Access & roles"
-        subtitle="Add staff, email them their login, assign farm roles, and control what each role can do. approval roles are assigned when you create the user."
+        subtitle="Add staff, send them a login email, and choose what each person can do."
       />
       {roles.error ? (
         <ErrorState message={errorMessage(roles.error)} onRetry={() => roles.refetch()} />

@@ -158,7 +158,7 @@ export function HarvestBatchSheet({ open, onOpenChange, batch, defaults, onSaved
       description={
         batch
           ? 'The batch number stays the same.'
-          : 'A batch number is generated from crop, block and date, e.g. CHILLI-BLK-A-20261002-001. The batch then waits for grading.'
+          : 'Record what was picked. A batch number is created for you, then the harvest waits for grading.'
       }
       form={form}
       onSubmit={(v) => save.mutate(v)}
@@ -172,11 +172,12 @@ export function HarvestBatchSheet({ open, onOpenChange, batch, defaults, onSaved
       ) : null}
       <SelectField<HarvestBatchInput>
         name="planting_cycle_id"
-        label="Planting harvested"
+        label="Which planting was harvested?"
         required
         disabled={graded}
+        placeholder="Choose planting"
         options={cycleOptions}
-        description={!cycles.isLoading && !cycleOptions.length ? 'No active plantings. Record a planting on a block first.' : undefined}
+        description={!cycles.isLoading && !cycleOptions.length ? 'No plantings yet. Add a planting on a block first.' : undefined}
       />
       {cycle ? (
         <p className="-mt-2 text-xs text-muted-foreground">
@@ -186,11 +187,12 @@ export function HarvestBatchSheet({ open, onOpenChange, batch, defaults, onSaved
       ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <DateField<HarvestBatchInput> name="harvest_date" label="Harvest date" required />
-        <NumberField<HarvestBatchInput> name="quantity" label="Quantity harvested" required suffix={unit} disabled={graded} />
+        <NumberField<HarvestBatchInput> name="quantity" label="How much was harvested?" required suffix={unit} disabled={graded} placeholder="e.g. 120" />
         <SelectField<HarvestBatchInput>
           name="supervisor_id"
           label="Supervisor"
           emptyLabel="Not recorded"
+          placeholder="Choose a person"
           options={(users.data ?? []).map((u) => ({ value: u.id, label: u.full_name }))}
         />
       </div>
@@ -212,7 +214,7 @@ export function HarvestBatchSheet({ open, onOpenChange, batch, defaults, onSaved
           </Select>
         </div>
         {pickers.fields.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Add registered workers who picked, with hours and optionally how much each picked.</p>
+          <p className="text-sm text-muted-foreground">Add workers who picked, with hours and how much each picked if you know.</p>
         ) : (
           <ul className="space-y-2">
             {pickers.fields.map((f, i) => (
@@ -235,17 +237,18 @@ export function HarvestBatchSheet({ open, onOpenChange, batch, defaults, onSaved
         <div className="grid gap-4 sm:grid-cols-2">
           <NumberField<HarvestBatchInput>
             name="casual_labour_days"
-            label="Unregistered casual labour"
+            label="Extra day workers (not on the list)"
             suffix="days"
+            placeholder="e.g. 4"
           />
-          <NumberField<HarvestBatchInput> name="other_labour_cost" label="Their labour cost" suffix={currency} />
+          <NumberField<HarvestBatchInput> name="other_labour_cost" label="Pay for those day workers" suffix={currency} placeholder="e.g. 100000" />
         </div>
         <p className="text-xs text-muted-foreground">
           Estimated labour cost {fmtMoney(labour + Number(otherLabour || 0), currency)}
           {pickers.fields.length ? ` (${fmtNumber((watchedPickers ?? []).reduce((s, w) => s + Number(w.hours_worked || 0), 0))} worker hours)` : ''}.
         </p>
       </section>
-      <TextareaField<HarvestBatchInput> name="notes" label="Notes" />
+      <TextareaField<HarvestBatchInput> name="notes" label="Notes" placeholder="Optional notes about this harvest" />
     </FormSheet>
   );
 }

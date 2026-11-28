@@ -23,6 +23,33 @@ type ImportSpec = {
   sample: (string | number | null)[];
 };
 
+const COLUMN_HELP: Record<string, string> = {
+  worker_code: 'Worker ID',
+  full_name: 'Full name',
+  category: 'permanent or casual',
+  pay_basis: 'daily or monthly',
+  phone: 'Phone',
+  national_id: 'National ID',
+  job_role: 'Job',
+  status: 'Status',
+  start_date: 'Start date',
+  daily_rate: 'Pay per day',
+  monthly_salary: 'Monthly pay',
+  overtime_rate: 'Overtime pay per hour',
+  notes: 'Notes',
+  code: 'Code',
+  name: 'Name',
+  size_value: 'Size number',
+  size_unit: 'acres or hectares',
+  soil_type: 'Soil type',
+  irrigation_type: 'Watering method',
+  production_cycle: 'seasonal / annual / perennial / continuous',
+  default_unit: 'Usual unit (kg, etc.)',
+  scientific_name: 'Scientific name',
+  maturity_days: 'Days to harvest',
+  description: 'Description',
+};
+
 const SPECS: Record<ImportKind, ImportSpec> = {
   workers: {
     title: 'Workers',
@@ -38,7 +65,7 @@ const SPECS: Record<ImportKind, ImportSpec> = {
       'overtime_rate',
       'notes',
     ],
-    description: 'Add many workers at once. Use daily_rate for daily pay, or monthly_salary for monthly pay.',
+    description: 'Add many workers at once. For daily pay fill “daily_rate”. For monthly pay fill “monthly_salary”.',
     permission: 'workforce.manage',
     endpoint: '/api/farm/import/workers',
     sample: ['W-001', 'Jane Okello', 'casual', 'daily', '0700000000', '', 'Picker', 'active', '2026-01-15', 25000, '', 0, ''],
@@ -47,7 +74,7 @@ const SPECS: Record<ImportKind, ImportSpec> = {
     title: 'Blocks',
     required: ['code', 'name', 'size_value', 'size_unit', 'status'],
     optional: ['soil_type', 'irrigation_type', 'notes'],
-    description: 'Upload farm plots in one file. size_unit must be acres or hectares.',
+    description: 'Add many farm plots at once. Size unit must be acres or hectares.',
     permission: 'farm.manage',
     endpoint: '/api/farm/import/blocks',
     sample: ['B01', 'North Block', 2.5, 'acres', 'active', 'loam', 'drip', ''],
@@ -56,12 +83,16 @@ const SPECS: Record<ImportKind, ImportSpec> = {
     title: 'Crops',
     required: ['code', 'name', 'production_cycle', 'default_unit', 'status'],
     optional: ['scientific_name', 'maturity_days', 'description'],
-    description: 'Upload crops in bulk. production_cycle: seasonal, annual, perennial, or continuous.',
+    description: 'Add many crops at once. Production cycle can be seasonal, annual, perennial, or continuous.',
     permission: 'crops.manage',
     endpoint: '/api/farm/import/crops',
     sample: ['CHILLI', 'Chilies', 'seasonal', 'kg', 'active', 'Capsicum annuum', 90, 'Hot pepper'],
   },
 };
+
+function friendlyColumns(cols: string[]) {
+  return cols.map((c) => COLUMN_HELP[c] ? `${COLUMN_HELP[c]} (${c})` : c).join(', ');
+}
 
 function ImportPage() {
   const { can } = useFarmAccess();
@@ -185,7 +216,7 @@ function ImportPage() {
     <div className="space-y-6">
       <PageHeader
         title="Bulk upload"
-        subtitle="Upload an Excel or CSV file to add many workers, blocks, or crops at once."
+        subtitle="Upload one Excel or CSV file to add many workers, blocks, or crops quickly."
       />
 
       <Card>
@@ -196,9 +227,9 @@ function ImportPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>1. Download the Excel template for the data you want to add.</p>
-          <p>2. Fill in the rows in Excel, then save the file.</p>
-          <p>3. Upload the file here and import.</p>
+          <p>1. Download the Excel template.</p>
+          <p>2. Fill in the rows. Keep the column names the same.</p>
+          <p>3. Save the file, upload it here, then click Import.</p>
         </CardContent>
       </Card>
 
@@ -228,13 +259,8 @@ function ImportPage() {
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">{spec.description}</p>
           <p className="text-xs text-muted-foreground">
-            Required: <span className="font-mono">{spec.required.join(', ')}</span>
-            {spec.optional.length ? (
-              <>
-                {' '}
-                · Optional: <span className="font-mono">{spec.optional.join(', ')}</span>
-              </>
-            ) : null}
+            Required columns: {friendlyColumns(spec.required)}
+            {spec.optional.length ? <> · Optional: {friendlyColumns(spec.optional)}</> : null}
           </p>
 
           <div className="flex flex-wrap gap-2">

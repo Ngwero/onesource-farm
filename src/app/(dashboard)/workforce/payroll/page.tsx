@@ -99,7 +99,7 @@ function PayrollPage() {
     <div className="space-y-5">
       <PageHeader
         title="Payroll Costing"
-        subtitle="Labour cost per pay period, what each worker is owed, and where the labour was spent."
+        subtitle="What workers are owed for each pay period."
         actions={
           can('payroll.manage') ? (
             <Button onClick={() => setCreating(true)}>

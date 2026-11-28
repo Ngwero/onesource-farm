@@ -115,49 +115,53 @@ export function ShipmentFormSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={shipment ? `Edit ${shipment.shipment_no}` : 'New shipment'}
-      description="Plan an export shipment, then allocate packing batches as lines."
+      description="Plan a shipment to a buyer. You can add packed boxes later."
       form={form}
       onSubmit={(v) => save.mutate(v)}
       pending={save.isPending}
       submitLabel={shipment ? 'Save changes' : 'Create shipment'}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <TextField<ShipmentInput> name="shipment_no" label="Shipment number" required placeholder="SHP-2026-001" />
+        <TextField<ShipmentInput> name="shipment_no" label="Shipment number" required placeholder="e.g. SHP-2026-001" />
         <SelectField<ShipmentInput>
           name="status"
           label="Status"
           required
+          placeholder="Choose status"
           options={SHIPMENT_STATUSES.map((s) => ({ value: s, label: optionLabel(s) }))}
         />
         <SelectField<ShipmentInput>
           name="buyer_id"
           label="Buyer"
           required
+          placeholder="Who is buying?"
           options={buyers.map((b) => ({ value: b.id, label: `${b.code} · ${b.name}` }))}
         />
         <SelectField<ShipmentInput>
           name="contract_id"
           label="Contract"
           emptyLabel="No contract"
+          placeholder="Optional contract"
           options={buyerContracts.map((c) => ({ value: c.id, label: `${c.contract_no} · ${c.title}` }))}
         />
-        <TextField<ShipmentInput> name="destination" label="Destination" />
-        <TextField<ShipmentInput> name="carrier" label="Carrier" />
-        <TextField<ShipmentInput> name="booking_ref" label="Booking reference" />
-        <TextField<ShipmentInput> name="awb_bl_number" label="AWB / BL number" />
-        <DateField<ShipmentInput> name="etd" label="ETD" />
-        <DateField<ShipmentInput> name="eta" label="ETA" />
-        <TextField<ShipmentInput> name="invoice_no" label="Invoice number" />
-        <NumberField<ShipmentInput> name="invoice_amount" label="Invoice amount" />
+        <TextField<ShipmentInput> name="destination" label="Where is it going?" placeholder="e.g. Amsterdam, Netherlands" />
+        <TextField<ShipmentInput> name="carrier" label="Transport company" placeholder="e.g. Airline or trucker name" />
+        <TextField<ShipmentInput> name="booking_ref" label="Booking number" placeholder="Optional booking reference" />
+        <TextField<ShipmentInput> name="awb_bl_number" label="Air / sea waybill number" placeholder="Optional AWB or BL number" />
+        <DateField<ShipmentInput> name="etd" label="Leave date" />
+        <DateField<ShipmentInput> name="eta" label="Arrive date" />
+        <TextField<ShipmentInput> name="invoice_no" label="Invoice number" placeholder="e.g. INV-001" />
+        <NumberField<ShipmentInput> name="invoice_amount" label="Invoice amount" placeholder="e.g. 5000000" />
         <TextField<ShipmentInput> name="invoice_currency" label="Invoice currency" uppercase placeholder="UGX" />
         <SelectField<ShipmentInput>
           name="payment_status"
           label="Payment status"
           required
+          placeholder="Paid or not?"
           options={PAYMENT_STATUSES.map((s) => ({ value: s, label: optionLabel(s) }))}
         />
       </div>
-      <TextareaField<ShipmentInput> name="notes" label="Notes" />
+      <TextareaField<ShipmentInput> name="notes" label="Notes" placeholder="Optional notes about this shipment" />
     </FormSheet>
   );
 }

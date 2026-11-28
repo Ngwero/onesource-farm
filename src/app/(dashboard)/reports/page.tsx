@@ -244,7 +244,7 @@ function ReportsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Reports"
-        subtitle="Download operational CSVs or schedule email digests."
+        subtitle="Download farm reports, or send them by email on a schedule."
       />
 
       <Card>

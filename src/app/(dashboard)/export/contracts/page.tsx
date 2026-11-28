@@ -66,7 +66,7 @@ function ContractsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Contracts"
-        subtitle="Supply agreements with buyers — quantity, price and crop specs."
+        subtitle="Agreements with buyers about quantity and price."
         actions={
           canManage ? (
             <Button onClick={() => setCreating(true)}>

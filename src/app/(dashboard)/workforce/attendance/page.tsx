@@ -268,7 +268,7 @@ function AttendancePage() {
     <div className="space-y-5">
       <PageHeader
         title="Attendance"
-        subtitle="Daily register. Days present and overtime feed payroll costing."
+        subtitle="Daily attendance. Days present and overtime help calculate pay."
       />
 
       <div className="flex flex-wrap items-center gap-2">

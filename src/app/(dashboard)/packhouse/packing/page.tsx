@@ -60,7 +60,7 @@ function PackingPage() {
     <div className="space-y-5">
       <PageHeader
         title="Packed Batches"
-        subtitle="Graded produce packed into cartons, crates or sacks. Each packed batch is inspected, stored and shipped under its own number."
+        subtitle="Graded produce packed into boxes or bags for storage and shipping."
         actions={
           can('packing.record') ? (
             <Button onClick={() => setCreating(true)}>

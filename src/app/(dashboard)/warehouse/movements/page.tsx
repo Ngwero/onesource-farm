@@ -48,7 +48,7 @@ function MovementsPage() {
       </Link>
       <PageHeader
         title="Stock Movements"
-        subtitle="The permanent ledger of every receipt, move, loss and dispatch. Entries cannot be edited or deleted."
+        subtitle="A full list of stock in, stock out, moves, and losses. These records cannot be changed."
       />
 
       <div className="flex flex-wrap items-center gap-3">

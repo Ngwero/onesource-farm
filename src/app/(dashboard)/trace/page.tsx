@@ -385,7 +385,7 @@ function TracePage() {
     <div className="space-y-6">
       <PageHeader
         title="Traceability"
-        subtitle="Follow any harvest or packed batch back to its block, field work and pickers, and forward through grading, QC, packing, the warehouse and dispatch."
+        subtitle="Follow a harvest or packed batch from the field to shipping."
       />
 
       <form
