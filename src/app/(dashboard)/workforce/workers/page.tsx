@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { BulkUploadCard } from '@/components/farm/BulkUploadCard';
 import { EmptyRow, ErrorState, LoadingRows } from '@/components/farm/DataStates';
 import { RequirePermission } from '@/components/farm/RequirePermission';
 import { StatusChip } from '@/components/farm/StatusChip';
@@ -173,6 +174,8 @@ function WorkersPage() {
           </Table>
         </div>
       )}
+
+      <BulkUploadCard kind="workers" />
 
       <WorkerFormSheet
         open={creating}

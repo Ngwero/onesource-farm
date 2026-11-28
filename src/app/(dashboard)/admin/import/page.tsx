@@ -1,222 +1,55 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Download, FileSpreadsheet, FileUp, Upload } from 'lucide-react';
-import { toast } from 'sonner';
+import { FileSpreadsheet } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BulkUploadCard } from '@/components/farm/BulkUploadCard';
 import { RequirePermission } from '@/components/farm/RequirePermission';
 import { useFarmAccess } from '@/hooks/useFarmAccess';
-import { farmFetch, errorMessage } from '@/lib/farm/client';
-import { downloadImportTemplate, parseSpreadsheetFile } from '@/lib/farm/spreadsheet';
+import {
+  BULK_IMPORT_SPECS,
+  type BulkImportKind,
+} from '@/lib/farm/bulkImportCatalog';
 
-type ImportKind = 'workers' | 'blocks' | 'crops';
-
-type ImportSpec = {
-  title: string;
-  required: string[];
-  optional: string[];
-  description: string;
-  permission: 'workforce.manage' | 'farm.manage' | 'crops.manage';
-  endpoint: string;
-  sample: (string | number | null)[];
-};
-
-const COLUMN_HELP: Record<string, string> = {
-  worker_code: 'Worker ID',
-  full_name: 'Full name',
-  category: 'permanent or casual',
-  pay_basis: 'daily or monthly',
-  phone: 'Phone',
-  national_id: 'National ID',
-  job_role: 'Job',
-  status: 'Status',
-  start_date: 'Start date',
-  daily_rate: 'Pay per day',
-  monthly_salary: 'Monthly pay',
-  overtime_rate: 'Overtime pay per hour',
-  notes: 'Notes',
-  code: 'Code',
-  name: 'Name',
-  size_value: 'Size number',
-  size_unit: 'acres or hectares',
-  soil_type: 'Soil type',
-  irrigation_type: 'Watering method',
-  production_cycle: 'seasonal / annual / perennial / continuous',
-  default_unit: 'Usual unit (kg, etc.)',
-  scientific_name: 'Scientific name',
-  maturity_days: 'Days to harvest',
-  description: 'Description',
-};
-
-const SPECS: Record<ImportKind, ImportSpec> = {
-  workers: {
-    title: 'Workers',
-    required: ['worker_code', 'full_name', 'category', 'pay_basis'],
-    optional: [
-      'phone',
-      'national_id',
-      'job_role',
-      'status',
-      'start_date',
-      'daily_rate',
-      'monthly_salary',
-      'overtime_rate',
-      'notes',
-    ],
-    description: 'Add many workers at once. For daily pay fill “daily_rate”. For monthly pay fill “monthly_salary”.',
-    permission: 'workforce.manage',
-    endpoint: '/api/farm/import/workers',
-    sample: ['W-001', 'Jane Okello', 'casual', 'daily', '0700000000', '', 'Picker', 'active', '2026-01-15', 25000, '', 0, ''],
-  },
-  blocks: {
-    title: 'Blocks',
-    required: ['code', 'name', 'size_value', 'size_unit', 'status'],
-    optional: ['soil_type', 'irrigation_type', 'notes'],
-    description: 'Add many farm plots at once. Size unit must be acres or hectares.',
-    permission: 'farm.manage',
-    endpoint: '/api/farm/import/blocks',
-    sample: ['B01', 'North Block', 2.5, 'acres', 'active', 'loam', 'drip', ''],
-  },
-  crops: {
-    title: 'Crops',
-    required: ['code', 'name', 'production_cycle', 'default_unit', 'status'],
-    optional: ['scientific_name', 'maturity_days', 'description'],
-    description: 'Add many crops at once. Production cycle can be seasonal, annual, perennial, or continuous.',
-    permission: 'crops.manage',
-    endpoint: '/api/farm/import/crops',
-    sample: ['CHILLI', 'Chilies', 'seasonal', 'kg', 'active', 'Capsicum annuum', 90, 'Hot pepper'],
-  },
-};
-
-function friendlyColumns(cols: string[]) {
-  return cols.map((c) => COLUMN_HELP[c] ? `${COLUMN_HELP[c]} (${c})` : c).join(', ');
-}
+const KIND_ORDER: BulkImportKind[] = [
+  'workers',
+  'attendance',
+  'blocks',
+  'crops',
+  'varieties',
+  'buyers',
+  'contracts',
+  'shipments',
+  'input-products',
+  'input-lots',
+  'incidents',
+];
 
 function ImportPage() {
   const { can } = useFarmAccess();
-  const [kind, setKind] = useState<ImportKind>('workers');
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [headers, setHeaders] = useState<string[]>([]);
-  const [rows, setRows] = useState<Record<string, string>[]>([]);
-  const [headerError, setHeaderError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{ created: number; errors: { row: number; error: string }[] } | null>(
-    null
+  const available = useMemo(
+    () => KIND_ORDER.filter((k) => can(BULK_IMPORT_SPECS[k].permission)),
+    [can]
   );
+  const [kind, setKind] = useState<BulkImportKind>(available[0] ?? 'workers');
+  const activeKind = available.includes(kind) ? kind : available[0];
 
-  const spec = SPECS[kind];
-  const columns = useMemo(() => [...spec.required, ...spec.optional], [spec]);
-  const missing = useMemo(
-    () => spec.required.filter((h) => !headers.includes(h)),
-    [headers, spec.required]
-  );
-  const canImport = can(spec.permission);
-
-  const resetFile = () => {
-    setFileName(null);
-    setHeaders([]);
-    setRows([]);
-    setHeaderError(null);
-    setResult(null);
-  };
-
-  const onFile = async (file: File | null) => {
-    setResult(null);
-    setHeaderError(null);
-    setRows([]);
-    setHeaders([]);
-    setFileName(null);
-    if (!file) return;
-    try {
-      const parsed = await parseSpreadsheetFile(file);
-      if (!parsed.headers.length || parsed.rows.length === 0) {
-        setHeaderError('File needs a header row and at least one data row.');
-        return;
-      }
-      setHeaders(parsed.headers);
-      setFileName(file.name);
-      setRows(parsed.rows);
-      const miss = SPECS[kind].required.filter((h) => !parsed.headers.includes(h));
-      if (miss.length) {
-        setHeaderError(`Missing required columns: ${miss.join(', ')}`);
-      }
-    } catch (err) {
-      setHeaderError(err instanceof Error ? err.message : 'Could not read this file.');
-    }
-  };
-
-  const buildPayload = () => {
-    if (kind === 'workers') {
-      return rows.map((r) => {
-        const pay_basis = r.pay_basis as 'daily' | 'monthly';
-        const daily = r.daily_rate ? Number(r.daily_rate) : null;
-        const monthly = r.monthly_salary ? Number(r.monthly_salary) : null;
-        return {
-          worker_code: r.worker_code,
-          full_name: r.full_name,
-          phone: r.phone || null,
-          national_id: r.national_id || null,
-          category: r.category as 'permanent' | 'casual',
-          job_role: r.job_role || null,
-          status: (r.status || 'active') as 'active' | 'inactive' | 'terminated',
-          start_date: r.start_date || null,
-          pay_basis,
-          daily_rate: pay_basis === 'daily' ? daily : null,
-          monthly_salary: pay_basis === 'monthly' ? monthly : null,
-          overtime_rate: r.overtime_rate ? Number(r.overtime_rate) : 0,
-          notes: r.notes || null,
-        };
-      });
-    }
-    if (kind === 'blocks') {
-      return rows.map((r) => ({
-        code: r.code,
-        name: r.name,
-        size_value: Number(r.size_value),
-        size_unit: r.size_unit as 'acres' | 'hectares',
-        status: r.status as 'active' | 'preparation' | 'fallow' | 'inactive',
-        soil_type: r.soil_type || null,
-        irrigation_type: r.irrigation_type || null,
-        notes: r.notes || null,
-      }));
-    }
-    return rows.map((r) => ({
-      code: r.code,
-      name: r.name,
-      scientific_name: r.scientific_name || null,
-      production_cycle: r.production_cycle as 'seasonal' | 'annual' | 'perennial' | 'continuous',
-      default_unit: r.default_unit as 'kg' | 'tonne' | 'crate' | 'bunch' | 'piece',
-      maturity_days: r.maturity_days ? Number(r.maturity_days) : null,
-      description: r.description || null,
-      status: (r.status || 'active') as 'active' | 'inactive',
-    }));
-  };
-
-  const runImport = async () => {
-    if (missing.length || rows.length === 0 || !canImport) return;
-    setBusy(true);
-    setResult(null);
-    try {
-      const res = await farmFetch<{ created: number; errors: { row: number; error: string }[] }>(spec.endpoint, {
-        method: 'POST',
-        body: { rows: buildPayload() },
-      });
-      setResult(res);
-      toast.success(`Imported ${res.created} ${spec.title.toLowerCase()}`);
-    } catch (err) {
-      toast.error(errorMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  };
+  if (!activeKind) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Bulk upload" subtitle="Upload Excel files to add many records at once." />
+        <p className="text-sm text-muted-foreground">You do not have permission to bulk upload data.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Bulk upload"
-        subtitle="Upload one Excel or CSV file to add many workers, blocks, or crops quickly."
+        subtitle="Download a sample Excel template, fill it in, then upload to add many records at once."
       />
 
       <Card>
@@ -227,126 +60,48 @@ function ImportPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>1. Download the Excel template.</p>
-          <p>2. Fill in the rows. Keep the column names the same.</p>
-          <p>3. Save the file, upload it here, then click Import.</p>
+          <p>1. Choose what you want to import.</p>
+          <p>2. Download the Excel template (it has one sample row).</p>
+          <p>3. Fill in your rows. Keep the column names the same.</p>
+          <p>4. Upload the file and click Import.</p>
         </CardContent>
       </Card>
 
       <div className="flex flex-wrap gap-2">
-        {(Object.keys(SPECS) as ImportKind[]).map((k) => (
+        {available.map((k) => (
           <Button
             key={k}
             type="button"
             size="sm"
-            variant={kind === k ? 'default' : 'outline'}
-            onClick={() => {
-              setKind(k);
-              resetFile();
-            }}
+            variant={activeKind === k ? 'default' : 'outline'}
+            onClick={() => setKind(k)}
           >
-            {SPECS[k].title}
+            {BULK_IMPORT_SPECS[k].title}
           </Button>
         ))}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <FileUp className="size-4 text-brand-600" /> {spec.title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">{spec.description}</p>
-          <p className="text-xs text-muted-foreground">
-            Required columns: {friendlyColumns(spec.required)}
-            {spec.optional.length ? <> · Optional: {friendlyColumns(spec.optional)}</> : null}
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => downloadImportTemplate(`${kind}-import-template`, columns, spec.sample, 'xlsx')}
-            >
-              <Download className="size-4" />
-              Download Excel template
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => downloadImportTemplate(`${kind}-import-template`, columns, spec.sample, 'csv')}
-            >
-              <Download className="size-4" />
-              Download CSV template
-            </Button>
-          </div>
-
-          <label className="flex cursor-pointer flex-col items-center gap-2 rounded-[0.95rem] border border-dashed border-[rgb(46_94_74/0.25)] bg-[linear-gradient(180deg,#ffffff_0%,#f7faf8_100%)] px-4 py-8 text-center shadow-[var(--shadow-soft)] hover:border-[rgb(46_94_74/0.4)]">
-            <Upload className="size-6 text-brand-700" />
-            <span className="text-sm font-medium">{fileName ?? 'Choose an Excel or CSV file'}</span>
-            <span className="text-xs text-muted-foreground">.xlsx, .xls, or .csv · up to 500 rows</span>
-            <input
-              type="file"
-              accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
-              className="sr-only"
-              onChange={(e) => void onFile(e.target.files?.[0] ?? null)}
-            />
-          </label>
-
-          {headerError ? <p className="text-sm text-red-600">{headerError}</p> : null}
-          {!headerError && rows.length > 0 ? (
-            <p className="text-sm text-emerald-700">
-              Headers look good · {rows.length} row{rows.length === 1 ? '' : 's'} ready
-            </p>
-          ) : null}
-
-          <div className="flex flex-wrap gap-2">
-            <Button
-              disabled={busy || !!headerError || rows.length === 0 || !canImport}
-              onClick={() => void runImport()}
-            >
-              {busy ? 'Importing…' : `Import ${spec.title.toLowerCase()}`}
-            </Button>
-            {fileName ? (
-              <Button type="button" variant="outline" disabled={busy} onClick={resetFile}>
-                Clear file
-              </Button>
-            ) : null}
-          </div>
-
-          {!canImport ? (
-            <p className="text-sm text-amber-700">You need permission to import {spec.title.toLowerCase()}.</p>
-          ) : null}
-
-          {result ? (
-            <div className="rounded-lg border border-[rgb(46_94_74/0.12)] bg-[linear-gradient(180deg,#ffffff_0%,#f7faf8_100%)] px-3 py-2 text-sm shadow-[var(--shadow-soft)]">
-              <p>
-                Created <strong>{result.created}</strong>
-                {result.errors.length ? ` · ${result.errors.length} row error(s)` : ''}
-              </p>
-              {result.errors.length ? (
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-red-700">
-                  {result.errors.slice(0, 20).map((e) => (
-                    <li key={`${e.row}-${e.error}`}>
-                      Row {e.row}: {e.error}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
+      <BulkUploadCard key={activeKind} kind={activeKind} />
     </div>
   );
 }
 
 export default function Page() {
   return (
-    <RequirePermission permission={['admin.settings', 'workforce.manage', 'farm.manage', 'crops.manage']}>
+    <RequirePermission
+      permission={[
+        'admin.settings',
+        'workforce.manage',
+        'attendance.record',
+        'farm.manage',
+        'crops.manage',
+        'buyers.manage',
+        'contracts.manage',
+        'shipments.manage',
+        'procurement.manage',
+        'pest.record',
+      ]}
+    >
       <ImportPage />
     </RequirePermission>
   );

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { BulkUploadCard } from '@/components/farm/BulkUploadCard';
 import { EmptyRow, ErrorState, LoadingRows } from '@/components/farm/DataStates';
 import { RequirePermission } from '@/components/farm/RequirePermission';
 import { InputLotFormSheet } from '@/components/farm/forms/InputLotFormSheet';
@@ -159,6 +160,8 @@ function LotsPage() {
           </Table>
         </div>
       )}
+
+      <BulkUploadCard kind="input-lots" />
 
       <InputLotFormSheet open={creating} onOpenChange={setCreating} />
       <InputLotFormSheet open={Boolean(editing)} onOpenChange={(v) => !v && setEditing(null)} lot={editing} />

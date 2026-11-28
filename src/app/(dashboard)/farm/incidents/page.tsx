@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { BulkUploadCard } from '@/components/farm/BulkUploadCard';
 import { EmptyRow, ErrorState, LoadingRows, MobileTableHint } from '@/components/farm/DataStates';
 import { KpiCard } from '@/components/farm/KpiCard';
 import { RequirePermission } from '@/components/farm/RequirePermission';
@@ -184,6 +185,8 @@ function IncidentsPage() {
           </Table>
         </div>
       )}
+
+      <BulkUploadCard kind="incidents" />
 
       <IncidentFormSheet
         open={creating}

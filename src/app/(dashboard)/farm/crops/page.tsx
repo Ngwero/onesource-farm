@@ -7,6 +7,7 @@ import { Plus } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { BulkUploadCard } from '@/components/farm/BulkUploadCard';
 import { EmptyRow, ErrorState, LoadingRows } from '@/components/farm/DataStates';
 import { RequirePermission } from '@/components/farm/RequirePermission';
 import { StatusChip } from '@/components/farm/StatusChip';
@@ -106,6 +107,9 @@ function CropsPage() {
           </Table>
         </div>
       )}
+
+      <BulkUploadCard kind="crops" />
+      <BulkUploadCard kind="varieties" />
 
       <CropFormSheet open={creating} onOpenChange={setCreating} onSaved={(crop) => router.push(`/farm/crops/${crop.id}`)} />
     </div>
