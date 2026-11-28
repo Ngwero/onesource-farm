@@ -37,7 +37,7 @@ export function OpsCard({
   return (
     <section
       className={cn(
-        'relative overflow-hidden rounded-[0.95rem] border border-[rgb(46_94_74/0.12)] bg-[linear-gradient(180deg,#ffffff_0%,#fbfcfb_48%,#f7faf8_100%)] p-4 shadow-[var(--shadow-soft)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-[linear-gradient(90deg,rgb(46_94_74/0.35),rgb(180_207_94/0.4),transparent_78%)] sm:rounded-[1.1rem] sm:p-5',
+        'relative overflow-hidden rounded-[1.25rem] border border-[rgb(46_94_74/0.12)] bg-[linear-gradient(180deg,#faf9f6_0%,#f7f8f4_55%,#f2f5f0_100%)] p-4 shadow-[var(--shadow-soft)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-[linear-gradient(90deg,#2e5e4a,#b4cf5a_45%,#f0c947_78%,transparent)] sm:rounded-[1.4rem] sm:p-5',
         className
       )}
     >

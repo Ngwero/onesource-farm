@@ -17,7 +17,7 @@ const BRAND_PRIMARY = '#2e5e4a';
 const BRAND_FOOTER = '#1e3e31';
 const BRAND_FOOTER_DEEP = '#152c23';
 const ACCENT_GREEN = '#377256';
-const HIGHLIGHT_BORDER = '#b4cf5e';
+const HIGHLIGHT_BORDER = '#b4cf5a';
 
 function escapeHtml(value: string): string {
   return value

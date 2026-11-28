@@ -1,20 +1,16 @@
 import type { Metadata, Viewport } from 'next';
-import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google';
+import { Gabarito } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { SessionInactivityGuard } from '@/components/auth/SessionInactivityGuard';
 import { PwaRegister } from '@/components/pwa/PwaRegister';
 
-const sans = Plus_Jakarta_Sans({
+/** Brand typeface from One Source guidelines — Gabarito only. */
+const gabarito = Gabarito({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
-});
-
-const display = Fraunces({
-  subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap',
+  weight: ['400', '500', '600', '700', '800', '900'],
 });
 
 export const metadata: Metadata = {
@@ -43,7 +39,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${sans.variable} ${display.variable} font-sans antialiased`}>
+      <body className={`${gabarito.variable} font-sans antialiased`}>
         <AuthProvider>
           <SessionInactivityGuard />
           <PwaRegister />

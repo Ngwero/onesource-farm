@@ -79,10 +79,10 @@ function FarmDashboardPage() {
     <div className="space-y-5">
       <FarmWeatherStrip />
 
-      <header className="overflow-hidden rounded-2xl border border-brand-800/20 bg-[linear-gradient(135deg,#152c23_0%,#1e3e31_42%,#2e5e4a_78%,#377256_100%)] text-white shadow-[var(--shadow-card)]">
+      <header className="overflow-hidden rounded-[1.6rem] border border-brand-800/20 bg-[linear-gradient(135deg,#152c23_0%,#1e3e31_42%,#2e5e4a_78%,#377256_100%)] text-[color:var(--color-paper)] shadow-[var(--shadow-card)]">
         <div className="relative px-4 py-5 sm:px-7 sm:py-7">
           <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_18%,rgb(180_207_94/0.28),transparent_42%)]"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_18%,rgb(180_207_90/0.3),transparent_42%),radial-gradient(circle_at_12%_90%,rgb(240_201_71/0.16),transparent_36%)]"
             aria-hidden
           />
           <div className="relative flex flex-wrap items-end justify-between gap-4">
@@ -139,7 +139,7 @@ function FarmDashboardPage() {
                 </Button>
               ) : null}
               {can('harvest.record') ? (
-                <Button asChild size="sm" className="min-w-[calc(50%-0.25rem)] flex-1 bg-accent-500 text-brand-950 shadow-none hover:bg-accent-400 hover:brightness-100 sm:flex-none">
+                <Button asChild size="sm" className="min-w-[calc(50%-0.25rem)] flex-1 bg-amber-500 text-brand-950 shadow-none hover:bg-amber-400 hover:brightness-100 sm:flex-none">
                   <Link href="/harvest/batches?new=1">
                     <Plus className="size-4" /> Record harvest
                   </Link>

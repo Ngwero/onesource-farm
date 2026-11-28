@@ -3,10 +3,10 @@
 @source "../components/**/*.{js,ts,jsx,tsx}";
 @source "../app/**/*.{js,ts,jsx,tsx}";
 
-/* OneSource Farm — logo forest green #2E5E4A + leaf lime #B4CF5E */
+/* One Source brand guidelines — Dark green #2E5E4A · Lemon green #B4CF5A · Amber #F0C947 · Black #1C1C1C · White #FAF9F6 · Gabarito */
 @theme {
-  --font-sans: var(--font-sans), 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-display), Fraunces, ui-serif, Georgia, serif;
+  --font-sans: var(--font-sans), Gabarito, ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sans), Gabarito, ui-sans-serif, system-ui, sans-serif;
   --color-brand-50: #eef6f1;
   --color-brand-100: #d5eadf;
   --color-brand-200: #a9d3be;
@@ -18,12 +18,17 @@
   --color-brand-800: #1e3e31;
   --color-brand-900: #152c23;
   --color-brand-950: #0c1a14;
-  --color-accent-300: #d4e5a0;
-  --color-accent-400: #c7dd82;
-  --color-accent-500: #b4cf5e;
+  --color-accent-300: #d4e59a;
+  --color-accent-400: #c5d97a;
+  --color-accent-500: #b4cf5a;
   --color-accent-600: #9ab846;
-  --color-surface: #eef2ef;
-  --color-surface-elevated: #ffffff;
+  --color-amber-400: #f5d76a;
+  --color-amber-500: #f0c947;
+  --color-amber-600: #d4b03a;
+  --color-ink: #1c1c1c;
+  --color-paper: #faf9f6;
+  --color-surface: #f3f5f1;
+  --color-surface-elevated: #faf9f6;
   --color-border-subtle: #d9e2dc;
 }
 
@@ -52,64 +57,66 @@
 }
 
 :root {
-  --background: #eef2ef;
-  --foreground: #14201b;
+  --background: #f3f5f1;
+  --foreground: #1c1c1c;
   --primary: #2e5e4a;
-  --primary-foreground: #ffffff;
-  --card: #ffffff;
-  --card-foreground: #14201b;
-  --popover: #ffffff;
-  --popover-foreground: #14201b;
+  --primary-foreground: #faf9f6;
+  --card: #faf9f6;
+  --card-foreground: #1c1c1c;
+  --popover: #faf9f6;
+  --popover-foreground: #1c1c1c;
   --secondary: #e4efe8;
   --secondary-foreground: #1e3e31;
-  --muted: #e7ece9;
+  --muted: #eceee8;
   --muted-foreground: #5b6b63;
-  --accent: #eef6e0;
+  --accent: #f3f7e4;
   --accent-foreground: #1e3e31;
   --destructive: #dc2626;
   --border: #d5dfd8;
   --input: #d5dfd8;
-  --ring: #377256;
-  --radius: 0.75rem;
+  --ring: #2e5e4a;
+  --radius: 0.95rem;
   --primary-dark: #1e3e31;
   --sidebar-width: 16.75rem;
-  --radius-lg: 1.05rem;
-  --radius-xl: 1.35rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.6rem;
   --shadow-soft:
-    0 1px 0 rgb(255 255 255 / 0.75) inset,
-    0 1px 2px rgb(20 32 27 / 0.04),
-    0 10px 28px rgb(46 94 74 / 0.06);
+    0 1px 0 rgb(250 249 246 / 0.9) inset,
+    0 1px 2px rgb(28 28 28 / 0.04),
+    0 12px 32px rgb(46 94 74 / 0.07);
   --shadow-card:
-    0 1px 0 rgb(255 255 255 / 0.8) inset,
-    0 1px 2px rgb(20 32 27 / 0.045),
-    0 14px 36px rgb(46 94 74 / 0.09);
+    0 1px 0 rgb(250 249 246 / 0.95) inset,
+    0 1px 2px rgb(28 28 28 / 0.045),
+    0 16px 40px rgb(46 94 74 / 0.1);
   --surface-panel:
-    linear-gradient(180deg, #ffffff 0%, #fbfcfb 48%, #f7faf8 100%);
+    linear-gradient(180deg, #faf9f6 0%, #f7f8f4 55%, #f2f5f0 100%);
   --surface-panel-header:
-    linear-gradient(180deg, #f4f8f5 0%, #eef4f0 100%);
+    linear-gradient(180deg, #f1f5ef 0%, #eaf0ea 100%);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans), Gabarito, ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: -0.011em;
+  letter-spacing: -0.01em;
 }
 
 .font-display {
-  font-family: var(--font-display), Fraunces, ui-serif, Georgia, serif;
-  letter-spacing: -0.02em;
+  font-family: var(--font-sans), Gabarito, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
 }
 
 /* ——— Layout shells ——— */
 .page-shell {
   background-color: var(--background);
   background-image:
-    radial-gradient(ellipse 90% 55% at 100% -10%, rgb(46 94 74 / 0.09), transparent 55%),
-    radial-gradient(ellipse 70% 45% at -5% 5%, rgb(180 207 94 / 0.08), transparent 50%),
-    linear-gradient(180deg, #f5f8f6 0%, var(--background) 42%);
+    radial-gradient(circle at 100% -8%, rgb(46 94 74 / 0.12), transparent 42%),
+    radial-gradient(circle at -6% 12%, rgb(180 207 90 / 0.14), transparent 38%),
+    radial-gradient(circle at 72% 100%, rgb(240 201 71 / 0.08), transparent 36%),
+    linear-gradient(180deg, #f7f8f4 0%, var(--background) 46%);
   min-height: 100%;
 }
 
@@ -264,13 +271,13 @@ body {
 /* ——— Buttons ——— */
 .btn-primary {
   background: linear-gradient(135deg, var(--color-brand-600) 0%, var(--color-brand-500) 100%);
-  color: #fff;
+  color: #faf9f6;
   padding: 0.625rem 1.25rem;
-  border-radius: 0.625rem;
+  border-radius: 999px;
   font-weight: 600;
   font-size: 0.875rem;
   letter-spacing: 0.01em;
-  border: 1px solid rgb(255 255 255 / 0.1);
+  border: 1px solid rgb(250 249 246 / 0.12);
   box-shadow: 0 2px 8px rgb(46 94 74 / 0.25);
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
@@ -294,9 +301,9 @@ body {
 .btn-secondary {
   background: var(--color-surface-elevated);
   border: 1px solid var(--color-border-subtle);
-  color: #334155;
+  color: #1c1c1c;
   padding: 0.625rem 1.25rem;
-  border-radius: 0.625rem;
+  border-radius: 999px;
   font-weight: 500;
   font-size: 0.875rem;
   transition: background-color 0.15s ease, border-color 0.15s ease;
@@ -491,7 +498,7 @@ body {
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #14201b;
+  color: #1c1c1c;
   margin-top: 0.45rem;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
@@ -886,11 +893,11 @@ body {
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  font-family: var(--font-display), Fraunces, ui-serif, Georgia, serif;
+  font-family: var(--font-sans), Gabarito, ui-sans-serif, system-ui, sans-serif;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.02em;
-  color: #14201b;
+  color: #1c1c1c;
 }
 
 .farm-panel__title svg {
@@ -953,11 +960,11 @@ body {
 }
 
 .page-header__title {
-  font-family: var(--font-display), Fraunces, ui-serif, Georgia, serif;
+  font-family: var(--font-sans), Gabarito, ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(1.35rem, 4.5vw, 1.75rem);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.03em;
-  color: #14201b;
+  color: #1c1c1c;
   line-height: 1.15;
   overflow-wrap: anywhere;
 }
@@ -1183,11 +1190,15 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  color: #fff;
-  background: linear-gradient(185deg, #0c1a14 0%, #1e3e31 38%, #234a3a 100%);
+  color: #faf9f6;
+  background:
+    radial-gradient(circle at 100% 0%, rgb(180 207 90 / 0.18), transparent 42%),
+    radial-gradient(circle at 0% 100%, rgb(240 201 71 / 0.1), transparent 40%),
+    linear-gradient(185deg, #0c1a14 0%, #1e3e31 40%, #2e5e4a 100%);
   border-right: 1px solid rgb(116 179 149 / 0.12);
   position: relative;
   z-index: 50;
+  overflow: hidden;
 }
 
 .app-nav-overlay {
@@ -1404,7 +1415,7 @@ body {
 
 .memo-filters-panel__accent {
   height: 3px;
-  background: linear-gradient(90deg, #1e3e31, #2e5e4a 40%, #468a6c 70%, #b4cf5e);
+  background: linear-gradient(90deg, #1e3e31, #2e5e4a 38%, #b4cf5a 72%, #f0c947);
 }
 
 .memo-filters-panel__header {
