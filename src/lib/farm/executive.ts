@@ -326,7 +326,7 @@ export async function loadExecutiveOverview(
           shipment: s.shipment_no,
           buyer,
           amount: round(amt),
-          currency: s.invoice_currency ?? 'USD',
+          currency: s.invoice_currency ?? 'UGX',
           paymentStatus: s.payment_status,
         });
       }

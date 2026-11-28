@@ -47,7 +47,7 @@ export const farmSchema = z.object({
   country: requiredText(80),
   total_area_ha: positive.nullable().optional(),
   timezone: requiredText(60),
-  default_currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, 'Use a 3-letter code, e.g. USD'),
+  default_currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, 'Use a 3-letter code, e.g. UGX'),
   manager_id: optionalId,
   notes: optionalText(),
 });
@@ -641,7 +641,7 @@ export const contractSchema = z
     agreed_quantity: positive,
     quantity_unit: requiredText(20),
     unit_price: nonNegative,
-    currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, 'Use a 3-letter code, e.g. USD'),
+    currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, 'Use a 3-letter code, e.g. UGX'),
     specifications: optionalText(),
     status: z.enum(CONTRACT_STATUSES),
     notes: optionalText(),

@@ -131,7 +131,7 @@ export function useCurrency(): string {
     staleTime: 10 * 60_000,
     retry: false,
   });
-  return profile.data?.default_currency ?? '';
+  return profile.data?.default_currency ?? 'UGX';
 }
 
 export function useActivityTypes() {

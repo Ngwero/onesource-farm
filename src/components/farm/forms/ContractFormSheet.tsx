@@ -30,7 +30,7 @@ function toValues(contract?: ContractRow | null, defaults?: Partial<ContractInpu
       agreed_quantity: null as unknown as number,
       quantity_unit: 'kg',
       unit_price: null as unknown as number,
-      currency: 'USD',
+      currency: 'UGX',
       specifications: '',
       status: 'draft',
       notes: '',
@@ -130,7 +130,7 @@ export function ContractFormSheet({ open, onOpenChange, contract, buyers, defaul
         <NumberField<ContractInput> name="agreed_quantity" label="Agreed quantity" required />
         <TextField<ContractInput> name="quantity_unit" label="Unit" required placeholder="kg" />
         <NumberField<ContractInput> name="unit_price" label="Unit price" required />
-        <TextField<ContractInput> name="currency" label="Currency" required uppercase placeholder="USD" />
+        <TextField<ContractInput> name="currency" label="Currency" required uppercase placeholder="UGX" />
         <SelectField<ContractInput>
           name="status"
           label="Status"

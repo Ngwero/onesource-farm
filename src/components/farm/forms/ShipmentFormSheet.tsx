@@ -33,7 +33,7 @@ function toValues(shipment?: ShipmentRow | null, defaults?: Partial<ShipmentInpu
       status: 'planned',
       invoice_no: '',
       invoice_amount: null,
-      invoice_currency: '',
+      invoice_currency: 'UGX',
       payment_status: 'unpaid',
       notes: '',
       ...defaults,
@@ -53,7 +53,7 @@ function toValues(shipment?: ShipmentRow | null, defaults?: Partial<ShipmentInpu
     status: shipment.status,
     invoice_no: shipment.invoice_no ?? '',
     invoice_amount: shipment.invoice_amount == null ? null : Number(shipment.invoice_amount),
-    invoice_currency: shipment.invoice_currency ?? '',
+    invoice_currency: shipment.invoice_currency ?? 'UGX',
     payment_status: shipment.payment_status,
     notes: shipment.notes ?? '',
   };
@@ -149,7 +149,7 @@ export function ShipmentFormSheet({
         <DateField<ShipmentInput> name="eta" label="ETA" />
         <TextField<ShipmentInput> name="invoice_no" label="Invoice number" />
         <NumberField<ShipmentInput> name="invoice_amount" label="Invoice amount" />
-        <TextField<ShipmentInput> name="invoice_currency" label="Invoice currency" uppercase placeholder="USD" />
+        <TextField<ShipmentInput> name="invoice_currency" label="Invoice currency" uppercase placeholder="UGX" />
         <SelectField<ShipmentInput>
           name="payment_status"
           label="Payment status"
